@@ -3,6 +3,8 @@ package com.ruoyi.huiyi.service.impl;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
+
+import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.ruoyi.common.utils.DateUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -17,7 +19,7 @@ import com.ruoyi.huiyi.service.IMeetingService;
  * @date 2026-03-26
  */
 @Service
-public class MeetingServiceImpl implements IMeetingService 
+public class MeetingServiceImpl extends ServiceImpl<MeetingMapper,Meeting> implements IMeetingService
 {
     @Autowired
     private MeetingMapper meetingMapper;

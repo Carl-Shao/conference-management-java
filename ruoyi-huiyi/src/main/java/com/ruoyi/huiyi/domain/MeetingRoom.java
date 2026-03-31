@@ -1,5 +1,7 @@
 package com.ruoyi.huiyi.domain;
 
+import lombok.Data;
+import lombok.EqualsAndHashCode;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.apache.commons.lang3.builder.ToStringStyle;
 import com.ruoyi.common.annotation.Excel;
@@ -11,6 +13,8 @@ import com.ruoyi.common.core.domain.BaseEntity;
  * @author ruoyi
  * @date 2026-03-26
  */
+@EqualsAndHashCode(callSuper = true)
+@Data
 public class MeetingRoom extends BaseEntity
 {
     private static final long serialVersionUID = 1L;
@@ -45,100 +49,4 @@ public class MeetingRoom extends BaseEntity
     /** 排序号（数字越小越靠前） */
     @Excel(name = "排序号", readConverterExp = "数=字越小越靠前")
     private Long sortOrder;
-
-    public void setId(Long id) 
-    {
-        this.id = id;
-    }
-
-    public Long getId() 
-    {
-        return id;
-    }
-
-    public void setRoomName(String roomName) 
-    {
-        this.roomName = roomName;
-    }
-
-    public String getRoomName() 
-    {
-        return roomName;
-    }
-
-    public void setLocation(String location) 
-    {
-        this.location = location;
-    }
-
-    public String getLocation() 
-    {
-        return location;
-    }
-
-    public void setCapacity(Long capacity) 
-    {
-        this.capacity = capacity;
-    }
-
-    public Long getCapacity() 
-    {
-        return capacity;
-    }
-
-    public void setEquipment(String equipment) 
-    {
-        this.equipment = equipment;
-    }
-
-    public String getEquipment() 
-    {
-        return equipment;
-    }
-
-    public void setRtspUrl(String rtspUrl) 
-    {
-        this.rtspUrl = rtspUrl;
-    }
-
-    public String getRtspUrl() 
-    {
-        return rtspUrl;
-    }
-
-    public void setStatus(String status) 
-    {
-        this.status = status;
-    }
-
-    public String getStatus() 
-    {
-        return status;
-    }
-
-    public void setSortOrder(Long sortOrder) 
-    {
-        this.sortOrder = sortOrder;
-    }
-
-    public Long getSortOrder() 
-    {
-        return sortOrder;
-    }
-
-    @Override
-    public String toString() {
-        return new ToStringBuilder(this,ToStringStyle.MULTI_LINE_STYLE)
-            .append("id", getId())
-            .append("roomName", getRoomName())
-            .append("location", getLocation())
-            .append("capacity", getCapacity())
-            .append("equipment", getEquipment())
-            .append("rtspUrl", getRtspUrl())
-            .append("status", getStatus())
-            .append("sortOrder", getSortOrder())
-            .append("createTime", getCreateTime())
-            .append("updateTime", getUpdateTime())
-            .toString();
-    }
 }

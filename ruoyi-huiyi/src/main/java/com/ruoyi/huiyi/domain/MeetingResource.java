@@ -1,5 +1,7 @@
 package com.ruoyi.huiyi.domain;
 
+import lombok.Data;
+import lombok.EqualsAndHashCode;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.apache.commons.lang3.builder.ToStringStyle;
 import com.ruoyi.common.annotation.Excel;
@@ -11,6 +13,8 @@ import com.ruoyi.common.core.domain.BaseEntity;
  * @author ruoyi
  * @date 2026-03-26
  */
+@EqualsAndHashCode(callSuper = true)
+@Data
 public class MeetingResource extends BaseEntity
 {
     private static final long serialVersionUID = 1L;
@@ -38,77 +42,4 @@ public class MeetingResource extends BaseEntity
     @Excel(name = "录音文件路径")
     private String recordingPath;
 
-    public void setId(Long id) 
-    {
-        this.id = id;
-    }
-
-    public Long getId() 
-    {
-        return id;
-    }
-
-    public void setMeetingId(Long meetingId) 
-    {
-        this.meetingId = meetingId;
-    }
-
-    public Long getMeetingId() 
-    {
-        return meetingId;
-    }
-
-    public void setMeetingTitle(String meetingTitle) 
-    {
-        this.meetingTitle = meetingTitle;
-    }
-
-    public String getMeetingTitle() 
-    {
-        return meetingTitle;
-    }
-
-    public void setFullTranscript(String fullTranscript) 
-    {
-        this.fullTranscript = fullTranscript;
-    }
-
-    public String getFullTranscript() 
-    {
-        return fullTranscript;
-    }
-
-    public void setSummaryContent(String summaryContent) 
-    {
-        this.summaryContent = summaryContent;
-    }
-
-    public String getSummaryContent() 
-    {
-        return summaryContent;
-    }
-
-    public void setRecordingPath(String recordingPath) 
-    {
-        this.recordingPath = recordingPath;
-    }
-
-    public String getRecordingPath() 
-    {
-        return recordingPath;
-    }
-
-    @Override
-    public String toString() {
-        return new ToStringBuilder(this,ToStringStyle.MULTI_LINE_STYLE)
-            .append("id", getId())
-            .append("meetingId", getMeetingId())
-            .append("meetingTitle", getMeetingTitle())
-            .append("fullTranscript", getFullTranscript())
-            .append("summaryContent", getSummaryContent())
-            .append("recordingPath", getRecordingPath())
-            .append("createTime", getCreateTime())
-            .append("updateTime", getUpdateTime())
-            .toString();
-    }
 }

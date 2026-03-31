@@ -18,6 +18,7 @@
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
         <java.version>17</java.version>
         <spring-boot.version>4.0.3</spring-boot.version>
+        <mybatis-plus.version>3.5.15</mybatis-plus.version>
         <mybatis-spring-boot.version>4.0.1</mybatis-spring-boot.version>
         <druid.version>1.2.28</druid.version>
         <yauaa.version>8.1.0</yauaa.version>
@@ -68,8 +69,15 @@
             </dependency>
 
             <dependency>
+                <groupId>com.baomidou</groupId>
+                <artifactId>mybatis-plus-spring-boot4-starter</artifactId>
+                <version>${mybatis-plus.version}</version>
+            </dependency>
+
+            <!-- 供 SpringBootVFS 等使用（不含 mybatis-spring-boot-starter，避免与 MP 冲突） -->
+            <dependency>
                 <groupId>org.mybatis.spring.boot</groupId>
-                <artifactId>mybatis-spring-boot-starter</artifactId>
+                <artifactId>mybatis-spring-boot-autoconfigure</artifactId>
                 <version>${mybatis-spring-boot.version}</version>
             </dependency>
 

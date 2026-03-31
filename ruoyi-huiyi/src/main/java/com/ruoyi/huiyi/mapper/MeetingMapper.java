@@ -1,6 +1,8 @@
 package com.ruoyi.huiyi.mapper;
 
 import java.util.List;
+
+import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.ruoyi.huiyi.domain.Meeting;
 
 /**
@@ -9,8 +11,7 @@ import com.ruoyi.huiyi.domain.Meeting;
  * @author ruoyi
  * @date 2026-03-26
  */
-public interface MeetingMapper 
-{
+public interface MeetingMapper extends BaseMapper<Meeting> {
     /**
      * 查询会议信息
      * 

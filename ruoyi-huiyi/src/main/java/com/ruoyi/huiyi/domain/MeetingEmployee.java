@@ -1,5 +1,7 @@
 package com.ruoyi.huiyi.domain;
 
+import lombok.Data;
+import lombok.EqualsAndHashCode;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.apache.commons.lang3.builder.ToStringStyle;
 import com.ruoyi.common.annotation.Excel;
@@ -11,6 +13,8 @@ import com.ruoyi.common.core.domain.BaseEntity;
  * @author ruoyi
  * @date 2026-03-26
  */
+@EqualsAndHashCode(callSuper = true)
+@Data
 public class MeetingEmployee extends BaseEntity
 {
     private static final long serialVersionUID = 1L;
@@ -46,99 +50,4 @@ public class MeetingEmployee extends BaseEntity
     @Excel(name = "角色", readConverterExp = "s=ecretary:秘书，participant:参与者")
     private String role;
 
-    public void setId(Long id) 
-    {
-        this.id = id;
-    }
-
-    public Long getId() 
-    {
-        return id;
-    }
-
-    public void setEmployeeNo(String employeeNo) 
-    {
-        this.employeeNo = employeeNo;
-    }
-
-    public String getEmployeeNo() 
-    {
-        return employeeNo;
-    }
-
-    public void setEmployeeName(String employeeName) 
-    {
-        this.employeeName = employeeName;
-    }
-
-    public String getEmployeeName() 
-    {
-        return employeeName;
-    }
-
-    public void setDepartment(String department) 
-    {
-        this.department = department;
-    }
-
-    public String getDepartment() 
-    {
-        return department;
-    }
-
-    public void setPosition(String position) 
-    {
-        this.position = position;
-    }
-
-    public String getPosition() 
-    {
-        return position;
-    }
-
-    public void setEmail(String email) 
-    {
-        this.email = email;
-    }
-
-    public String getEmail() 
-    {
-        return email;
-    }
-
-    public void setPhone(String phone) 
-    {
-        this.phone = phone;
-    }
-
-    public String getPhone() 
-    {
-        return phone;
-    }
-
-    public void setRole(String role) 
-    {
-        this.role = role;
-    }
-
-    public String getRole() 
-    {
-        return role;
-    }
-
-    @Override
-    public String toString() {
-        return new ToStringBuilder(this,ToStringStyle.MULTI_LINE_STYLE)
-            .append("id", getId())
-            .append("employeeNo", getEmployeeNo())
-            .append("employeeName", getEmployeeName())
-            .append("department", getDepartment())
-            .append("position", getPosition())
-            .append("email", getEmail())
-            .append("phone", getPhone())
-            .append("role", getRole())
-            .append("createTime", getCreateTime())
-            .append("updateTime", getUpdateTime())
-            .toString();
-    }
 }

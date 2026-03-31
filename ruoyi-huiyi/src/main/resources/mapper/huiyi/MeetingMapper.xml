@@ -35,7 +35,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             <if test="startTime != null "> and start_time = #{startTime}</if>
             <if test="endTime != null "> and end_time = #{endTime}</if>
             <if test="organizerNo != null  and organizerNo != ''"> and organizer_no = #{organizerNo}</if>
-            <if test="participantNos != null  and participantNos != ''"> and participant_nos = #{participantNos}</if>
+            <if test="participantNos != null  and participantNos != ''"> and participant_nos like concat('%', #{participantNos}, '%')</if>
             <if test="description != null  and description != ''"> and description = #{description}</if>
             <if test="status != null  and status != ''"> and status = #{status}</if>
         </where>
