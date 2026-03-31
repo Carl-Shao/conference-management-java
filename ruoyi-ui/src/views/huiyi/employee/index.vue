@@ -50,12 +50,19 @@
         />
       </el-form-item>
       <el-form-item label="角色" prop="role">
-        <el-input
+        <el-select
           v-model="queryParams.role"
-          placeholder="请输入角色"
+          placeholder="请选择角色"
           clearable
-          @keyup.enter.native="handleQuery"
-        />
+          style="width: 140px"
+        >
+          <el-option
+            v-for="item in roleOptions"
+            :key="item.value"
+            :label="item.label"
+            :value="item.value"
+          />
+        </el-select>
       </el-form-item>
       <el-form-item>
         <el-button type="primary" icon="el-icon-search" size="mini" @click="handleQuery">搜索</el-button>
@@ -118,7 +125,11 @@
       <el-table-column label="职位" align="center" prop="position" />
       <el-table-column label="邮箱地址" align="center" prop="email" />
       <el-table-column label="电话号码" align="center" prop="phone" />
-      <el-table-column label="角色" align="center" prop="role" />
+      <el-table-column label="角色" align="center" prop="role" width="100">
+        <template slot-scope="scope">
+          <span>{{ roleLabel(scope.row.role) }}</span>
+        </template>
+      </el-table-column>
       <el-table-column label="操作" align="center" class-name="small-padding fixed-width">
         <template slot-scope="scope">
           <el-button
@@ -169,7 +180,18 @@
           <el-input v-model="form.phone" placeholder="请输入电话号码" />
         </el-form-item>
         <el-form-item label="角色" prop="role">
-          <el-input v-model="form.role" placeholder="请输入角色" />
+          <el-select
+            v-model="form.role"
+            placeholder="请选择角色"
+            style="width: 100%"
+          >
+            <el-option
+              v-for="item in roleOptions"
+              :key="item.value"
+              :label="item.label"
+              :value="item.value"
+            />
+          </el-select>
         </el-form-item>
       </el-form>
       <div slot="footer" class="dialog-footer">
@@ -201,6 +223,11 @@ export default {
       total: 0,
       // 员工信息表格数据
       employeeList: [],
+      // 角色：展示文案与后端存储值
+      roleOptions: [
+        { label: "秘书", value: "secretary" },
+        { label: "使用者", value: "participant" }
+      ],
       // 弹出层标题
       title: "",
       // 是否显示弹出层
@@ -228,7 +255,7 @@ export default {
           { required: true, message: "姓名不能为空", trigger: "blur" }
         ],
         role: [
-          { required: true, message: "角色不能为空", trigger: "blur" }
+          { required: true, message: "请选择角色", trigger: "change" }
         ],
       }
     }
@@ -237,6 +264,12 @@ export default {
     this.getList()
   },
   methods: {
+    /** 角色值转展示文案 */
+    roleLabel(val) {
+      if (val == null || val === "") return ""
+      const o = this.roleOptions.find(x => x.value === val)
+      return o ? o.label : val
+    },
     /** 查询员工信息列表 */
     getList() {
       this.loading = true

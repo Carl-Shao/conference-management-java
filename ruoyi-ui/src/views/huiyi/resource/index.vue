@@ -1,13 +1,21 @@
 <template>
   <div class="app-container">
     <el-form :model="queryParams" ref="queryForm" size="small" :inline="true" v-show="showSearch" label-width="68px">
-      <el-form-item label="会议 ID" prop="meetingId">
-        <el-input
+      <el-form-item label="会议" prop="meetingId">
+        <el-select
           v-model="queryParams.meetingId"
-          placeholder="请输入会议 ID"
+          placeholder="请选择会议"
           clearable
-          @keyup.enter.native="handleQuery"
-        />
+          filterable
+          style="width: 220px"
+        >
+          <el-option
+            v-for="item in meetingOptions"
+            :key="item.id"
+            :label="meetingOptionLabel(item)"
+            :value="item.id"
+          />
+        </el-select>
       </el-form-item>
       <el-form-item label="会议主题" prop="meetingTitle">
         <el-input
@@ -72,7 +80,11 @@
     <el-table v-loading="loading" :data="resourceList" @selection-change="handleSelectionChange">
       <el-table-column type="selection" width="55" align="center" />
       <el-table-column label="资源 ID" align="center" prop="id" />
-      <el-table-column label="会议 ID" align="center" prop="meetingId" />
+      <el-table-column label="会议" align="center" prop="meetingId" min-width="160" show-overflow-tooltip>
+        <template slot-scope="scope">
+          <span>{{ meetingLabelById(scope.row.meetingId) }}</span>
+        </template>
+      </el-table-column>
       <el-table-column label="会议主题" align="center" prop="meetingTitle" />
       <el-table-column label="完整会议转录" align="center" prop="fullTranscript" />
       <el-table-column label="会议概要内容" align="center" prop="summaryContent" />
@@ -108,8 +120,21 @@
     <!-- 添加或修改会议资源（完整转录、会议概要、录音）对话框 -->
     <el-dialog :title="title" :visible.sync="open" width="500px" append-to-body>
       <el-form ref="form" :model="form" :rules="rules" label-width="80px">
-        <el-form-item label="会议 ID" prop="meetingId">
-          <el-input v-model="form.meetingId" placeholder="请输入会议 ID" />
+        <el-form-item label="会议" prop="meetingId">
+          <el-select
+            v-model="form.meetingId"
+            placeholder="请选择会议"
+            filterable
+            style="width: 100%"
+            @change="onFormMeetingChange"
+          >
+            <el-option
+              v-for="item in meetingOptions"
+              :key="item.id"
+              :label="meetingOptionLabel(item)"
+              :value="item.id"
+            />
+          </el-select>
         </el-form-item>
         <el-form-item label="会议主题" prop="meetingTitle">
           <el-input v-model="form.meetingTitle" placeholder="请输入会议主题" />
@@ -134,6 +159,7 @@
 
 <script>
 import { listResource, getResource, delResource, addResource, updateResource } from "@/api/huiyi/resource"
+import { listMeeting } from "@/api/huiyi/meeting"
 
 export default {
   name: "Resource",
@@ -153,6 +179,8 @@ export default {
       total: 0,
       // 会议资源（完整转录、会议概要、录音）表格数据
       resourceList: [],
+      // 会议下拉（接口加载）
+      meetingOptions: [],
       // 弹出层标题
       title: "",
       // 是否显示弹出层
@@ -172,15 +200,42 @@ export default {
       // 表单校验
       rules: {
         meetingId: [
-          { required: true, message: "会议 ID不能为空", trigger: "blur" }
+          { required: true, message: "请选择会议", trigger: "change" }
         ],
       }
     }
   },
   created() {
+    this.loadMeetingOptions()
     this.getList()
   },
   methods: {
+    /** 会议下拉 */
+    loadMeetingOptions() {
+      listMeeting({ pageNum: 1, pageSize: 1000 }).then(res => {
+        this.meetingOptions = res.rows || []
+      })
+    },
+    meetingOptionLabel(m) {
+      const t = (m && m.title) || ""
+      return m && m.id != null ? `${t}（ID: ${m.id}）` : t || ""
+    },
+    meetingLabelById(meetingId) {
+      if (meetingId == null || meetingId === "") return ""
+      const list = this.meetingOptions || []
+      const m = list.find(x => String(x.id) === String(meetingId))
+      return m ? this.meetingOptionLabel(m) : meetingId
+    },
+    /** 弹窗中选择会议后同步会议主题 */
+    onFormMeetingChange(meetingId) {
+      if (meetingId == null || meetingId === "") {
+        return
+      }
+      const m = (this.meetingOptions || []).find(x => String(x.id) === String(meetingId))
+      if (m && m.title != null) {
+        this.form.meetingTitle = m.title
+      }
+    },
     /** 查询会议资源（完整转录、会议概要、录音）列表 */
     getList() {
       this.loading = true

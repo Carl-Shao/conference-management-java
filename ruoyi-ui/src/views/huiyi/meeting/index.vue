@@ -9,13 +9,21 @@
           @keyup.enter.native="handleQuery"
         />
       </el-form-item>
-      <el-form-item label="会议室 ID" prop="roomId">
-        <el-input
+      <el-form-item label="会议室" prop="roomId">
+        <el-select
           v-model="queryParams.roomId"
-          placeholder="请输入会议室 ID"
+          placeholder="请选择会议室"
           clearable
-          @keyup.enter.native="handleQuery"
-        />
+          filterable
+          style="width: 200px"
+        >
+          <el-option
+            v-for="item in roomOptions"
+            :key="item.id"
+            :label="roomOptionLabel(item)"
+            :value="item.id"
+          />
+        </el-select>
       </el-form-item>
       <el-form-item label="会议日期" prop="meetingDate">
         <el-date-picker clearable
@@ -39,13 +47,37 @@
           placeholder="请选择结束时间">
         </el-time-picker>
       </el-form-item>
-      <el-form-item label="组织者工号" prop="organizerNo">
-        <el-input
+      <el-form-item label="组织者" prop="organizerNo">
+        <el-select
           v-model="queryParams.organizerNo"
-          placeholder="请输入组织者工号"
+          placeholder="请选择组织者"
           clearable
-          @keyup.enter.native="handleQuery"
-        />
+          filterable
+          style="width: 200px"
+        >
+          <el-option
+            v-for="item in employeeOptions"
+            :key="item.id"
+            :label="employeeOptionLabel(item)"
+            :value="item.employeeNo"
+          />
+        </el-select>
+      </el-form-item>
+      <el-form-item label="参会人员" prop="participantNos">
+        <el-select
+          v-model="queryParams.participantNos"
+          placeholder="请选择参会人员（筛选包含该工号的会议）"
+          clearable
+          filterable
+          style="width: 260px"
+        >
+          <el-option
+            v-for="item in employeeOptions"
+            :key="'q-p-' + item.id"
+            :label="employeeOptionLabel(item)"
+            :value="item.employeeNo"
+          />
+        </el-select>
       </el-form-item>
       <el-form-item>
         <el-button type="primary" icon="el-icon-search" size="mini" @click="handleQuery">搜索</el-button>
@@ -103,7 +135,11 @@
       <el-table-column type="selection" width="55" align="center" />
       <el-table-column label="会议 ID" align="center" prop="id" />
       <el-table-column label="会议主题" align="center" prop="title" />
-      <el-table-column label="会议室 ID" align="center" prop="roomId" />
+      <el-table-column label="会议室" align="center" prop="roomId" min-width="140">
+        <template slot-scope="scope">
+          <span>{{ roomLabelById(scope.row.roomId) }}</span>
+        </template>
+      </el-table-column>
       <el-table-column label="会议日期" align="center" prop="meetingDate" width="180">
         <template slot-scope="scope">
           <span>{{ parseTime(scope.row.meetingDate, '{y}-{m}-{d}') }}</span>
@@ -119,8 +155,16 @@
           <span>{{ scope.row.endTime }}</span>
         </template>
       </el-table-column>
-      <el-table-column label="组织者工号" align="center" prop="organizerNo" />
-      <el-table-column label="参会人员工号数组" align="center" prop="participantNos" />
+      <el-table-column label="组织者" align="center" prop="organizerNo" min-width="120">
+        <template slot-scope="scope">
+          <span>{{ employeeLabelByNo(scope.row.organizerNo) }}</span>
+        </template>
+      </el-table-column>
+      <el-table-column label="参会人员" align="center" prop="participantNos" min-width="200" show-overflow-tooltip>
+        <template slot-scope="scope">
+          <span>{{ formatParticipantNos(scope.row.participantNos) }}</span>
+        </template>
+      </el-table-column>
       <el-table-column label="会议描述" align="center" prop="description" />
       <el-table-column label="会议状态" align="center" prop="status" />
       <el-table-column label="操作" align="center" class-name="small-padding fixed-width">
@@ -142,7 +186,7 @@
         </template>
       </el-table-column>
     </el-table>
-    
+
     <pagination
       v-show="total>0"
       :total="total"
@@ -157,8 +201,20 @@
         <el-form-item label="会议主题" prop="title">
           <el-input v-model="form.title" placeholder="请输入会议主题" />
         </el-form-item>
-        <el-form-item label="会议室 ID" prop="roomId">
-          <el-input v-model="form.roomId" placeholder="请输入会议室 ID" />
+        <el-form-item label="会议室" prop="roomId">
+          <el-select
+            v-model="form.roomId"
+            placeholder="请选择会议室"
+            filterable
+            style="width: 100%"
+          >
+            <el-option
+              v-for="item in roomOptions"
+              :key="item.id"
+              :label="roomOptionLabel(item)"
+              :value="item.id"
+            />
+          </el-select>
         </el-form-item>
         <el-form-item label="会议日期" prop="meetingDate">
           <el-date-picker clearable
@@ -182,15 +238,37 @@
             placeholder="请选择结束时间">
           </el-time-picker>
         </el-form-item>
-        <el-form-item label="组织者工号" prop="organizerNo">
-          <el-input v-model="form.organizerNo" placeholder="请输入组织者工号" />
+        <el-form-item label="组织者" prop="organizerNo">
+          <el-select
+            v-model="form.organizerNo"
+            placeholder="请选择组织者"
+            filterable
+            style="width: 100%"
+          >
+            <el-option
+              v-for="item in employeeOptions"
+              :key="item.id"
+              :label="employeeOptionLabel(item)"
+              :value="item.employeeNo"
+            />
+          </el-select>
         </el-form-item>
-        <el-form-item label="参会人员工号" prop="participantNos">
-          <el-input 
-            v-model="form.participantNos" 
-            type="textarea" 
-            :rows="3"
-            placeholder="请输入参会人员工号，多个用工号逗号分隔，例如：E001,E002,E003" />
+        <el-form-item label="参会人员" prop="participantNoList">
+          <el-select
+            v-model="form.participantNoList"
+            multiple
+            collapse-tags
+            placeholder="请选择参会人员（可多选）"
+            filterable
+            style="width: 100%"
+          >
+            <el-option
+              v-for="item in employeeOptions"
+              :key="'f-p-' + item.id"
+              :label="employeeOptionLabel(item)"
+              :value="item.employeeNo"
+            />
+          </el-select>
         </el-form-item>
         <el-form-item label="会议描述" prop="description">
           <el-input v-model="form.description" type="textarea" placeholder="请输入内容" />
@@ -206,6 +284,8 @@
 
 <script>
 import { listMeeting, getMeeting, delMeeting, addMeeting, updateMeeting } from "@/api/huiyi/meeting"
+import { listRoom } from "@/api/huiyi/room"
+import { listEmployee } from "@/api/huiyi/employee"
 
 export default {
   name: "Meeting",
@@ -225,6 +305,9 @@ export default {
       total: 0,
       // 会议信息表格数据
       meetingList: [],
+      // 会议室、员工下拉（须初始化为数组，避免首屏渲染时 undefined）
+      roomOptions: [],
+      employeeOptions: [],
       // 弹出层标题
       title: "",
       // 是否显示弹出层
@@ -251,7 +334,7 @@ export default {
           { required: true, message: "会议主题不能为空", trigger: "blur" }
         ],
         roomId: [
-          { required: true, message: "会议室 ID不能为空", trigger: "blur" }
+          { required: true, message: "请选择会议室", trigger: "change" }
         ],
         meetingDate: [
           { required: true, message: "会议日期不能为空", trigger: "blur" }
@@ -263,15 +346,75 @@ export default {
           { required: true, message: "结束时间不能为空", trigger: "blur" }
         ],
         organizerNo: [
-          { required: true, message: "组织者工号不能为空", trigger: "blur" }
+          { required: true, message: "请选择组织者", trigger: "change" }
+        ],
+        participantNoList: [
+          {
+            validator: (rule, value, callback) => {
+              if (!value || !value.length) {
+                callback(new Error("请至少选择一名参会人员"))
+              } else {
+                callback()
+              }
+            },
+            trigger: "change"
+          }
         ],
       }
     }
   },
   created() {
+    this.loadRoomOptions()
+    this.loadEmployeeOptions()
     this.getList()
   },
   methods: {
+    /** 会议室下拉 */
+    loadRoomOptions() {
+      listRoom({ pageNum: 1, pageSize: 1000 }).then(res => {
+        this.roomOptions = res.rows || []
+      })
+    },
+    /** 员工下拉 */
+    loadEmployeeOptions() {
+      listEmployee({ pageNum: 1, pageSize: 1000 }).then(res => {
+        this.employeeOptions = res.rows || []
+      })
+    },
+    roomOptionLabel(room) {
+      const name = room.roomName || ""
+      return room.id != null ? `${name}（ID: ${room.id}）` : name
+    },
+    employeeOptionLabel(emp) {
+      const name = emp.employeeName || ""
+      const no = emp.employeeNo || ""
+      return no ? `${name}（${no}）` : name
+    },
+    roomLabelById(roomId) {
+      if (roomId == null || roomId === "") return ""
+      const rooms = this.roomOptions || []
+      const r = rooms.find(x => String(x.id) === String(roomId))
+      return r ? this.roomOptionLabel(r) : roomId
+    },
+    employeeLabelByNo(employeeNo) {
+      if (employeeNo == null || employeeNo === "") return ""
+      const emps = this.employeeOptions || []
+      const e = emps.find(x => x.employeeNo === employeeNo)
+      return e ? this.employeeOptionLabel(e) : employeeNo
+    },
+    formatParticipantNos(val) {
+      if (val == null || val === "") return ""
+      if (typeof val === "string" && val.trim().startsWith("[")) {
+        try {
+          const arr = JSON.parse(val)
+          if (!Array.isArray(arr)) return val
+          return arr.map(no => this.employeeLabelByNo(no)).join("，")
+        } catch (e) {
+          return val
+        }
+      }
+      return val
+    },
     /** 查询会议信息列表 */
     getList() {
       this.loading = true
@@ -297,6 +440,7 @@ export default {
         endTime: null,
         organizerNo: null,
         participantNos: null,
+        participantNoList: [],
         description: null,
         status: null,
         createTime: null,
@@ -331,14 +475,28 @@ export default {
       this.reset()
       const id = row.id || this.ids
       getMeeting(id).then(response => {
-        this.form = response.data
-        // 将 JSON 数组转换为逗号分隔的字符串，方便编辑
-        if (this.form.participantNos && this.form.participantNos.startsWith('[')) {
-          try {
-            const nos = JSON.parse(this.form.participantNos)
-            this.form.participantNos = nos.join(',')
-          } catch (e) {
-            // 如果不是有效的 JSON，保持原样
+        const data = response.data || {}
+        this.form = { ...data }
+        // 多选绑定 participantNoList，与后端 participantNos（JSON 字符串或数组）同步
+        this.form.participantNoList = []
+        const pn = data.participantNos
+        if (pn != null && pn !== "") {
+          if (Array.isArray(pn)) {
+            this.form.participantNoList = pn.map(x => String(x).trim()).filter(Boolean)
+          } else if (typeof pn === "string") {
+            const s = pn.trim()
+            if (s.startsWith("[")) {
+              try {
+                const nos = JSON.parse(s)
+                this.form.participantNoList = Array.isArray(nos)
+                  ? nos.map(x => String(x).trim()).filter(Boolean)
+                  : []
+              } catch (e) {
+                this.form.participantNoList = []
+              }
+            } else {
+              this.form.participantNoList = s.split(/[,，]/).map(x => x.trim()).filter(Boolean)
+            }
           }
         }
         this.open = true
@@ -349,29 +507,20 @@ export default {
     submitForm() {
       this.$refs["form"].validate(valid => {
         if (valid) {
-          // 处理参会人员工号数组，将逗号分隔的字符串转为 JSON 数组
-          if (this.form.participantNos && this.form.participantNos.trim()) {
-            // 支持中文逗号和英文逗号分割，去除空格和空项
-            const nos = this.form.participantNos
-              .split(/[,,]/)  // 支持中英文逗号
-              .map(s => s.trim())  // 去除每项的空格
-              .filter(s => s.length > 0);  // 过滤空项
-            
-            // 确保生成的 JSON 数组格式正确
-            this.form.participantNos = JSON.stringify(nos);
-            
-            console.log('转换前的输入:', this.form.participantNos);
-            console.log('转换后的 JSON:', this.form.participantNos);
-          }
-          
+          const nos = (this.form.participantNoList || []).filter(s => s && String(s).trim())
+          this.form.participantNos = nos.length ? JSON.stringify(nos) : null
+
+          const payload = { ...this.form }
+          delete payload.participantNoList
+
           if (this.form.id != null) {
-            updateMeeting(this.form).then(response => {
+            updateMeeting(payload).then(response => {
               this.$modal.msgSuccess("修改成功")
               this.open = false
               this.getList()
             })
           } else {
-            addMeeting(this.form).then(response => {
+            addMeeting(payload).then(response => {
               this.$modal.msgSuccess("新增成功")
               this.open = false
               this.getList()
