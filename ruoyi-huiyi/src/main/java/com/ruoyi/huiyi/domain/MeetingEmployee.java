@@ -46,8 +46,19 @@ public class MeetingEmployee extends BaseEntity
     @Excel(name = "电话号码")
     private String phone;
 
-    /** 角色（secretary:秘书，participant:参与者） */
-    @Excel(name = "角色", readConverterExp = "s=ecretary:秘书，participant:参与者")
+    /** 角色（manager:管理员，participants:普通员工） */
+    @Excel(name = "角色", readConverterExp = "manager:管理员，participants:普通员工")
     private String role;
+
+    /** 关联的系统用户ID */
+    private Long userId;
+
+    public Long getUserId() {
+        return userId;
+    }
+
+    public void setUserId(Long userId) {
+        this.userId = userId;
+    }
 
 }

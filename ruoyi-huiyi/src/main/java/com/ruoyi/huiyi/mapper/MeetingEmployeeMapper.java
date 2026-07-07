@@ -21,11 +21,19 @@ public interface MeetingEmployeeMapper
 
     /**
      * 查询员工信息列表
-     * 
+     *
      * @param meetingEmployee 员工信息
      * @return 员工信息集合
      */
     public List<MeetingEmployee> selectMeetingEmployeeList(MeetingEmployee meetingEmployee);
+
+    /**
+     * 根据工号检查员工是否唯一
+     *
+     * @param employeeNo 员工工号
+     * @return 员工信息，如果不存在则返回null
+     */
+    public MeetingEmployee checkEmployeeNoUnique(String employeeNo);
 
     /**
      * 新增员工信息

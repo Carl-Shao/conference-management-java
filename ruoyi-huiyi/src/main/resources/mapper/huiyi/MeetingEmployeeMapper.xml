@@ -15,10 +15,11 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         <result property="role"    column="role"    />
         <result property="createTime"    column="create_time"    />
         <result property="updateTime"    column="update_time"    />
+        <result property="userId"    column="user_id"    />
     </resultMap>
 
     <sql id="selectMeetingEmployeeVo">
-        select id, employee_no, employee_name, department, position, email, phone, role, create_time, update_time from meeting_employee
+        select id, employee_no, employee_name, department, position, email, phone, role, create_time, update_time, user_id from meeting_employee
     </sql>
 
     <select id="selectMeetingEmployeeList" parameterType="MeetingEmployee" resultMap="MeetingEmployeeResult">
@@ -39,6 +40,11 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         where id = #{id}
     </select>
 
+    <select id="checkEmployeeNoUnique" parameterType="String" resultMap="MeetingEmployeeResult">
+        <include refid="selectMeetingEmployeeVo"/>
+        where employee_no = #{employeeNo}
+    </select>
+
     <insert id="insertMeetingEmployee" parameterType="MeetingEmployee" useGeneratedKeys="true" keyProperty="id">
         insert into meeting_employee
         <trim prefix="(" suffix=")" suffixOverrides=",">
@@ -51,6 +57,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             <if test="role != null and role != ''">role,</if>
             <if test="createTime != null">create_time,</if>
             <if test="updateTime != null">update_time,</if>
+            <if test="userId != null">user_id,</if>
          </trim>
         <trim prefix="values (" suffix=")" suffixOverrides=",">
             <if test="employeeNo != null and employeeNo != ''">#{employeeNo},</if>
@@ -62,6 +69,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             <if test="role != null and role != ''">#{role},</if>
             <if test="createTime != null">#{createTime},</if>
             <if test="updateTime != null">#{updateTime},</if>
+            <if test="userId != null">#{userId},</if>
          </trim>
     </insert>
 
@@ -77,6 +85,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             <if test="role != null and role != ''">role = #{role},</if>
             <if test="createTime != null">create_time = #{createTime},</if>
             <if test="updateTime != null">update_time = #{updateTime},</if>
+            <if test="userId != null">user_id = #{userId},</if>
         </trim>
         where id = #{id}
     </update>
