@@ -1,4 +1,4 @@
-<template>
+<!-- <template>
   <el-breadcrumb class="app-breadcrumb" separator="/">
     <transition-group name="breadcrumb">
       <el-breadcrumb-item v-for="(item, index) in levelList" :key="item.path">
@@ -99,4 +99,4 @@ export default {
     cursor: text;
   }
 }
-</style>
+</style> -->
