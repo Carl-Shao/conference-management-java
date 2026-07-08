@@ -330,16 +330,37 @@ public class SysUserServiceImpl implements ISysUserService
         return userMapper.updateUserStatus(user.getUserId(), user.getStatus());
     }
 
+    @Override
+    public int updateUserProfile(SysUser user) {
+        return 0;
+    }
+
+    @Override
+    public int updateUserBaseInfo(SysUser user) {
+        return 0;
+    }
+
     /**
-     * 修改用户基本信息
-     * 
+     * 修改用户基本信息（可选择性更新角色）
+     *
      * @param user 用户信息
      * @return 结果
      */
-    @Override
-    public int updateUserProfile(SysUser user)
+    @Transactional
+    public int updateUserWithRoles(SysUser user)
     {
-        return userMapper.updateUser(user);
+        Long userId = user.getUserId();
+        int result = userMapper.updateUserBaseInfo(user);
+
+        // 如果提供了角色信息，则更新角色关联
+        if (StringUtils.isNotEmpty(user.getRoleIds()))
+        {
+            // 删除用户与角色关联
+            userRoleMapper.deleteUserRoleByUserId(userId);
+            // 新增用户与角色管理
+            insertUserRole(user);
+        }
+        return result;
     }
 
     /**

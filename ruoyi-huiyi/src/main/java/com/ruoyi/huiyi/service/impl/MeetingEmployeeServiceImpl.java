@@ -165,7 +165,16 @@ public class MeetingEmployeeServiceImpl implements IMeetingEmployeeService
                 sysUser.setEmail(meetingEmployee.getEmail());
                 sysUser.setPhonenumber(meetingEmployee.getPhone());
 
-                sysUserService.updateUser(sysUser);
+                // 根据员工角色确定要设置的角色ID
+                Long[] roleIds = determineRoleIdsForEmployee(meetingEmployee.getRole());
+                if (roleIds != null && roleIds.length > 0) {
+                    // 同时更新基本信息和角色
+                    sysUser.setRoleIds(roleIds);
+                    sysUserService.updateUserWithRoles(sysUser);
+                } else {
+                    // 只更新基本信息，不改变角色
+                    sysUserService.updateUserBaseInfo(sysUser);
+                }
             }
         }
 

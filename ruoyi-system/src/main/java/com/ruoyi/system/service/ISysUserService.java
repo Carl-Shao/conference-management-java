@@ -153,6 +153,16 @@ public interface ISysUserService
      */
     public int updateUserProfile(SysUser user);
 
+    int updateUserBaseInfo(SysUser user);
+
+    /**
+     * 修改用户基本信息和角色（可选择性更新角色）
+     *
+     * @param user 用户信息
+     * @return 结果
+     */
+    int updateUserWithRoles(SysUser user);
+
     /**
      * 修改用户头像
      * 
