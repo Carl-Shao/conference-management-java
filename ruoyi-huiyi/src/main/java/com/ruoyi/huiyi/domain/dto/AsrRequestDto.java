@@ -6,28 +6,16 @@ package com.ruoyi.huiyi.domain.dto;
 public class AsrRequestDto {
 
     /**
-     * RTSP流地址
+     * audio directory path
      */
-    private String rtspUrl;
+    private String audioPath;
+
+    private String audioFormat;
 
     /**
-     * 房间ID
+     * get audio path
      */
-    private String roomId;
+    public String getAudioPath() {return audioPath;}
 
-    public String getRtspUrl() {
-        return rtspUrl;
-    }
-
-    public void setRtspUrl(String rtspUrl) {
-        this.rtspUrl = rtspUrl;
-    }
-
-    public String getRoomId() {
-        return roomId;
-    }
-
-    public void setRoomId(String roomId) {
-        this.roomId = roomId;
-    }
+    public String getAudioFormat() {return audioFormat;}
 }

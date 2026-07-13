@@ -1,6 +1,19 @@
 # AI服务配置
-ai:
-  services:
-    # AI服务API地址
-    api:
-      url: http://localhost:5000
+huiyi:
+  storage:
+    audio-path: /home/shao/conference-management-java/audio
+    transcript-path: /home/shao/conference-management-java/transcript
+
+  upload:
+    max-size: 1024MB
+    allowed-type:
+      - mp3
+      - wav
+
+  asr:
+    api-url:
+    timeout:
+
+  llm:
+    api-url:
+    model: qwen
