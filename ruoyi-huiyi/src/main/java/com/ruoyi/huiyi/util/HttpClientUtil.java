@@ -121,15 +121,19 @@ public class HttpClientUtil {
      * @param file          待上传文件
      * @param extraParams   除文件外的其它表单参数
      */
-    public static String doPostFile(String url, String fileFieldName, File file,
+    public static String doPostFile(String url, String fileFieldName, String filePath,
                                     Map<String, String> extraParams) throws IOException {
-        return doPostFile(url, fileFieldName, file, extraParams, null, CONNECT_TIMEOUT, SOCKET_TIMEOUT);
+        return doPostFile(url, fileFieldName, filePath, extraParams, null, CONNECT_TIMEOUT, SOCKET_TIMEOUT);
     }
 
-    public static String doPostFile(String url, String fileFieldName, File file,
+    public static String doPostFile(String url, String fileFieldName, String filePath,
                                     Map<String, String> extraParams,
                                     Map<String, String> headers,
                                     int connectTimeout, int socketTimeout) throws IOException {
+        File file = new File(filePath);
+        if (!file.exists()) {
+            throw new IOException("文件不存在: " + filePath);
+        }
         HttpPost httpPost = new HttpPost(url);
         httpPost.setConfig(buildRequestConfig(connectTimeout, socketTimeout));
 

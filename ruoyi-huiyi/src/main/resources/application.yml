@@ -11,9 +11,38 @@ huiyi:
       - wav
 
   asr:
-    api-url:
-    timeout:
+    api-url: http://127.0.0.1:8899/asr/recognize
+    connect-timeout: 5000
+    socket-timeout: 60000
 
   llm:
-    api-url:
+    api-url: http
     model: qwen
+    connect-timeout: 5000
+    socket-timeout: 60000
+
+  rabbitmq:
+    asr:
+          exchange: huiyi.asr.exchange
+          queue: huiyi.asr.queue
+          routing-key: huiyi.asr.routing.key
+          concurrency: 2        # 同时处理几个音频文件，对应你ASR服务能扛住的并发数
+          max-concurrency: 4
+    minutes:
+          exchange: huiyi.minutes.exchange
+          queue: huiyi.minutes.queue
+          routing-key: huiyi.minutes.routing.key
+          concurrency: 2
+          max-concurrency: 4
+spring:
+  rabbitmq:
+    host: 127.0.0.1
+    port: 5672
+    username: shaoqi
+    password: Shaoqi2006
+    listener:
+      simple:
+        acknowledge-mode: manual   # 手动ack，处理失败不丢消息
+        retry:
+          enabled: true
+          max-attempts: 3
