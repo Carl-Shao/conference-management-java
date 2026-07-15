@@ -118,7 +118,7 @@ public class HttpClientUtil {
     // POST Multipart
     /**
      * @param fileFieldName 文件对应的表单字段名
-     * @param file          待上传文件
+     * @param filePath      待上传文件
      * @param extraParams   除文件外的其它表单参数
      */
     public static String doPostFile(String url, String fileFieldName, String filePath,
@@ -157,13 +157,13 @@ public class HttpClientUtil {
                 .build();
     }
 
-    private static void addHeaders(HttpRequestBase request, Map<String, String> headers) {
+    private static void addHeaders(org.apache.http.client.methods.HttpRequestBase request, Map<String, String> headers) {
         if(headers != null) {
             headers.forEach(request::setHeader);
         }
     }
 
-    private static String execute(HttpRequestBase request) throws IOException{
+    private static String execute(org.apache.http.client.methods.HttpUriRequest request) throws IOException{
         try (CloseableHttpResponse response = HTTP_CLIENT.execute(request)) {
             HttpEntity entity = response.getEntity();
             String result = entity != null ? EntityUtils.toString(entity, StandardCharsets.UTF_8) : null;

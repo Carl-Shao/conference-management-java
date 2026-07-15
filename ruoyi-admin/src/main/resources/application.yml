@@ -91,6 +91,17 @@ spring:
           max-active: 8
           # #连接池最大阻塞等待时间（使用负值表示没有限制）
           max-wait: -1ms
+  rabbitmq:
+    host: 127.0.0.1
+    port: 5672
+    username: shaoqi
+    password: Shaoqi2006
+    listener:
+      simple:
+        acknowledge-mode: manual   # 手动ack，处理失败不丢消息
+        retry:
+          enabled: true
+          max-attempts: 3
 
 # token配置
 token:
@@ -147,8 +158,37 @@ xss:
   urlPatterns: /system/*,/monitor/*,/tool/*
 
 # AI服务配置
-ai:
-  services:
-    # AI服务API地址
-    api:
-      url: http://localhost:5001
+huiyi:
+  storage:
+    audio-path: /home/shao/conference-management-java/audio
+    transcript-path: /home/shao/conference-management-java/transcript
+
+  upload:
+    max-size: 1024MB
+    allowed-type: mp3,wav
+
+  asr:
+    api-url: http://127.0.0.1:8899/v1/audio/transcriptions
+    connect-timeout: 5000
+    socket-timeout: 60000
+
+  llm:
+    api-url: http://127.0.0.1:11434/api/generate
+    model: qwen2.5:7b
+    connect-timeout: 5000
+    socket-timeout: 60000
+
+  rabbitmq:
+    asr:
+      exchange: huiyi.asr.exchange
+      queue: huiyi.asr.queue
+      routing-key: huiyi.asr.routing.key
+      concurrency: 2        # 同时处理几个音频文件，对应你ASR服务能扛住的并发数
+      max-concurrency: 4
+    minutes:
+      exchange: huiyi.minutes.exchange
+      queue: huiyi.minutes.queue
+      routing-key: huiyi.minutes.routing.key
+      concurrency: 2
+      max-concurrency: 4
+

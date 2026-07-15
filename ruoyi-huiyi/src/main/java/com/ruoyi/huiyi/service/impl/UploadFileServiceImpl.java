@@ -19,7 +19,7 @@ public class UploadFileServiceImpl implements IUploadFileService {
     @Value("${huiyi.storage.audio-path}")
     private String audioPath;
 
-    @Value("${huiyi.storage.allowed-type}")
+    @Value("${huiyi.upload.allowed-type}")
     private List<String> allowedType;
 
     @Override
