@@ -68,7 +68,7 @@ public class UploadFileServiceImpl implements IUploadFileService {
         try{
             file.transferTo(targetFile);
         }catch (IOException e){
-            throw new RuntimeException("文件保存失败");
+            throw new RuntimeException("文件保存失败", e);
         }
         return path;
     }

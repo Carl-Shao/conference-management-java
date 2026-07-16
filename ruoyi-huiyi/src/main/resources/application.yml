@@ -1,8 +1,8 @@
 # AI服务配置
 huiyi:
   storage:
-    audio-path: /home/shao/conference-management-java/audio
-    transcript-path: /home/shao/conference-management-java/transcript
+    audio-path: /home/shao/project/conference-management-java/audio
+    transcript-path: /home/shao/project/conference-management-java/transcript
 
   upload:
     max-size: 1024MB

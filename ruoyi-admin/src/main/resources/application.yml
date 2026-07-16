@@ -57,9 +57,9 @@ spring:
   servlet:
     multipart:
       # 单个文件大小
-      max-file-size: 10MB
+      max-file-size: 1024MB
       # 设置总上传的文件大小
-      max-request-size: 20MB
+      max-request-size: 2048MB
   jackson:
     time-zone: GMT+8
     date-format: yyyy-MM-dd HH:mm:ss
@@ -160,8 +160,8 @@ xss:
 # AI服务配置
 huiyi:
   storage:
-    audio-path: /home/shao/conference-management-java/audio
-    transcript-path: /home/shao/conference-management-java/transcript
+    audio-path: /home/shao/project/conference-management-java/audio
+    transcript-path: /home/shao/project/conference-management-java/transcript
 
   upload:
     max-size: 1024MB
