@@ -1,0 +1,171 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.meeting.mapper.BookRoomMapper">
+
+    <resultMap type="com.ruoyi.meeting.domain.RoomBooking" id="RoomBookingResult">
+        <id     property="bookingId"    column="booking_id"    />
+        <result property="bookNo"       column="book_no"       />
+        <result property="empNo"        column="emp_no"        />
+        <result property="userId"       column="user_id"       />
+        <result property="roomId"       column="room_id"       />
+        <result property="roomName"     column="room_name"     />
+        <result property="bookDate"     column="book_date"     />
+        <result property="startTime"    column="start_time"    />
+        <result property="endTime"      column="end_time"      />
+        <result property="meetingId"    column="meeting_id"    />
+        <result property="bookStatus"   column="book_status"   />
+        <result property="bookPurpose"  column="book_purpose"  />
+        <result property="cancelReason" column="cancel_reason" />
+        <result property="version"      column="version"       />
+        <result property="createBy"     column="create_by"     />
+        <result property="createTime"   column="create_time"   />
+        <result property="updateBy"     column="update_by"     />
+        <result property="updateTime"   column="update_time"   />
+        <result property="remark"       column="remark"        />
+    </resultMap>
+
+    <sql id="selectRoomBookingVo">
+        SELECT b.booking_id, b.book_no, b.emp_no, b.user_id, b.room_id, r.room_name,
+        b.book_date, b.start_time, b.end_time, b.meeting_id, b.book_status,
+        b.book_purpose, b.cancel_reason, b.version,
+        b.create_by, b.create_time, b.update_by, b.update_time, b.remark
+        FROM room_booking b
+        LEFT JOIN meeting_room r ON r.room_id = b.room_id
+    </sql>
+
+    <select id="selectBookRoomBookingById" parameterType="Long" resultMap="RoomBookingResult">
+        <include refid="selectRoomBookingVo"/>
+        WHERE b.booking_id = #{bookingId}
+    </select>
+
+    <!-- 行级悲观锁：仅锁 room_booking 本身这一行，用于取消/修改时防止并发操作同一条预约 -->
+    <select id="selectBookRoomBookingByIdForUpdate" parameterType="Long" resultMap="RoomBookingResult">
+        SELECT booking_id, book_no, emp_no, user_id, room_id, book_date, start_time, end_time,
+        meeting_id, book_status, book_purpose, cancel_reason, version,
+        create_by, create_time, update_by, update_time, remark
+        FROM room_booking
+        WHERE booking_id = #{bookingId}
+        FOR UPDATE
+    </select>
+
+    <select id="selectBookRoomBookingList" parameterType="com.ruoyi.meeting.domain.RoomBooking" resultMap="RoomBookingResult">
+        <include refid="selectRoomBookingVo"/>
+        <where>
+            <if test="empNo != null and empNo != ''">
+                AND b.emp_no = #{empNo}
+            </if>
+            <if test="roomId != null">
+                AND b.room_id = #{roomId}
+            </if>
+            <if test="bookDate != null">
+                AND b.book_date = #{bookDate}
+            </if>
+            <if test="bookStatus != null and bookStatus != ''">
+                AND b.book_status = #{bookStatus}
+            </if>
+            <if test="params.beginBookDate != null and params.endBookDate != null">
+                AND b.book_date BETWEEN #{params.beginBookDate} AND #{params.endBookDate}
+            </if>
+        </where>
+        ORDER BY b.book_date DESC, b.start_time DESC
+    </select>
+
+    <select id="selectActiveBookingsByRoomAndDate" resultMap="RoomBookingResult">
+        SELECT booking_id, book_no, emp_no, user_id, room_id, book_date, start_time, end_time,
+        meeting_id, book_status, book_purpose, cancel_reason, version,
+        create_by, create_time, update_by, update_time, remark
+        FROM room_booking
+        WHERE room_id = #{roomId}
+        AND book_date = #{bookDate}
+        AND book_status IN ('0', '1')
+        ORDER BY start_time
+    </select>
+
+    <select id="selectActiveBookingsByRoomAndDateExcludeId" resultMap="RoomBookingResult">
+        SELECT booking_id, book_no, emp_no, user_id, room_id, book_date, start_time, end_time,
+        meeting_id, book_status, book_purpose, cancel_reason, version,
+        create_by, create_time, update_by, update_time, remark
+        FROM room_booking
+        WHERE room_id = #{roomId}
+        AND book_date = #{bookDate}
+        AND book_status IN ('0', '1')
+        AND booking_id != #{excludeBookingId}
+        ORDER BY start_time
+    </select>
+
+    <insert id="insertBookRoomBooking" parameterType="com.ruoyi.meeting.domain.RoomBooking" useGeneratedKeys="true" keyProperty="bookingId">
+        INSERT INTO room_booking (
+        book_no, emp_no, user_id, room_id, book_date, start_time, end_time,
+        meeting_id, book_status, book_purpose, version,
+        create_by, create_time, remark
+        ) VALUES (
+        #{bookNo}, #{empNo}, #{userId}, #{roomId}, #{bookDate}, #{startTime}, #{endTime},
+        #{meetingId}, #{bookStatus}, #{bookPurpose}, 0,
+        #{createBy}, #{createTime}, #{remark}
+        )
+    </insert>
+
+    <!-- 修改时 version = version + 1，且 WHERE 条件带上旧 version，作为行锁之外的二次乐观锁防御 -->
+    <update id="updateBookRoomBooking" parameterType="com.ruoyi.meeting.domain.RoomBooking">
+        UPDATE room_booking
+        SET room_id      = #{roomId},
+        book_date    = #{bookDate},
+        start_time   = #{startTime},
+        end_time     = #{endTime},
+        book_purpose = #{bookPurpose},
+        book_status  = #{bookStatus},
+        version      = version + 1,
+        update_by    = #{updateBy},
+        update_time  = #{updateTime}
+        WHERE booking_id = #{bookingId}
+        AND version = #{version}
+    </update>
+
+    <update id="cancelBookRoomBooking">
+        UPDATE room_booking
+        SET book_status  = '2',
+        cancel_reason = #{cancelReason},
+        version      = version + 1,
+        update_by    = #{updateBy},
+        update_time  = NOW()
+        WHERE booking_id = #{bookingId}
+    </update>
+
+    <delete id="deleteBookRoomBookingByIds" parameterType="Long">
+        DELETE FROM room_booking WHERE booking_id IN
+        <foreach item="bookingId" collection="array" open="(" separator="," close=")">
+            #{bookingId}
+        </foreach>
+    </delete>
+
+    <select id="selectCurrentOccupyingBooking" resultMap="RoomBookingResult">
+        SELECT booking_id, book_no, emp_no, user_id, room_id, book_date, start_time, end_time,
+        meeting_id, book_status, book_purpose, cancel_reason, version,
+        create_by, create_time, update_by, update_time, remark
+        FROM room_booking
+        WHERE room_id = #{roomId}
+        AND book_date = #{bookDate}
+        AND book_status IN ('0', '1')
+        AND start_time &lt;= #{currentTime}
+        AND end_time &gt; #{currentTime}
+        LIMIT 1
+    </select>
+
+    <select id="selectCurrentOccupyingBookings" resultMap="RoomBookingResult">
+        SELECT booking_id, book_no, emp_no, user_id, room_id, book_date, start_time, end_time,
+        meeting_id, book_status, book_purpose, cancel_reason, version,
+        create_by, create_time, update_by, update_time, remark
+        FROM room_booking
+        WHERE book_date = #{bookDate}
+        AND book_status IN ('0', '1')
+        AND start_time &lt;= #{currentTime}
+        AND end_time &gt; #{currentTime}
+        AND room_id IN
+        <foreach item="roomId" collection="roomIds" open="(" separator="," close=")">
+            #{roomId}
+        </foreach>
+    </select>
+
+</mapper>

@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.meeting.mapper.RoomTimeSlotMapper">
+
+    <resultMap type="com.ruoyi.meeting.domain.RoomTimeSlot" id="RoomTimeSlotResult">
+        <id     property="slotId"     column="slot_id"     />
+        <result property="roomId"     column="room_id"     />
+        <result property="slotDate"   column="slot_date"   />
+        <result property="startTime"  column="start_time"  />
+        <result property="endTime"    column="end_time"    />
+        <result property="slotStatus" column="slot_status" />
+        <result property="createBy"   column="create_by"   />
+        <result property="createTime" column="create_time" />
+        <result property="updateBy"   column="update_by"   />
+        <result property="updateTime" column="update_time" />
+        <result property="remark"     column="remark"      />
+    </resultMap>
+
+    <select id="selectClosedSlotsByRoomAndDate" resultMap="RoomTimeSlotResult">
+        SELECT slot_id, room_id, slot_date, start_time, end_time, slot_status,
+               create_by, create_time, update_by, update_time, remark
+        FROM room_time_slot
+        WHERE room_id = #{roomId}
+          AND slot_date = #{slotDate}
+          AND slot_status = '1'
+        ORDER BY start_time
+    </select>
+
+    <insert id="insertRoomTimeSlot" parameterType="com.ruoyi.meeting.domain.RoomTimeSlot" useGeneratedKeys="true" keyProperty="slotId">
+        INSERT INTO room_time_slot (
+        room_id, slot_date, start_time, end_time, slot_status, create_by, create_time, remark
+        ) VALUES (
+        #{roomId}, #{slotDate}, #{startTime}, #{endTime}, #{slotStatus}, #{createBy}, #{createTime}, #{remark}
+        )
+    </insert>
+
+    <update id="updateRoomTimeSlot" parameterType="com.ruoyi.meeting.domain.RoomTimeSlot">
+        UPDATE room_time_slot
+        <set>
+            <if test="startTime != null">start_time = #{startTime},</if>
+            <if test="endTime != null">end_time = #{endTime},</if>
+            <if test="slotStatus != null">slot_status = #{slotStatus},</if>
+            <if test="updateBy != null">update_by = #{updateBy},</if>
+            update_time = NOW()
+        </set>
+        WHERE slot_id = #{slotId}
+    </update>
+
+    <delete id="deleteRoomTimeSlotById" parameterType="Long">
+        DELETE FROM room_time_slot WHERE slot_id = #{slotId}
+    </delete>
+
+</mapper>
