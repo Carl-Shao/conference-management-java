@@ -20,6 +20,12 @@ public interface MeetingRoomMapper
     public MeetingRoom selectMeetingRoomById(Long id);
 
     /**
+     * 加行锁查询预约详情，用于"取消"、"修改"等需要防止并发操作同一条预约的场景。
+     * 对应 SQL: SELECT * FROM room_booking WHERE booking_id = #{bookingId} FOR UPDATE
+     */
+    public MeetingRoom selectMeetingRoomByIdForUpdate(Long id);
+
+    /**
      * 查询会议室信息列表
      * 
      * @param meetingRoom 会议室信息
