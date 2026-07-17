@@ -37,7 +37,7 @@ public class BookRoomController extends BaseController {
     /**
      * 查询预约列表（分页）
      */
-    @PreAuthorize("@ss.hasPermi('meeting:bookRoom:list')")
+    @PreAuthorize("@ss.hasPermi('huiyi:bookRoom:list')")
     @GetMapping("/list")
     public TableDataInfo list(RoomBooking query) {
         startPage();
@@ -59,7 +59,7 @@ public class BookRoomController extends BaseController {
     /**
      * 获取预约详情
      */
-    @PreAuthorize("@ss.hasPermi('meeting:bookRoom:query')")
+    @PreAuthorize("@ss.hasPermi('huiyi:bookRoom:query')")
     @GetMapping("/{bookingId}")
     public AjaxResult getInfo(@PathVariable("bookingId") Long bookingId) {
         return success(bookMeetingRoomService.selectBookingById(bookingId));
@@ -96,7 +96,7 @@ public class BookRoomController extends BaseController {
     /**
      * 提交会议室预约
      */
-    @PreAuthorize("@ss.hasPermi('meeting:bookRoom:add')")
+    @PreAuthorize("@ss.hasPermi('huiyi:bookRoom:add')")
     @Log(title = "会议室预约", businessType = BusinessType.INSERT)
     @PostMapping
     public AjaxResult add(@Valid @RequestBody BookingCreateDTO dto) {
@@ -107,7 +107,7 @@ public class BookRoomController extends BaseController {
     /**
      * 修改会议室预约（改期/改时间段/改事由）
      */
-    @PreAuthorize("@ss.hasPermi('meeitng:bookRoom:edit')")
+    @PreAuthorize("@ss.hasPermi('huiyi:bookRoom:edit')")
     @Log(title = "会议室预约", businessType = BusinessType.UPDATE)
     @PutMapping
     public AjaxResult edit(@Valid @RequestBody BookingUpdateDTO dto) {
@@ -118,7 +118,7 @@ public class BookRoomController extends BaseController {
     /**
      * 取消会议室预约
      */
-    @PreAuthorize("@ss.hasPermi('meeting:bookRoom:cancel')")
+    @PreAuthorize("@ss.hasPermi('huiyi:bookRoom:cancel')")
     @Log(title = "会议室预约", businessType = BusinessType.UPDATE)
     @PutMapping("/cancel/{bookingId}")
     public AjaxResult cancel(@PathVariable("bookingId") Long bookingId,
