@@ -17,7 +17,7 @@ import com.ruoyi.huiyi.domain.vo.TimeRangeVO;
 import com.ruoyi.huiyi.mapper.BookRoomMapper;
 import com.ruoyi.huiyi.mapper.MeetingRoomMapper;
 import com.ruoyi.huiyi.mapper.RoomTimeSlotMapper;
-import com.ruoyi.huiyi.service.IBookMeetingRoom;
+import com.ruoyi.huiyi.service.IBookMeetingRoomService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Isolation;
@@ -32,8 +32,6 @@ import java.util.Date;
 import java.util.List;
 import java.util.concurrent.ThreadLocalRandom;
 
-import static javax.xml.bind.DatatypeConverter.parseTime;
-
 /**
  * 会议室预约业务层处理
  *
@@ -41,7 +39,7 @@ import static javax.xml.bind.DatatypeConverter.parseTime;
  * @date 2026-07-16
  */
 @Service
-public class BookMeetingRoomImpl implements IBookMeetingRoom {
+public class BookMeetingRoomServiceImpl implements IBookMeetingRoomService {
 
     private static final DateTimeFormatter TIME_FMT = DateTimeFormatter.ofPattern("HH:mm[:ss]");
     private static final DateTimeFormatter TIME_OUT_FMT = DateTimeFormatter.ofPattern("HH:mm");
@@ -56,12 +54,12 @@ public class BookMeetingRoomImpl implements IBookMeetingRoom {
     private RoomTimeSlotMapper roomTimeSlotMapper;
 
     @Override
-    public RoomBooking selectRoomInfo(Long bookingId) {
+    public RoomBooking selectBookingById(Long bookingId) {
         return bookRoomMapper.selectBookRoomBookingById(bookingId);
     }
 
     @Override
-    public List<RoomBooking> bookMeetingRome(RoomBooking query) {
+    public List<RoomBooking> selectBookingList(RoomBooking query) {
         return bookRoomMapper.selectBookRoomBookingList(query);
     }
 

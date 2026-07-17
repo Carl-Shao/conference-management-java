@@ -15,7 +15,7 @@ import java.util.List;
  * @author ruoyi
  * @date 2026-07-16
  */
-public interface IBookMeetingRoom {
+public interface IBookMeetingRoomService {
 
     /**
      * 查询会议室预约信息
@@ -23,7 +23,7 @@ public interface IBookMeetingRoom {
      * @param bookingId       会议室信息主键
      * @return                返回结果
      */
-    RoomBooking selectRoomInfo(Long bookingId);
+    RoomBooking selectBookingById(Long bookingId);
 
     /**
      * 条件查询预约列表
@@ -31,7 +31,7 @@ public interface IBookMeetingRoom {
      * @param query
      * @return                返回结果
      */
-    List<RoomBooking> bookMeetingRome(RoomBooking query);
+    List<RoomBooking> selectBookingList(RoomBooking query);
 
     /**
      * 查询会议室某天空闲时间
