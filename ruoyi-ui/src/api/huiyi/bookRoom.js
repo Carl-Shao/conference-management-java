@@ -1,4 +1,5 @@
 import request from '@/utils/request'
+import qs from 'qs'
 
 // 查询会议室预约列表
 export function listBookRoom(query) {
@@ -85,11 +86,17 @@ export function getCurrentStatus(roomId) {
 
 // 批量获取多个会议室当前状态
 export function getCurrentStatusList(roomIds) {
+  console.log("发送会议室id:", roomIds)
   return request({
     url: '/huiyi/bookRoom/currentStatus/list',
     method: 'get',
     params: {
       roomIds: roomIds
+    },
+    paramsSerializer(params) {
+      return qs.stringify(params, {
+        arrayFormat: 'repeat'
+      })
     }
   })
 }

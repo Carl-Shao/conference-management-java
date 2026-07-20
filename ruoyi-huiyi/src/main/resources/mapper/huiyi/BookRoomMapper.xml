@@ -2,9 +2,9 @@
 <!DOCTYPE mapper
 PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
-<mapper namespace="com.ruoyi.meeting.mapper.BookRoomMapper">
+<mapper namespace="com.ruoyi.huiyi.mapper.BookRoomMapper">
 
-    <resultMap type="com.ruoyi.meeting.domain.RoomBooking" id="RoomBookingResult">
+    <resultMap type="com.ruoyi.huiyi.domain.RoomBooking" id="RoomBookingResult">
         <id     property="bookingId"    column="booking_id"    />
         <result property="bookNo"       column="book_no"       />
         <result property="empNo"        column="emp_no"        />
@@ -32,7 +32,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         b.book_purpose, b.cancel_reason, b.version,
         b.create_by, b.create_time, b.update_by, b.update_time, b.remark
         FROM room_booking b
-        LEFT JOIN meeting_room r ON r.room_id = b.room_id
+        LEFT JOIN meeting_room r ON r.id = b.room_id
     </sql>
 
     <select id="selectBookRoomBookingById" parameterType="Long" resultMap="RoomBookingResult">
@@ -50,7 +50,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         FOR UPDATE
     </select>
 
-    <select id="selectBookRoomBookingList" parameterType="com.ruoyi.meeting.domain.RoomBooking" resultMap="RoomBookingResult">
+    <select id="selectBookRoomBookingList" parameterType="com.ruoyi.huiyi.domain.RoomBooking" resultMap="RoomBookingResult">
         <include refid="selectRoomBookingVo"/>
         <where>
             <if test="empNo != null and empNo != ''">
@@ -95,7 +95,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         ORDER BY start_time
     </select>
 
-    <insert id="insertBookRoomBooking" parameterType="com.ruoyi.meeting.domain.RoomBooking" useGeneratedKeys="true" keyProperty="bookingId">
+    <insert id="insertBookRoomBooking" parameterType="com.ruoyi.huiyi.domain.RoomBooking" useGeneratedKeys="true" keyProperty="bookingId">
         INSERT INTO room_booking (
         book_no, emp_no, user_id, room_id, book_date, start_time, end_time,
         meeting_id, book_status, book_purpose, version,
@@ -108,7 +108,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
     </insert>
 
     <!-- 修改时 version = version + 1，且 WHERE 条件带上旧 version，作为行锁之外的二次乐观锁防御 -->
-    <update id="updateBookRoomBooking" parameterType="com.ruoyi.meeting.domain.RoomBooking">
+    <update id="updateBookRoomBooking" parameterType="com.ruoyi.huiyi.domain.RoomBooking">
         UPDATE room_booking
         SET room_id      = #{roomId},
         book_date    = #{bookDate},

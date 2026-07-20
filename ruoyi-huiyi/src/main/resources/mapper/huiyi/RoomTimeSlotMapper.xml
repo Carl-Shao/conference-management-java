@@ -2,9 +2,9 @@
 <!DOCTYPE mapper
 PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
-<mapper namespace="com.ruoyi.meeting.mapper.RoomTimeSlotMapper">
+<mapper namespace="com.ruoyi.huiyi.mapper.RoomTimeSlotMapper">
 
-    <resultMap type="com.ruoyi.meeting.domain.RoomTimeSlot" id="RoomTimeSlotResult">
+    <resultMap type="com.ruoyi.huiyi.domain.RoomTimeSlot" id="RoomTimeSlotResult">
         <id     property="slotId"     column="slot_id"     />
         <result property="roomId"     column="room_id"     />
         <result property="slotDate"   column="slot_date"   />
@@ -18,7 +18,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         <result property="remark"     column="remark"      />
     </resultMap>
 
-    <select id="selectClosedSlotsByRoomAndDate" resultMap="RoomTimeSlotResult">
+    <select id="selectClosedSlotsByRoomsAndDate" resultMap="RoomTimeSlotResult">
         SELECT slot_id, room_id, slot_date, start_time, end_time, slot_status,
                create_by, create_time, update_by, update_time, remark
         FROM room_time_slot
@@ -28,7 +28,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         ORDER BY start_time
     </select>
 
-    <insert id="insertRoomTimeSlot" parameterType="com.ruoyi.meeting.domain.RoomTimeSlot" useGeneratedKeys="true" keyProperty="slotId">
+    <insert id="insertRoomTimeSlot" parameterType="com.ruoyi.huiyi.domain.RoomTimeSlot" useGeneratedKeys="true" keyProperty="slotId">
         INSERT INTO room_time_slot (
         room_id, slot_date, start_time, end_time, slot_status, create_by, create_time, remark
         ) VALUES (
@@ -36,7 +36,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         )
     </insert>
 
-    <update id="updateRoomTimeSlot" parameterType="com.ruoyi.meeting.domain.RoomTimeSlot">
+    <update id="updateRoomTimeSlot" parameterType="com.ruoyi.huiyi.domain.RoomTimeSlot">
         UPDATE room_time_slot
         <set>
             <if test="startTime != null">start_time = #{startTime},</if>
