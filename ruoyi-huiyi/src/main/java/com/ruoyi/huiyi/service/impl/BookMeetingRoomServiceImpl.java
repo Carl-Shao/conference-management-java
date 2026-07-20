@@ -24,7 +24,9 @@ import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
 import java.time.LocalTime;
+import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -85,7 +87,13 @@ public class BookMeetingRoomServiceImpl implements IBookMeetingRoomService {
             occupied.add(new TimeRangeVO(parseTime(b.getStartTime()), parseTime(b.getEndTime())));
         }
 
-        TimeRangeVO wholeDay = new TimeRangeVO(LocalTime.MIN, LocalTime.of(23,59,59));
+        LocalDate today = LocalDate.now();
+        LocalTime startTime = LocalTime.MIN;
+        if (bookDate.toInstant().atZone(ZoneId.systemDefault()).toLocalDate().equals(today)) {
+            startTime = LocalTime.now().withNano(0);
+        }
+
+        TimeRangeVO wholeDay = new TimeRangeVO(startTime, LocalTime.of(23,59,59));
         vo.setFreeRanges(subtractOccupied(wholeDay, occupied));
         return vo;
     }
@@ -115,7 +123,7 @@ public class BookMeetingRoomServiceImpl implements IBookMeetingRoomService {
         if (roomIds == null || roomIds.isEmpty()) {
             return Collections.emptyList();
         }
-        Date today = DateUtils.getNowDate();
+        LocalDate today = LocalDate.now();
         String now = LocalTime.now().withNano(0).toString();
 
         List<RoomBooking> occupyingList = bookRoomMapper.selectCurrentOccupyingBookings(roomIds, today, now);
@@ -269,11 +277,18 @@ public class BookMeetingRoomServiceImpl implements IBookMeetingRoomService {
                 }
 
                 if (occupied.getStartTime().isAfter(free.getStartTime())) {
-                    next.add(new TimeRangeVO(free.getStartTime(), occupied.getStartTime()));
-                }
+                    TimeRangeVO left = new TimeRangeVO(free.getStartTime(), occupied.getStartTime());
 
-                if (occupied.getEndTime().isAfter(free.getEndTime())) {
-                    next.add(new TimeRangeVO(free.getEndTime(), occupied.getEndTime()));
+                    if(left.getStartTime().isBefore(left.getEndTime())) {
+                        next.add(left);
+                    }
+                }
+                if (occupied.getEndTime().isBefore(free.getEndTime())) {
+                    TimeRangeVO right = new TimeRangeVO(occupied.getEndTime(), free.getEndTime());
+
+                    if(right.getStartTime().isBefore(right.getEndTime())) {
+                        next.add(right);
+                    }
                 }
             }
             result = next;
@@ -282,7 +297,7 @@ public class BookMeetingRoomServiceImpl implements IBookMeetingRoomService {
     }
 
     private boolean isRoomUsable(MeetingRoom room) {
-        return room.getStatus() == null || "0".equals(room.getStatus());
+        return "ACTIVE".equals(room.getStatus());
     }
 
     /**

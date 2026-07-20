@@ -77,7 +77,7 @@ public class HttpClientUtil {
 
     /**
      *通用的POST请求方法(发送JSON数据)
-     * * @Param url
+     * @Param url
      * @Param jsonParams 转换为JSON字符串的参数
      * @return 接口返回的相应字符串
      **/

@@ -3,6 +3,7 @@ package com.ruoyi.huiyi.mapper;
 import com.ruoyi.huiyi.domain.RoomBooking;
 import org.apache.ibatis.annotations.Param;
 
+import java.time.LocalDate;
 import java.util.Date;
 import java.util.List;
 
@@ -80,6 +81,6 @@ public interface BookRoomMapper {
      * 避免对每个会议室单独查一次数据库（N+1 问题）。
      */
     List<RoomBooking> selectCurrentOccupyingBookings(@Param("roomIds") List<Long> roomIds,
-                                                     @Param("bookDate") Date bookDate,
+                                                     @Param("bookDate") LocalDate bookDate,
                                                      @Param("currentTime") String currentTime);
 }

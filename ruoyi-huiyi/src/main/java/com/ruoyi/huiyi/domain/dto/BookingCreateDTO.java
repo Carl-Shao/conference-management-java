@@ -1,5 +1,6 @@
 package com.ruoyi.huiyi.domain.dto;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import org.springframework.format.annotation.DateTimeFormat;
@@ -19,7 +20,7 @@ public class BookingCreateDTO {
 
     // 预约日期
     @NotNull(message = "预约日期不能为空")
-    @DateTimeFormat(pattern = "yyyy_mm_dd")
+    @JsonFormat(pattern = "yyyy-MM-dd")
     private Date bookDate;
 
     // 开始时间

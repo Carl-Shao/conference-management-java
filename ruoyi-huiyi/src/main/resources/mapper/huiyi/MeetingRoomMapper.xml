@@ -39,6 +39,12 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         where id = #{id}
     </select>
 
+    <select id="selectMeetingRoomByIdForUpdate" parameterType="Long" resultMap="MeetingRoomResult">
+        <include refid="selectMeetingRoomVo"/>
+        where id = #{id}
+        FOR UPDATE
+    </select>
+
     <insert id="insertMeetingRoom" parameterType="MeetingRoom" useGeneratedKeys="true" keyProperty="id">
         insert into meeting_room
         <trim prefix="(" suffix=")" suffixOverrides=",">
