@@ -95,7 +95,7 @@
 
           <!-- 时间轴显示预约情况 -->
           <div class="time-axis">
-            <div class="time-label">08:00</div>
+            <div class="time-label">00:00</div>
             <div class="time-line">
               <div
                 v-for="booking in getRoomBookings(room.id)"
@@ -111,7 +111,7 @@
                 </div>
               </div>
             </div>
-            <div class="time-label">22:00</div>
+            <div class="time-label">24:00</div>
           </div>
 
           <!-- 操作按钮 -->
@@ -126,7 +126,7 @@
             </el-button>
             <el-button
               size="mini"
-              type="info"
+              :type="room.currentStatus === 'occupied' ? 'primary' : 'info'"
               @click.stop="viewRoomDetails(room)"
             >
               详情
@@ -229,9 +229,9 @@
           <el-time-select
             v-model="bookingForm.startTime"
             :picker-options="{
-              start: '08:00',
+              start: '00:00',
               step: '00:15',
-              end: '22:00'
+              end: '24:00'
             }"
             placeholder="请选择开始时间"
             style="width: 49%;"
@@ -245,9 +245,9 @@
           <el-time-select
             v-model="bookingForm.endTime"
             :picker-options="{
-              start: '08:00',
+              start: '00:00',
               step: '00:15',
-              end: '22:00',
+              end: '24:00',
               minTime: bookingForm.startTime
             }"
             placeholder="请选择结束时间"
@@ -380,7 +380,10 @@ export default {
     /** 加载会议室列表 */
     loadRooms() {
       return listRoom({}).then(response => {
-        this.roomList = response.rows || [];
+        this.roomList = (response.rows || []).map(room => ({
+          ...room,
+          currentStatus:'unknown'
+        }));
         this.filteredRooms = [...this.roomList];
       });
     },
@@ -419,26 +422,70 @@ export default {
       // 批量获取会议室状态
       const roomIds = this.filteredRooms.map(room => room.id);
       if (roomIds.length > 0) {
+        console.log('发送的房间ID:', roomIds); // 调试信息
         getCurrentStatusList(roomIds).then(response => {
-          const statusMap = {};
+          console.log('接收到的状态数据:', response.data); // 调试信息
+
+          // 创建房间ID到状态的映射，使用更严格的相等比较
+          const statusMap = new Map();
           response.data.forEach(status => {
-            statusMap[status.roomId] = status;
+            statusMap.set(status.roomId, status); // 保持原始类型进行比较
           });
+
+          console.log('构建的状态映射:', Object.fromEntries(statusMap)); // 调试信息
 
           // 更新会议室状态
           this.filteredRooms.forEach(room => {
-            const statusInfo = statusMap[room.id];
+            // 尝试多种匹配方式
+            let statusInfo = null;
+
+            // 方式1: 直接匹配（保持原始类型）
+            if (statusMap.has(room.id)) {
+              statusInfo = statusMap.get(room.id);
+            }
+            // 方式2: 数字-字符串转换匹配
+            else if (typeof room.id === 'number' && statusMap.has(String(room.id))) {
+              statusInfo = statusMap.get(String(room.id));
+            }
+            // 方式3: 字符串-数字转换匹配
+            else if (typeof room.id === 'string' && statusMap.has(Number(room.id))) {
+              statusInfo = statusMap.get(Number(room.id));
+            }
+            // 方式4: 遍历查找匹配
+            else {
+              for (let [key, value] of statusMap) {
+                if (String(key) === String(room.id)) {
+                  statusInfo = value;
+                  break;
+                }
+              }
+            }
+
             if (statusInfo) {
+              console.log(`房间ID ${room.id} 匹配到状态: `, statusInfo);
               // 如果数据库中的状态不是ACTIVE，则保持为维护状态
               if (room.status !== 'ACTIVE') {
                 room.currentStatus = 'maintaining';
               } else {
                 // 否则根据实时占用情况设置
-                room.currentStatus = statusInfo.isOccupied ? 'occupied' : 'available';
+                room.currentStatus = statusInfo.occupied ? 'occupied' : 'available';
               }
             } else {
+              console.log(`未找到房间ID为 ${room.id} 的状态信息，房间ID类型: ${typeof room.id}`);
               room.currentStatus = 'unknown';
             }
+          });
+
+          console.log('更新后的房间状态:', this.filteredRooms.map(r => ({
+            id: r.id,
+            status: r.currentStatus,
+            occupied: r.currentStatus === 'occupied'
+          }))); // 调试信息
+        }).catch(error => {
+          console.error('获取会议室状态失败:', error);
+          // 出错时设置所有房间为unknown状态
+          this.filteredRooms.forEach(room => {
+            room.currentStatus = 'unknown';
           });
         });
       }
@@ -479,15 +526,15 @@ export default {
 
     /** 计算预订时间槽样式 */
     getBookingStyle(booking) {
-      // 将时间转换为相对于08:00的位置百分比
+      // 将时间转换为相对于00:00的位置百分比（24小时制）
       const startHour = parseInt(booking.startTime.split(':')[0]);
       const startMinute = parseInt(booking.startTime.split(':')[1]);
       const endHour = parseInt(booking.endTime.split(':')[0]);
       const endMinute = parseInt(booking.endTime.split(':')[1]);
 
-      const startMinutes = (startHour - 8) * 60 + startMinute;
-      const endMinutes = (endHour - 8) * 60 + endMinute;
-      const totalSlotMinutes = 14 * 60; // 从8点到22点共14小时
+      const startMinutes = startHour * 60 + startMinute;
+      const endMinutes = endHour * 60 + endMinute;
+      const totalSlotMinutes = 24 * 60; // 从0点到24点共24小时
 
       const top = (startMinutes / totalSlotMinutes) * 100;
       const height = ((endMinutes - startMinutes) / totalSlotMinutes) * 100;
@@ -540,8 +587,20 @@ export default {
 
     /** 查看会议室详情 */
     viewRoomDetails(room) {
-      // 跳转到会议室详情页面或显示详情对话框
-      this.$router.push(`/huiyi/room/${room.id}`);
+      // 获取该会议室在当前选定日期的预约信息
+      const roomBookings = this.getRoomBookings(room.id);
+      if (roomBookings && roomBookings.length > 0) {
+        // 如果有预约记录，则显示第一个预约的详情
+        const firstBooking = roomBookings[0];
+        getBookRoom(firstBooking.bookingId).then(response => {
+          this.currentBooking = response.data;
+          this.detailDialogTitle = "预约详情";
+          this.detailDialogVisible = true;
+        });
+      } else {
+        // 如果当天没有预约，显示提示信息
+        this.$modal.msgInfo(`会议室 ${room.roomName} 在 ${this.selectedDate} 当天暂无预约`);
+      }
     },
 
     /** 预订项点击事件 */
