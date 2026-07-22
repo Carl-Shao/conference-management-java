@@ -9,13 +9,13 @@ huiyi:
     allowed-type: mp3,wav
 
   asr:
-    api-url: http://127.0.0.1:8899/v1/audio/transcriptions
+    api-url: http://192.168.2.195:8000/v1/audio/transcriptions
     connect-timeout: 5000
     socket-timeout: 60000
 
   llm:
-    api-url: http://127.0.0.1:11434/api/generate
-    model: qwen2.5:7b
+    api-url: http://192.168.2.195:8081/v1/chat/completions
+    model: gemma4
     connect-timeout: 5000
     socket-timeout: 60000
 
