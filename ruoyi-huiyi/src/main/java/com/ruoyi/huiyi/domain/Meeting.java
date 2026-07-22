@@ -60,4 +60,24 @@ public class Meeting extends BaseEntity
     /** 会议状态（scheduled:预定，active:进行中，completed:已结束，cancelled:已取消） */
     @Excel(name = "会议状态", readConverterExp = "s=cheduled:预定，active:进行中，completed:已结束，cancelled:已取消")
     private String status;
+
+    /** 录制状态 */
+    @Excel(name = "录制状态", readConverterExp = "0=未开始,1=录制中,2=已暂停,3=结束待处理,4=离线处理中,5=已完成,6=异常终止")
+    private int recordStatus;
+
+    /** 音频路径 */
+    @Excel(name = "最终合并音频路径")
+    private String audioFilePath;
+
+    /** 开始录制时间 */
+    @Excel(name = "录制开始时间", width = 30, dateFormat = "HH:mm:ss")
+    private Date recordStartTime;
+
+    /** 结束录制时间 */
+    @Excel(name = "结束录制时间", width = 30, dateFormat = "HH:mm:ss")
+    private Date recordEndTime;
+
+    /** 总共录制时间 */
+    @Excel(name = "累计有效录制时长")
+    private Long recordDurationMs;
 }
