@@ -25,4 +25,13 @@ public enum MeetingRecordStatus {
     public String getDesc() {
         return desc;
     }
+
+    public static MeetingRecordStatus of(int code) {
+        for (MeetingRecordStatus s : values()) {
+            if(s.code == code) {
+                return s;
+            }
+        }
+        throw new IllegalArgumentException("非法的录制状态码: " + code);
+    }
 }

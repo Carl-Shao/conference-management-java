@@ -2,6 +2,7 @@ package com.ruoyi.huiyi.mq.listener;
 
 import com.rabbitmq.client.Channel;
 import com.ruoyi.huiyi.config.RabbitMqConfig;
+import com.ruoyi.huiyi.domain.Meeting;
 import com.ruoyi.huiyi.mq.message.MinutesTaskMessage;
 import com.ruoyi.huiyi.service.IMeetingLlmService;
 import org.springframework.amqp.core.Message;

@@ -207,13 +207,13 @@ public class RecordingSession {
     /** 切片结果载体 */
     public static class ChunkResult {
         public final int seqNo;
-        public final byte[] pcmByte;
+        public final byte[] pcmBytes;
         public final long startOffsetMs;
         public final long endOffsetMs;
 
-        public ChunkResult(int seqNo, byte[] pcmByte, long startOffsetMs, long endOffsetMs) {
+        public ChunkResult(int seqNo, byte[] pcmBytes, long startOffsetMs, long endOffsetMs) {
             this.seqNo = seqNo;
-            this.pcmByte = pcmByte;
+            this.pcmBytes = pcmBytes;
             this.startOffsetMs = startOffsetMs;
             this.endOffsetMs = endOffsetMs;
         }

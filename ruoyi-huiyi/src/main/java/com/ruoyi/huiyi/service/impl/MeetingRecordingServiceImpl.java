@@ -7,35 +7,59 @@ import com.ruoyi.huiyi.domain.vo.MeetingRecordStatusVO;
 import com.ruoyi.huiyi.domain.vo.MeetingRecordVO;
 import com.ruoyi.huiyi.mapper.MeetingMapper;
 import com.ruoyi.huiyi.service.IMeetingRecordingService;
+import com.ruoyi.huiyi.websocket.MeetingSessionManager;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
+import java.io.IOException;
 import java.util.Date;
 
 @Service
 public class MeetingRecordingServiceImpl implements IMeetingRecordingService {
 
-    @Autowired
-    private final MeetingMapper meetingMapper;
+    private static final Logger log = LoggerFactory.getLogger(MeetingRecordingServiceImpl.class);
 
-    public MeetingRecordingServiceImpl(MeetingMapper meetingMapper) {
-        this.meetingMapper = meetingMapper;
-    }
+    private static final String WS_PATH_TEMPLATE = "/ws/huiyi/record/%d";
+
+    @Autowired
+    private MeetingMapper meetingMapper;
+
+    @Autowired
+    private MeetingSessionManager sessionManager;
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public MeetingRecordVO startRecord(Long meetingId) {
         Meeting meeting = meetingMapper.selectMeetingById(meetingId);
         if (meeting == null) {
             throw new ServiceException("会议不存在" + meetingId);
         }
-        if (meeting.getRecordStatus() != MeetingRecordStatus.NOT_STARTED.getCode()) {
-            throw new ServiceException("会议状态不允许开始录制，当前状态: " + meeting.getStatus());
+        MeetingRecordStatus current = MeetingRecordStatus.of(meeting.getRecordStatus());
+        if (current != MeetingRecordStatus.NOT_STARTED && current != MeetingRecordStatus.FAILED) {
+            throw new IllegalStateException("会议[" + meetingId + "]当前状态[" + current.getDesc() + "]不允许开始录制");
         }
 
+        try {
+            sessionManager.startSession(meetingId);
+        } catch (IOException e) {
+            log.error("会议[{}]创建录音文件失败", meetingId, e);
+            throw new RuntimeException("创建录音文件失败: " + e.getMessage(), e);
+        }
 
-        meeting.setRecordStatus((int) MeetingRecordStatus.RECORDING.getCode());
-        meeting.setRecordStartTime(new Date());
-        meetingMapper.updateMeeting(meeting);
+        Date now = new Date();
+        Meeting update = new Meeting();
+        update.setId(meetingId);
+        update.setRecordStatus(MeetingRecordStatus.RECORDING.getCode());
+        update.setRecordStartTime(now);
+        meetingMapper.updateRecordStatus(update);
+
+        insertEvent(meetingId, RecordEventType.START, operator, null);
+
+        return new MeetingRecordVO(meetingId, MeetingRecordStatus.RECORDING.getCode(),
+                String.format(WS_PATH_TEMPLATE, meetingId));
     }
 
     @Override
