@@ -1,11 +1,14 @@
 package com.ruoyi.huiyi.service;
 
+import com.ruoyi.huiyi.domain.vo.MeetingRecordStatusVO;
+import com.ruoyi.huiyi.domain.vo.MeetingRecordVO;
+
 public interface IMeetingRecordingService {
 
     /**
      * 开始录制
      */
-    void startRecord(Long meetingId);
+    MeetingRecordVO startRecord(Long meetingId);
 
     /**
      * 暂停录制
@@ -21,4 +24,9 @@ public interface IMeetingRecordingService {
      * 结束录制
      */
     void stopRecord(Long meetingId);
+
+    /**
+     * 查询当前录制状态
+     */
+    MeetingRecordStatusVO getRecordStatus (Long meetingId);
 }

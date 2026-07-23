@@ -3,12 +3,16 @@ package com.ruoyi.huiyi.service.impl;
 import com.ruoyi.common.exception.ServiceException;
 import com.ruoyi.huiyi.domain.Meeting;
 import com.ruoyi.huiyi.domain.enums.MeetingRecordStatus;
+import com.ruoyi.huiyi.domain.vo.MeetingRecordStatusVO;
+import com.ruoyi.huiyi.domain.vo.MeetingRecordVO;
 import com.ruoyi.huiyi.mapper.MeetingMapper;
 import com.ruoyi.huiyi.service.IMeetingRecordingService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
 
 import java.util.Date;
 
+@Service
 public class MeetingRecordingServiceImpl implements IMeetingRecordingService {
 
     @Autowired
@@ -19,7 +23,7 @@ public class MeetingRecordingServiceImpl implements IMeetingRecordingService {
     }
 
     @Override
-    public void startRecord(Long meetingId) {
+    public MeetingRecordVO startRecord(Long meetingId) {
         Meeting meeting = meetingMapper.selectMeetingById(meetingId);
         if (meeting == null) {
             throw new ServiceException("会议不存在" + meetingId);
@@ -67,6 +71,9 @@ public class MeetingRecordingServiceImpl implements IMeetingRecordingService {
         meeting.setRecordEndTime(new Date());
         meetingMapper.updateMeeting(meeting);
     }
+
+    @Override
+    public MeetingRecordStatusVO getRecordStatus(Long meetingId) {}
 
     private void checkStatus(Meeting meeting, MeetingRecordStatus expected) {
         if (meeting == null) {
