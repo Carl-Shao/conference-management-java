@@ -80,4 +80,12 @@ public class Meeting extends BaseEntity
     /** 总共录制时间 */
     @Excel(name = "累计有效录制时长")
     private Long recordDurationMs;
+
+    /** 全量转写文本 */
+    @Excel(name = "全量转写文本")
+    private String fullTranscript;
+
+    /** 大模型生成的会议纪要 */
+    @Excel(name = "会议纪要")
+    private String summeryText;
 }

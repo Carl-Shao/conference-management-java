@@ -46,6 +46,10 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         where id = #{id}
     </select>
 
+    <select id="selectMeetingForUpdate" parameterType="Long" resultMap="MeetingResult">
+        SELECT * FROM meeting WHERE id = #{meetingId} FOR UPDATE
+    </select>
+
     <insert id="insertMeeting" parameterType="Meeting" useGeneratedKeys="true" keyProperty="id">
         insert into meeting
         <trim prefix="(" suffix=")" suffixOverrides=",">
@@ -92,6 +96,26 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             <if test="updateTime != null">update_time = #{updateTime},</if>
         </trim>
         where id = #{id}
+    </update>
+
+    <update id="updateRecordStatus" parameterType="com.ruoyi.huiyi.domain.Meeting">
+        UPDATE meeting
+        <set>
+            record_status = #{recordStatus},
+            <if test="recordStartTime != null">record_start_time = #{recordStartTime},</if>
+            <if test="recordEndTime != null">record_end_time = #{recordEndTime},</if>
+            <if test="recordDurationMs != null">record_duration_ms = #{recordDurationMs},</if>
+            <if test="audioFilePath != null">audio_file_path = #{audioFilePath},</if>
+        </set>
+        WHERE id = #{id}
+    </update>
+
+    <update id="updateTranscriptAndSummary" parameterType="com.ruoyi.huiyi.domain.Meeting">
+        UPDATE meeting
+        SET full_transcript = #{fullTranscript},
+        summary_text    = #{summaryText},
+        record_status   = #{recordStatus}
+        WHERE id = #{id}
     </update>
 
     <delete id="deleteMeetingById" parameterType="Long">

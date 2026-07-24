@@ -32,6 +32,17 @@ huiyi:
           routing-key: huiyi.minutes.routing.key
           concurrency: 2
           max-concurrency: 4
+
+  record:
+    chunk-interval-seconds: 8      # 每8秒切一次片做实时转写
+    sample-rate: 16000              # 前端 AudioWorklet 采集参数需与此一致
+    channels: 1
+    bit-depth: 16
+    audio-base-path: /home/shao/project/conference-management-java/audio
+    asr-concurrency: 3               # 与ASR Docker容器实测可承受并发对齐
+    llm-concurrency: 2
+    finalize-wait-timeout-seconds: 60
+
 spring:
   rabbitmq:
     host: 127.0.0.1

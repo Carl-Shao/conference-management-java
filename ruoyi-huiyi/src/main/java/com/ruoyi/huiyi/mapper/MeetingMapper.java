@@ -59,4 +59,17 @@ public interface MeetingMapper extends BaseMapper<Meeting> {
      * @return 结果
      */
     public int deleteMeetingByIds(Long[] ids);
+
+    /**
+     * 悲观锁查询：开始/暂停/恢复/结束录制前都要先拿到这把行锁，
+     * 防止同一会议被并发重复触发状态迁移(例如前端手抖连点两次"开始")。
+     * 必须在 @Transactional 方法内调用。
+     */
+    public Meeting selectMeetingForUpdate(Long meetingId);
+
+    /** 更新录制状态及关联时间戳/时长字段 */
+    int updateRecordStatus(Meeting meeting);
+
+    /** 录制结束、全部转写完成后，回写全文转写与大模型生成的纪要 */
+    int updateTranscriptAndSummary(Meeting meeting);
 }

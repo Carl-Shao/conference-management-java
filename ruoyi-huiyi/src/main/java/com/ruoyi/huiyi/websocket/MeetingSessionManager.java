@@ -1,9 +1,11 @@
 package com.ruoyi.huiyi.websocket;
 
+import com.ruoyi.common.utils.uuid.UUID;
 import com.ruoyi.huiyi.config.MeetingRecordProperties;
 import com.ruoyi.huiyi.domain.MeetingTranscriptSegment;
 import com.ruoyi.huiyi.mapper.MeetingTranscriptSegmentMapper;
 import com.ruoyi.huiyi.service.impl.MeetingAsrServiceImpl;
+import com.ruoyi.huiyi.service.impl.MeetingFinalizeServiceImpl;
 import com.ruoyi.huiyi.util.WavUtils;
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
@@ -13,9 +15,14 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
 import org.springframework.stereotype.Component;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.springframework.web.socket.CloseStatus;
+import org.springframework.web.socket.WebSocketSession;
 
 import java.io.File;
 import java.io.IOException;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.*;
@@ -36,6 +43,9 @@ public class MeetingSessionManager {
 
     @Autowired
     private MeetingTranscriptSegmentMapper transcriptSegmentMapper;
+
+    @Autowired
+    private MeetingFinalizeServiceImpl finalizeService;
 
     /** 切片定时调度线程池(每个会议室共用即可，任务很轻量) */
     private ThreadPoolTaskScheduler flushScheduler;
@@ -97,6 +107,49 @@ public class MeetingSessionManager {
         return session;
     }
 
+    public void pauseSession(Long meetingId) {
+        RecordingSession session = requireSession(meetingId);
+        doFlushAndSubmitAsr(session);
+        session.pause();
+        log.info("会议[{}]录制已暂停", meetingId);
+    }
+
+    public void resumeSession(Long meetingId) {
+        RecordingSession session = requireSession(meetingId);
+        session.resume();
+        log.info("会议[{}]录制已恢复", meetingId);
+    }
+
+    public File stopSession(Long meetingId) {
+        RecordingSession session = requireSession(meetingId);
+        try {
+            doFlushAndSubmitAsr(session);
+            session.close();
+
+            ScheduledFuture<?> flushTask = session.getFlushTask();
+            if (flushTask != null) {
+                flushTask.cancel(false);
+            }
+
+            WebSocketSession wsSession = session.getWsSession();
+            if (wsSession != null && wsSession.isOpen()) {
+                try {
+                    wsSession.close(CloseStatus.NORMAL.withReason("meeting-record-stopped"));
+                } catch (IOException e) {
+                    log.warn("会议[{}]关闭WebSocket连接异常", meetingId, e);
+                }
+            }
+            File audioFile = session.getFullAudioFile();
+            log.info("会议[{}]录制已结束，完整录音文件: {}，等待{}个分片转写完成后生成纪要",
+                    meetingId, audioFile, session.getPendingAsrFutures().size());
+
+            dispatchFinalize(session);
+            return audioFile;
+        } finally {
+            sessions.remove(meetingId);
+        }
+    }
+
     /** 切片 + 提交异步ASR任务（在定时调度线程/REST线程里被同步调用，本身很快返回） */
     private void doFlushAndSubmitAsr(RecordingSession session){
         RecordingSession.ChunkResult chunk;
@@ -113,6 +166,26 @@ public class MeetingSessionManager {
         CompletableFuture<Void> future = CompletableFuture.runAsync(
                 () -> processChunk(session, chunk), asrExecutor);
         session.registerAsrFuture(future);
+    }
+
+    /** 异步等待该会议所有分片转写完成，然后触发纪要生成，全程不阻塞调用方 */
+    private void dispatchFinalize(RecordingSession session) {
+        Long meetingId = session.getMeetingId();
+        List<CompletableFuture<Void>> futures = session.getPendingAsrFutures();
+        CompletableFuture<Void> allDone = CompletableFuture.allOf(
+                futures.toArray(new CompletableFuture[0]));
+
+        finalizeDispatchExecutor.submit(() -> {
+            try {
+                allDone.get(properties.getFinalizeWaitTimeoutSeconds(), TimeUnit.SECONDS);
+            } catch (TimeoutException e) {
+                log.warn("会议[{}]等待分片转写完成超时({}s)，将基于当前已完成的分片生成纪要",
+                        meetingId, properties.getFinalizeWaitTimeoutSeconds());
+            } catch (Exception e) {
+                log.error("会议[{}]等待分片转写任务异常", meetingId, e);
+            }
+            finalizeService.finalizeMeeting(meetingId, session.getFullAudioFile());
+        });
     }
 
     /** 真正在 asrExecutor 线程池里执行的任务体：写chunk文件 -> 调ASR -> 落库 -> 推送前端 */
@@ -153,9 +226,14 @@ public class MeetingSessionManager {
     }
 
     private File buildAudioFile(Long meetingId) {
-        String dateDir = java.time.LocalDate.now().toString();
-        File dir = new File(properties.getAudioBasePath(), dateDir);
-        return new File(dir, "meeting_" + meetingId + "_full.wav");
+        File dir = new File(properties.getAudioBasePath());
+        if (!dir.exists()) {
+            dir.mkdirs();
+        }
+        String time = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss"));
+        String filename = time + "_" + UUID.randomUUID() + ".wav";
+
+        return new File(dir, filename);
     }
 
     private File buildChunkFile(Long meetingId, int seqNo) {
@@ -165,5 +243,13 @@ public class MeetingSessionManager {
             dir.mkdirs();
         }
         return new File(dir, "chunk_" + seqNo + ".wav");
+    }
+
+    private RecordingSession requireSession(Long meetingId) {
+        RecordingSession session = sessions.get(meetingId);
+        if(session == null) {
+            throw new IllegalStateException("会议[" + meetingId + "]不存在进行中的录制会话，请确认是否已开始录制");
+        }
+        return session;
     }
 }
