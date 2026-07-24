@@ -1,7 +1,6 @@
 package com.ruoyi.huiyi.controller;
 
 import com.ruoyi.common.utils.SecurityUtils;
-import com.ruoyi.huiyi.domain.Meeting;
 import com.ruoyi.huiyi.domain.vo.MeetingRecordStatusVO;
 import com.ruoyi.huiyi.domain.vo.MeetingRecordVO;
 import com.ruoyi.huiyi.service.IMeetingRecordingService;
