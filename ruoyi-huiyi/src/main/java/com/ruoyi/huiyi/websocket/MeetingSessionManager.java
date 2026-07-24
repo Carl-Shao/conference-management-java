@@ -2,20 +2,24 @@ package com.ruoyi.huiyi.websocket;
 
 import com.ruoyi.common.utils.uuid.UUID;
 import com.ruoyi.huiyi.config.MeetingRecordProperties;
+import com.ruoyi.huiyi.config.RabbitMqConfig;
 import com.ruoyi.huiyi.domain.MeetingTranscriptSegment;
+import com.ruoyi.huiyi.domain.dto.TranscriptPushDTO;
 import com.ruoyi.huiyi.mapper.MeetingTranscriptSegmentMapper;
+import com.ruoyi.huiyi.mq.message.MinutesTaskMessage;
 import com.ruoyi.huiyi.service.impl.MeetingAsrServiceImpl;
-import com.ruoyi.huiyi.service.impl.MeetingFinalizeServiceImpl;
 import com.ruoyi.huiyi.util.WavUtils;
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
 import org.springframework.stereotype.Component;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.web.socket.CloseStatus;
+import org.springframework.web.socket.TextMessage;
 import org.springframework.web.socket.WebSocketSession;
 
 import java.io.File;
@@ -26,6 +30,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.*;
+import java.util.stream.Collectors;
 
 @Component
 public class MeetingSessionManager {
@@ -45,7 +50,7 @@ public class MeetingSessionManager {
     private MeetingTranscriptSegmentMapper transcriptSegmentMapper;
 
     @Autowired
-    private MeetingFinalizeServiceImpl finalizeService;
+    private RabbitTemplate rabbitTemplate;
 
     /** 切片定时调度线程池(每个会议室共用即可，任务很轻量) */
     private ThreadPoolTaskScheduler flushScheduler;
@@ -143,7 +148,7 @@ public class MeetingSessionManager {
             log.info("会议[{}]录制已结束，完整录音文件: {}，等待{}个分片转写完成后生成纪要",
                     meetingId, audioFile, session.getPendingAsrFutures().size());
 
-            dispatchFinalize(session);
+            dispatchToMinutesQueue(session);
             return audioFile;
         } finally {
             sessions.remove(meetingId);
@@ -168,8 +173,12 @@ public class MeetingSessionManager {
         session.registerAsrFuture(future);
     }
 
-    /** 异步等待该会议所有分片转写完成，然后触发纪要生成，全程不阻塞调用方 */
-    private void dispatchFinalize(RecordingSession session) {
+    /**
+     * 等该会议所有分片转写完成(或超时) -> 按seqNo拼接全文 -> 直接发到你现有的
+     * "生成纪要"MQ队列(MINUTES_EXCHANGE)，taskId=meetingId。
+     * 完全不再经过ASR队列，因为文本在录制过程中就已经识别完了。
+     */
+    private void dispatchToMinutesQueue(RecordingSession session) {
         Long meetingId = session.getMeetingId();
         List<CompletableFuture<Void>> futures = session.getPendingAsrFutures();
         CompletableFuture<Void> allDone = CompletableFuture.allOf(
@@ -179,12 +188,30 @@ public class MeetingSessionManager {
             try {
                 allDone.get(properties.getFinalizeWaitTimeoutSeconds(), TimeUnit.SECONDS);
             } catch (TimeoutException e) {
-                log.warn("会议[{}]等待分片转写完成超时({}s)，将基于当前已完成的分片生成纪要",
+                log.warn("会议[{}]等待分片转写完成超时({}s)，将基于当前已完成的分片拼接全文",
                         meetingId, properties.getFinalizeWaitTimeoutSeconds());
             } catch (Exception e) {
                 log.error("会议[{}]等待分片转写任务异常", meetingId, e);
             }
-            finalizeService.finalizeMeeting(meetingId, session.getFullAudioFile());
+
+            List<MeetingTranscriptSegment> segments =
+                    transcriptSegmentMapper.selectSegmentsByMeetingId(meetingId);
+            String fullTranscript = segments.stream()
+                    .map(MeetingTranscriptSegment::getText)
+                    .filter(t -> t != null && !t.isEmpty())
+                    .collect(Collectors.joining("\n"));
+
+            MinutesTaskMessage message = new MinutesTaskMessage();
+            message.setTaskId(String.valueOf(meetingId));
+            message.setRecognizedText(fullTranscript);
+
+            rabbitTemplate.convertAndSend(
+                    RabbitMqConfig.MINUTES_EXCHANGE,
+                    RabbitMqConfig.MINUTES_ROUTING_KEY,
+                    message
+            );
+
+            log.info("会议[{}]全文已拼接({}字符)并投递纪要生成队列", meetingId, fullTranscript.length());
         });
     }
 
@@ -199,6 +226,17 @@ public class MeetingSessionManager {
                     session.getRecordConfig().getBitDepth());
 
             String text = asrService.asrTranslateService(chunkFile.getAbsolutePath());
+
+            MeetingTranscriptSegment segment = new MeetingTranscriptSegment();
+            segment.setMeetingId(meetingId);
+            segment.setSeqNo(chunk.seqNo);
+            segment.setStartOffsetMs(chunk.startOffsetMs);
+            segment.setEndOffsetMs(chunk.endOffsetMs);
+            segment.setText(text);
+            transcriptSegmentMapper.insertSegment(segment);
+
+            pushToClient(meetingId, new TranscriptPushDTO(
+                    meetingId, chunk.seqNo, chunk.startOffsetMs, chunk.endOffsetMs, text));
         } catch (Exception e) {
             // 单个分片转写失败不影响整场会议，记录空文本占位，保证seqNo连续、后续拼接不缺段
             log.error("会议[{}]分片[{}]转写失败", meetingId, chunk.seqNo, e);
@@ -223,6 +261,25 @@ public class MeetingSessionManager {
 
     public boolean hasSession(Long meetingId) {
         return sessions.containsKey(meetingId);
+    }
+
+    private void pushToClient(Long meetingId, TranscriptPushDTO dto) {
+        RecordingSession session = sessions.get(meetingId);
+        if(session == null) {
+            return;
+        }
+        WebSocketSession wsSession = session.getWsSession();
+        if(wsSession == null || !wsSession.isOpen()) {
+            return;
+        }
+        try {
+            String json = objectMapper.writeValueAsString(dto);
+            synchronized (wsSession) {
+                wsSession.sendMessage(new TextMessage(json));
+            }
+        } catch (IOException e) {
+            log.warn("会议[{}]推送转写结果到前端失败", meetingId, e);
+        }
     }
 
     private File buildAudioFile(Long meetingId) {

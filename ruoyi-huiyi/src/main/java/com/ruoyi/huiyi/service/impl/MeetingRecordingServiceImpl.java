@@ -117,14 +117,12 @@ public class MeetingRecordingServiceImpl implements IMeetingRecordingService {
         Date now = new Date();
         Meeting update = new Meeting();
         update.setId(meetingId);
-        update.setRecordStatus(MeetingRecordStatus.STOPPED_PENDING.getCode());
+        update.setRecordStatus(MeetingRecordStatus.STOP_PENDING.getCode());
         update.setRecordEndTime(now);
         update.setAudioFilePath(audioFile.getAbsolutePath());
         meetingMapper.updateRecordStatus(update);
 
         insertEvent(meetingId, MeetingRecordEventType.STOP, operator, null);
-
-        
     }
 
     @Override
