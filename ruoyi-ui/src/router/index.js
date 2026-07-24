@@ -67,6 +67,19 @@ export const constantRoutes = [
     redirect: '/huiyi/meeting'
   },
   {
+    path: '/huiyi/record',
+    component: Layout,
+    hidden: true,
+    children: [
+      {
+        path: 'index',
+        component: () => import('@/views/huiyi/record/index'),
+        name: 'Record',
+        meta: { title: '会议录制', icon: 'video-camera' }
+      }
+    ]
+  },
+  {
     path: '/lock',
     component: () => import('@/views/lock'),
     hidden: true,
