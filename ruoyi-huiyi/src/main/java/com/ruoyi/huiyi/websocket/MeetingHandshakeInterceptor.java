@@ -30,7 +30,7 @@ public class MeetingHandshakeInterceptor implements HandshakeInterceptor {
     @Override
     @SuppressWarnings("unchecked")
     public boolean beforeHandshake(ServerHttpRequest request, ServerHttpResponse response,
-                                   WebSocketHandler wsHandler, Map<String, String> attributes) {
+                                   WebSocketHandler wsHandler, Map<String, Object> attributes) {
         if (!(request instanceof ServletServerHttpRequest)) {
             return false;
         }
