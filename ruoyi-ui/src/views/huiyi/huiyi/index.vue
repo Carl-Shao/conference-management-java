@@ -3,8 +3,8 @@
     <!-- 顶部导航栏 -->
     <div class="home-header">
       <div class="header-left">
-        <i class="el-icon-video-camera-solid header-logo"></i>
-        <span class="header-title">会议纪要</span>
+        <i class="el-icon-microphone header-logo"></i>
+        <span class="header-title">智能会议助手</span>
       </div>
       <div class="header-right">
         <el-input
@@ -19,10 +19,10 @@
         />
         <el-button
           type="primary"
-          icon="el-icon-video-camera"
+          icon="el-icon-microphone"
           class="start-btn"
           @click="openStartDialog"
-        >发起会议</el-button>
+        >开始录音</el-button>
       </div>
     </div>
 
@@ -38,8 +38,8 @@
     <!-- 会议列表 -->
     <div class="home-body" v-loading="loading">
       <div v-if="meetingList.length === 0 && !loading" class="empty-block">
-        <i class="el-icon-chat-line-square empty-icon"></i>
-        <p>暂无会议，点击右上角「发起会议」开始第一场会议吧</p>
+        <i class="el-icon-microphone-off empty-icon"></i>
+        <p>暂无会议记录，点击右上角「开始录音」创建您的第一个会议记录</p>
       </div>
 
       <div class="meeting-grid">
@@ -71,16 +71,18 @@
           <div class="card-title">{{ item.title }}</div>
 
           <div class="card-meta">
+            <i class="el-icon-user"></i>
+            <span>{{ item.creator || '未知用户' }}</span>
+          </div>
+
+          <div class="card-meta">
             <i class="el-icon-time"></i>
             <span>{{ item.startTime }}</span>
           </div>
+
           <div class="card-meta" v-if="item.duration">
             <i class="el-icon-stopwatch"></i>
-            <span>时长 {{ item.duration }}</span>
-          </div>
-          <div class="card-meta" v-if="item.roomName">
-            <i class="el-icon-office-building"></i>
-            <span>{{ item.roomName }}</span>
+            <span>{{ formatDuration(item.duration) }}</span>
           </div>
 
           <div class="card-footer">
@@ -103,24 +105,21 @@
       />
     </div>
 
-    <!-- 发起会议弹窗 -->
+    <!-- 开始录音弹窗 -->
     <el-dialog
-      title="发起会议"
+      title="开始录音"
       :visible.sync="startDialogVisible"
       width="480px"
-      custom-class="start-meeting-dialog"
+      custom-class="start-recording-dialog"
     >
       <el-form :model="startForm" :rules="startRules" ref="startForm" label-width="80px">
-        <el-form-item label="会议主题" prop="title">
-          <el-input v-model="startForm.title" placeholder="请输入会议主题，例如：周例会" maxlength="50" show-word-limit />
-        </el-form-item>
-        <el-form-item label="所在会议室" prop="roomName">
-          <el-input v-model="startForm.roomName" placeholder="请输入会议室名称（选填）" maxlength="30" />
+        <el-form-item label="录音标题" prop="title">
+          <el-input v-model="startForm.title" placeholder="请输入录音标题，例如：周例会" maxlength="50" show-word-limit />
         </el-form-item>
       </el-form>
       <div slot="footer">
         <el-button @click="startDialogVisible = false">取 消</el-button>
-        <el-button type="primary" :loading="starting" @click="confirmStart">立即发起</el-button>
+        <el-button type="primary" :loading="starting" @click="confirmStart">开始录音</el-button>
       </div>
     </el-dialog>
   </div>
@@ -146,11 +145,10 @@ export default {
       startDialogVisible: false,
       starting: false,
       startForm: {
-        title: '',
-        roomName: ''
+        title: ''
       },
       startRules: {
-        title: [{ required: true, message: '请输入会议主题', trigger: 'blur' }]
+        title: [{ required: true, message: '请输入录音标题', trigger: 'blur' }]
       }
     }
   },
@@ -158,6 +156,23 @@ export default {
     this.getList()
   },
   methods: {
+    formatDuration(durationStr) {
+      // 将HH:mm:ss格式转换为更友好的显示格式
+      if (!durationStr) return ''
+
+      const parts = durationStr.split(':').map(Number)
+      const hours = parts[0]
+      const minutes = parts[1]
+      const seconds = parts[2]
+
+      if (hours > 0) {
+        return `${hours}小时${minutes}分钟`
+      } else if (minutes > 0) {
+        return `${minutes}分钟${seconds}秒`
+      } else {
+        return `${seconds}秒`
+      }
+    },
     statusText(status) {
       const map = { ongoing: '进行中', paused: '已暂停', ended: '已结束' }
       return map[status] || '未知'
@@ -178,7 +193,7 @@ export default {
       })
     },
     openStartDialog() {
-      this.startForm = { title: '', roomName: '' }
+      this.startForm = { title: '' }
       this.startDialogVisible = true
       this.$nextTick(() => {
         this.$refs.startForm && this.$refs.startForm.clearValidate()
@@ -192,7 +207,8 @@ export default {
           this.starting = false
           this.startDialogVisible = false
           const meetingId = res.data.meetingId
-          this.$router.push({ path: '/huiyi/meeting/room/' + meetingId })
+          // 直接跳转到录音界面，不再需要选择会议室
+          this.$router.push({ path: '/huiyi/meeting/recording/' + meetingId })
         }).catch(() => {
           this.starting = false
         })
@@ -202,14 +218,15 @@ export default {
       if (item.status === 'ended') {
         this.$router.push({ path: '/huiyi/meeting/detail/' + item.meetingId })
       } else {
-        this.$router.push({ path: '/huiyi/meeting/room/' + item.meetingId })
+        // 如果会议正在进行或暂停，进入录音界面
+        this.$router.push({ path: '/huiyi/meeting/recording/' + item.meetingId })
       }
     },
     handleCommand(command, item) {
       if (command === 'detail') {
         this.$router.push({ path: '/huiyi/meeting/detail/' + item.meetingId })
       } else if (command === 'delete') {
-        this.$modal.confirm('确认删除会议「' + item.title + '」吗？删除后无法恢复。').then(() => {
+        this.$modal.confirm('确认删除录音「' + item.title + '」吗？删除后无法恢复。').then(() => {
           return delMeeting(item.meetingId)
         }).then(() => {
           this.$modal.msgSuccess('删除成功')
@@ -224,7 +241,7 @@ export default {
 <style lang="scss" scoped>
 .meeting-home {
   min-height: 100%;
-  background: #f5f6f8;
+  background: #f8fafd;
   padding-bottom: 24px;
 }
 
@@ -232,18 +249,19 @@ export default {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  height: 64px;
+  height: 72px;
   padding: 0 24px;
   background: #fff;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  border-bottom: 1px solid #f0f0f0;
 
   .header-left {
     display: flex;
     align-items: center;
     .header-logo {
-      font-size: 24px;
+      font-size: 26px;
       color: #1890ff;
-      margin-right: 8px;
+      margin-right: 10px;
     }
     .header-title {
       font-size: 18px;
@@ -256,14 +274,27 @@ export default {
     display: flex;
     align-items: center;
     .search-input {
-      width: 220px;
+      width: 240px;
       margin-right: 16px;
+
+      ::v-deep .el-input__inner {
+        border-radius: 20px;
+        border: 1px solid #e5e5e5;
+      }
     }
     .start-btn {
-      background: #1890ff;
-      border-color: #1890ff;
-      border-radius: 6px;
+      background: linear-gradient(135deg, #1890ff, #40a9ff);
+      border: none;
+      border-radius: 24px;
       font-weight: 500;
+      padding: 10px 20px;
+      height: 40px;
+      display: flex;
+      align-items: center;
+
+      i {
+        margin-right: 6px;
+      }
     }
   }
 }
@@ -279,6 +310,11 @@ export default {
   ::v-deep .el-tabs__nav-wrap::after {
     display: none;
   }
+
+  ::v-deep .el-tabs__item {
+    font-size: 14px;
+    padding: 0 20px !important;
+  }
 }
 
 .home-body {
@@ -287,47 +323,49 @@ export default {
 
 .empty-block {
   text-align: center;
-  padding: 80px 0;
+  padding: 100px 0;
   color: #909399;
   .empty-icon {
-    font-size: 48px;
+    font-size: 64px;
     color: #c0c4cc;
-    margin-bottom: 12px;
+    margin-bottom: 16px;
     display: block;
   }
 }
 
 .meeting-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: 16px;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 20px;
 }
 
 .meeting-card {
   background: #fff;
-  border-radius: 10px;
-  padding: 16px 18px;
+  border-radius: 12px;
+  padding: 20px;
   cursor: pointer;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
-  transition: box-shadow 0.2s, transform 0.2s;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  transition: box-shadow 0.3s, transform 0.3s, border-color 0.3s;
   border: 1px solid #f0f0f0;
 
   &:hover {
-    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.1);
-    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+    transform: translateY(-4px);
+    border-color: #1890ff;
   }
 
   .card-top {
     display: flex;
     align-items: center;
-    margin-bottom: 10px;
+    margin-bottom: 12px;
+    position: relative;
 
     .status-dot {
       width: 8px;
       height: 8px;
       border-radius: 50%;
       background: #c0c4cc;
-      margin-right: 6px;
+      margin-right: 8px;
     }
     .dot-ongoing {
       background: #52c41a;
@@ -347,16 +385,20 @@ export default {
     }
     .card-more {
       color: #c0c4cc;
-      padding: 2px 6px;
-      &:hover { color: #1890ff; }
+      padding: 4px;
+      border-radius: 4px;
+      &:hover {
+        color: #1890ff;
+        background: #f0f9ff;
+      }
     }
   }
 
   .card-title {
-    font-size: 15px;
+    font-size: 16px;
     font-weight: 600;
     color: #1d2129;
-    margin-bottom: 10px;
+    margin-bottom: 12px;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -365,21 +407,26 @@ export default {
   .card-meta {
     display: flex;
     align-items: center;
-    font-size: 12px;
-    color: #86909c;
-    margin-bottom: 4px;
+    font-size: 13px;
+    color: #606266;
+    margin-bottom: 6px;
+
     i {
-      margin-right: 4px;
+      margin-right: 6px;
+      color: #909399;
+      font-size: 12px;
     }
   }
 
   .card-footer {
-    margin-top: 12px;
-    padding-top: 10px;
-    border-top: 1px dashed #f0f0f0;
+    margin-top: 16px;
+    padding-top: 12px;
+    border-top: 1px solid #f5f5f5;
     .footer-link {
       font-size: 13px;
       color: #1890ff;
+      display: flex;
+      align-items: center;
     }
     .footer-link-live {
       color: #52c41a;
@@ -392,5 +439,30 @@ export default {
   0% { box-shadow: 0 0 0 0 rgba(82, 196, 26, 0.4); }
   70% { box-shadow: 0 0 0 6px rgba(82, 196, 26, 0); }
   100% { box-shadow: 0 0 0 0 rgba(82, 196, 26, 0); }
+}
+
+// 弹窗样式
+::v-deep .start-recording-dialog {
+  border-radius: 12px;
+  overflow: hidden;
+
+  .el-dialog__header {
+    background: linear-gradient(135deg, #1890ff, #40a9ff);
+    color: white;
+    padding: 16px 24px;
+
+    .el-dialog__title {
+      color: white;
+    }
+  }
+
+  .el-dialog__body {
+    padding: 24px;
+  }
+
+  .el-dialog__footer {
+    padding: 16px 24px;
+    background: #fafafa;
+  }
 }
 </style>

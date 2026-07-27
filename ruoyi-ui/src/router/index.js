@@ -80,6 +80,40 @@ export const constantRoutes = [
     ]
   },
   {
+    path: '/huiyi/meeting',
+    component: Layout,
+    hidden: false, // 改为false以显示在菜单中
+    children: [
+      {
+        path: 'index',
+        component: () => import('@/views/huiyi/huiyi/index'),
+        name: 'MeetingIndex',
+        meta: { title: '会议管理', icon: 'meeting' }
+      },
+      {
+        path: 'room/:meetingId',
+        component: () => import('@/views/huiyi/huiyi/room'),
+        name: 'MeetingRoom',
+        meta: { title: '会议房间', icon: 'meeting', noCache: true },
+        hidden: true
+      },
+      {
+        path: 'detail/:meetingId',
+        component: () => import('@/views/huiyi/huiyi/detail'),
+        name: 'MeetingDetail',
+        meta: { title: '会议详情', icon: 'meeting', noCache: true },
+        hidden: true
+      },
+      {
+        path: 'recording/:meetingId',
+        component: () => import('@/views/huiyi/huiyi/recording'),
+        name: 'RecordingPage',
+        meta: { title: '录音界面', icon: 'microphone', noCache: true },
+        hidden: true
+      }
+    ]
+  },
+  {
     path: '/lock',
     component: () => import('@/views/lock'),
     hidden: true,

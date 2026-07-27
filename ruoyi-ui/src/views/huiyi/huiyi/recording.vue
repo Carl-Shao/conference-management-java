@@ -114,10 +114,10 @@ import {
   saveNote,
   getNote,
   buildMeetingWsUrl
-} from '@/api/huiyi/huiyi'  // 使用huiyi.js中的API
+} from '@/api/huiyi/meeting'
 
 export default {
-  name: 'MeetingRoom',
+  name: 'RecordingPage',
   data() {
     return {
       meetingId: null,

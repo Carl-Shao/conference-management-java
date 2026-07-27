@@ -1,0 +1,693 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>智能会议助手 - 钉钉听记风格</title>
+    <script src="https://cdn.jsdelivr.net/npm/vue@2.6.14/dist/vue.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/element-ui@2.15.6/lib/theme-chalk/index.css">
+    <script src="https://cdn.jsdelivr.net/npm/element-ui@2.15.6/lib/index.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background-color: #f8fafd;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        #app {
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* 录音页面样式 */
+        .recording-page {
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            background: #f8fafd;
+        }
+
+        .recording-header {
+            height: 60px;
+            background: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 20px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+            z-index: 10;
+            position: relative;
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+        }
+
+        .meeting-info {
+            margin-left: 16px;
+        }
+
+        .meeting-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: #1d2129;
+            margin-bottom: 4px;
+        }
+
+        .meeting-meta {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .timer {
+            font-family: 'SF Pro Display', 'Helvetica Neue', Arial, sans-serif;
+            font-size: 14px;
+            font-weight: 600;
+            color: #1d2129;
+        }
+
+        .rec-status {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 12px;
+            color: #52c41a;
+        }
+
+        .rec-status.rec-paused {
+            color: #faad14;
+        }
+
+        .rec-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #52c41a;
+            animation: blink 1.2s infinite;
+        }
+
+        .rec-dot.rec-paused {
+            background: #faad14;
+            animation: none;
+        }
+
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.3; }
+        }
+
+        .recording-body {
+            flex: 1;
+            display: flex;
+            padding: 16px 16px 0;
+            gap: 16px;
+            overflow: hidden;
+        }
+
+        .transcript-panel, .notes-panel {
+            flex: 1;
+            background: #fff;
+            border-radius: 12px;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+        }
+
+        .panel-header {
+            display: flex;
+            align-items: center;
+            padding: 16px 20px;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        .panel-header i {
+            font-size: 16px;
+            color: #1890ff;
+            margin-right: 8px;
+        }
+
+        .panel-title {
+            font-size: 15px;
+            font-weight: 600;
+            color: #1d2129;
+        }
+
+        .save-status {
+            margin-left: auto;
+            font-size: 12px;
+            color: #86909c;
+        }
+
+        .transcript-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 16px 20px 80px 20px; /* 底部留出空间放置控件 */
+        }
+
+        .empty-transcript {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            color: #c0c4cc;
+        }
+
+        .empty-transcript i {
+            font-size: 48px;
+            margin-bottom: 16px;
+        }
+
+        .empty-transcript p {
+            font-size: 14px;
+        }
+
+        .transcript-item {
+            padding: 12px 0;
+            border-bottom: 1px solid #f5f5f5;
+        }
+
+        .transcript-item.marked {
+            background: #f0f9ff;
+            border-left: 3px solid #1890ff;
+            padding-left: 16px;
+        }
+
+        .speaker-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .speaker-name {
+            font-size: 13px;
+            font-weight: 600;
+            color: #1890ff;
+        }
+
+        .timestamp {
+            font-size: 12px;
+            color: #c0c4cc;
+        }
+
+        .transcript-text {
+            font-size: 14px;
+            line-height: 1.6;
+            color: #1d2129;
+        }
+
+        .notes-content {
+            flex: 1;
+            padding: 0 20px 20px;
+        }
+
+        .notes-textarea textarea {
+            resize: none;
+            border: none;
+            height: 100% !important;
+            padding: 0;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+
+        /* 在实时转写面板底部添加控件区域 */
+        .controls-overlay {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(10px);
+            padding: 15px 20px;
+            border-radius: 0 0 12px 12px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            z-index: 10;
+        }
+
+        .audio-visualizer {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-right: 30px;
+        }
+
+        .wave-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 3px;
+            height: 30px;
+            width: 200px;
+        }
+
+        .wave-bar {
+            width: 3px;
+            background: #52c41a;
+            border-radius: 1px;
+            transition: height 0.1s ease;
+            min-height: 2px;
+        }
+
+        .wave-bar.paused {
+            height: 2px !important;
+            background: #c0c4cc;
+        }
+
+        .visualizer-label {
+            text-align: center;
+            font-size: 11px;
+            color: #86909c;
+            margin-top: 3px;
+        }
+
+        /* 控制按钮 */
+        .control-buttons {
+            display: flex;
+            gap: 15px;
+        }
+
+        .control-btn {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            width: auto; /* 改为自动宽度 */
+            height: auto; /* 改为自动高度 */
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+            color: #606266;
+            font-size: 20px; /* 增大图标大小 */
+            padding: 8px; /* 添加内边距 */
+            background: transparent; /* 透明背景 */
+            border: none;
+            outline: none;
+        }
+
+        .control-btn:hover {
+            color: #1890ff;
+            background: rgba(24, 144, 255, 0.1);
+        }
+
+        .control-btn span {
+            margin-top: 4px;
+            font-size: 10px;
+            color: #606266;
+            display: none; /* 隐藏文字 */
+        }
+
+        /* 响应式设计 */
+        @media (max-width: 1200px) {
+            .recording-body {
+                flex-direction: column;
+            }
+
+            .controls-overlay {
+                flex-direction: column;
+                gap: 10px;
+                align-items: flex-start;
+            }
+
+            .audio-visualizer {
+                margin-right: 0;
+                margin-bottom: 10px;
+            }
+
+            .control-buttons {
+                width: 100%;
+                justify-content: space-around;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="app">
+        <div class="recording-page">
+            <!-- 顶部信息栏 -->
+            <div class="recording-header">
+                <div class="header-left">
+                    <button class="el-button el-button--default is-circle" @click="handleBack" style="padding: 6px;">
+                        <i class="el-icon-arrow-left"></i>
+                    </button>
+                    <div class="meeting-info">
+                        <div class="meeting-title">{{ meeting.title || '会议进行中' }}</div>
+                        <div class="meeting-meta">
+                            <span class="timer">{{ formattedTimer }}</span>
+                            <span class="rec-status" :class="{ 'rec-paused': recordStatus === 'paused' }">
+                                <span class="rec-dot" :class="{ 'rec-paused': recordStatus === 'paused' }"></span>
+                                {{ recordStatus === 'paused' ? '已暂停' : '录制中' }}
+                            </span>
+                        </div>
+                    </div>
+                </div>
+                <div class="header-right">
+                    <el-tag v-if="connected" type="success" size="small" effect="plain">麦克风已连接</el-tag>
+                    <el-tag v-else type="info" size="small" effect="plain">连接中...</el-tag>
+                </div>
+            </div>
+
+            <!-- 主体内容：左右分栏 -->
+            <div class="recording-body">
+                <!-- 左侧：实时转写 -->
+                <div class="transcript-panel" style="position: relative;">
+                    <div class="panel-header">
+                        <i class="el-icon-microphone"></i>
+                        <span class="panel-title">实时转写</span>
+                    </div>
+                    <div class="transcript-content" ref="transcriptScroll">
+                        <div v-if="transcripts.length === 0" class="empty-transcript">
+                            <i class="el-icon-microphone-off"></i>
+                            <p>等待发言中，转写内容将实时显示</p>
+                        </div>
+                        <div
+                            v-for="(line, index) in transcripts"
+                            :key="index"
+                            class="transcript-item"
+                            :class="{ marked: markedIds.has(line.id) }"
+                        >
+                            <div class="speaker-info">
+                                <span class="speaker-name">{{ line.speaker || '发言人' }}</span>
+                                <span class="timestamp">{{ formatOffset(line.startMs) }}</span>
+                            </div>
+                            <div class="transcript-text">{{ line.text }}</div>
+                        </div>
+                    </div>
+                    <!-- 控制组件覆盖在实时转写面板底部 -->
+                    <div class="controls-overlay">
+                        <!-- 音频可视化区域 -->
+                        <div class="audio-visualizer">
+                            <div class="wave-container">
+                                <div
+                                    class="wave-bar"
+                                    v-for="n in 30"
+                                    :key="n"
+                                    :style="{ height: recordStatus === 'paused' ? '2px' : waveHeights[n-1] + 'px' }"
+                                    :class="{ paused: recordStatus === 'paused' }"
+                                ></div>
+                            </div>
+                            <div class="visualizer-label">麦克风声音</div>
+                        </div>
+
+                        <!-- 底部控制按钮 -->
+                        <div class="control-buttons">
+                            <!-- 标记按钮 -->
+                            <div class="control-btn" @click="handleMark">
+                                <i class="el-icon-collection-tag" style="font-size: 24px;"></i>
+                            </div>
+
+                            <!-- 暂停/继续按钮 -->
+                            <div class="control-btn" @click="handleToggleRecord">
+                                <i :class="recordStatus === 'paused' ? 'el-icon-video-play' : 'el-icon-video-pause'" style="font-size: 24px;"></i>
+                            </div>
+
+                            <!-- 结束会议按钮 -->
+                            <div class="control-btn" @click="handleEnd">
+                                <i class="el-icon-switch-button" style="font-size: 24px;"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 右侧：笔记 -->
+                <div class="notes-panel">
+                    <div class="panel-header">
+                        <i class="el-icon-edit"></i>
+                        <span class="panel-title">我的笔记</span>
+                        <span class="save-status">{{ saveStatus }}</span>
+                    </div>
+                    <div class="notes-content">
+                        <el-input
+                            type="textarea"
+                            v-model="notesContent"
+                            class="notes-textarea"
+                            :rows="20"
+                            placeholder="记录会议要点、待办事项..."
+                            @input="debouncedSaveNotes"
+                        />
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        new Vue({
+            el: '#app',
+
+            data: {
+                meeting: {
+                    title: '智能会议助手演示'
+                },
+                recordStatus: 'ongoing', // ongoing | paused
+                elapsedSeconds: 0,
+                timerInterval: null,
+
+                // 音频可视化
+                waveHeights: Array(30).fill(2), // 默认高度为2px（平直线）
+                connected: false,
+
+                // 转写数据
+                transcripts: [],
+                markedIds: new Set(),
+
+                // 笔记数据
+                notesContent: '',
+                saveStatus: '',
+
+                // 音频相关
+                audioContext: null,
+                analyser: null,
+                microphone: null,
+                animationFrame: null,
+
+                // 笔记保存定时器
+                saveTimeout: null
+            },
+
+            computed: {
+                formattedTimer() {
+                    const h = String(Math.floor(this.elapsedSeconds / 3600)).padStart(2, '0');
+                    const m = String(Math.floor((this.elapsedSeconds % 3600) / 60)).padStart(2, '0');
+                    const s = String(this.elapsedSeconds % 60).padStart(2, '0');
+                    return `${h}:${m}:${s}`;
+                }
+            },
+
+            created() {
+                this.startTimer();
+
+                // 页面加载后自动开始录音
+                this.$nextTick(() => {
+                    this.startMicrophone();
+                });
+            },
+
+            methods: {
+                // 启动计时器
+                startTimer() {
+                    this.timerInterval = setInterval(() => {
+                        if (this.recordStatus === 'ongoing') {
+                            this.elapsedSeconds++;
+                        }
+                    }, 1000);
+                },
+
+                // 开始使用麦克风
+                async startMicrophone() {
+                    try {
+                        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+
+                        this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                        this.analyser = this.audioContext.createAnalyser();
+                        this.microphone = this.audioContext.createMediaStreamSource(stream);
+
+                        this.analyser.fftSize = 256;
+                        this.microphone.connect(this.analyser);
+
+                        this.connected = true;
+
+                        // 开始音频可视化
+                        this.visualizeAudio();
+
+                        this.$message.success('麦克风已连接');
+                    } catch (err) {
+                        console.error('无法访问麦克风:', err);
+                        this.$message.error('无法访问麦克风，请检查权限设置');
+                        this.simulateAudioVisualization();
+                    }
+                },
+
+                // 音频可视化
+                visualizeAudio() {
+                    const bufferLength = this.analyser.frequencyBinCount;
+                    const dataArray = new Uint8Array(bufferLength);
+
+                    const update = () => {
+                        if (this.analyser && this.recordStatus === 'ongoing') {
+                            this.analyser.getByteFrequencyData(dataArray);
+
+                            // 将音频数据映射到波形高度
+                            for (let i = 0; i < 30; i++) {
+                                const value = dataArray[Math.floor(i * bufferLength / 30)] || 0;
+                                // 根据实际音频值调整高度，范围在2-25px之间
+                                const height = Math.max(2, Math.min(25, value / 6 + 2));
+                                this.$set(this.waveHeights, i, height);
+                            }
+                        } else if (this.recordStatus === 'paused') {
+                            // 暂停时重置为平直线
+                            for (let i = 0; i < 30; i++) {
+                                this.$set(this.waveHeights, i, 2);
+                            }
+                        }
+
+                        if (this.recordStatus === 'ongoing') {
+                            this.animationFrame = requestAnimationFrame(update);
+                        }
+                    };
+
+                    update();
+                },
+
+                // 模拟音频可视化（当无法访问麦克风时）
+                simulateAudioVisualization() {
+                    setInterval(() => {
+                        if (this.recordStatus === 'paused') {
+                            // 暂停时显示平直线
+                            for (let i = 0; i < 30; i++) {
+                                this.$set(this.waveHeights, i, 2);
+                            }
+                        } else {
+                            // 模拟动态音量波浪效果
+                            for (let i = 0; i < 30; i++) {
+                                this.$set(this.waveHeights, i, Math.random() * 15 + 5);
+                            }
+                        }
+                    }, 100);
+                },
+
+                // 添加转写内容（用于模拟或未来接入语音识别）
+                addTranscript(text, speaker = '发言人') {
+                    const newLine = {
+                        id: Date.now(),
+                        speaker: speaker,
+                        text: text,
+                        startMs: this.elapsedSeconds * 1000
+                    };
+
+                    this.transcripts.push(newLine);
+
+                    // 滚动到底部
+                    this.$nextTick(() => {
+                        const el = this.$refs.transcriptScroll;
+                        if (el) el.scrollTop = el.scrollHeight;
+                    });
+                },
+
+                // 格式化时间偏移
+                formatOffset(ms) {
+                    if (!ms && ms !== 0) return '';
+                    const totalSec = Math.floor(ms / 1000);
+                    const m = String(Math.floor(totalSec / 60)).padStart(2, '0');
+                    const s = String(totalSec % 60).padStart(2, '0');
+                    return `${m}:${s}`;
+                },
+
+                // 暂停/继续会议
+                handleToggleRecord() {
+                    if (this.recordStatus === 'ongoing') {
+                        this.recordStatus = 'paused';
+                        this.$message.success('会议已暂停');
+                        // 暂停时重置波浪为平直线
+                        for (let i = 0; i < 30; i++) {
+                            this.$set(this.waveHeights, i, 2);
+                        }
+                    } else {
+                        this.recordStatus = 'ongoing';
+                        this.$message.success('会议已继续');
+                        // 重新开始音频可视化
+                        if (this.analyser) {
+                            this.visualizeAudio();
+                        }
+                    }
+                },
+
+                // 添加标记
+                handleMark() {
+                    this.$message.success(`已在 ${this.formattedTimer} 处添加标记`);
+                    if (this.transcripts.length > 0) {
+                        const lastId = this.transcripts[this.transcripts.length - 1].id;
+                        this.markedIds.add(lastId);
+                    }
+                },
+
+                // 结束会议
+                handleEnd() {
+                    if (confirm('确认结束当前会议吗？')) {
+                        this.$message.success('会议已结束');
+
+                        // 停止所有活动
+                        if (this.timerInterval) {
+                            clearInterval(this.timerInterval);
+                        }
+                        if (this.animationFrame) {
+                            cancelAnimationFrame(this.animationFrame);
+                        }
+
+                        // 停止麦克风
+                        if (this.microphone) {
+                            this.microphone.disconnect();
+                        }
+                        if (this.audioContext) {
+                            this.audioContext.close();
+                        }
+
+                        // 重置界面
+                        this.recordStatus = 'paused';
+                        // 结束后也显示平直线
+                        for (let i = 0; i < 30; i++) {
+                            this.$set(this.waveHeights, i, 2);
+                        }
+                    }
+                },
+
+                // 返回上一页
+                handleBack() {
+                    if (confirm('返回首页不会结束会议，确认返回吗？')) {
+                        window.location.href = 'meeting-notes.html';
+                    }
+                },
+
+                // 防抖保存笔记
+                debouncedSaveNotes() {
+                    this.saveStatus = '编辑中...';
+
+                    if (this.saveTimeout) {
+                        clearTimeout(this.saveTimeout);
+                    }
+
+                    this.saveTimeout = setTimeout(() => {
+                        this.saveStatus = '已保存';
+                        setTimeout(() => {
+                            this.saveStatus = '';
+                        }, 2000);
+                    }, 1000);
+                }
+            }
+        });
+    </script>
+</body>
+</html>
