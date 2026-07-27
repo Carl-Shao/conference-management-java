@@ -24,7 +24,7 @@ export function resumeRecord(meetingId) {
   })
 }
 
-// 结束录制
+// 停止录制
 export function stopRecord(meetingId) {
   return request({
     url: `/huiyi/record/${meetingId}/stop`,

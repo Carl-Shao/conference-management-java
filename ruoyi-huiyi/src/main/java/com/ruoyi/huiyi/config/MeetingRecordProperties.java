@@ -16,7 +16,7 @@ public class MeetingRecordProperties {
     private int bitDepth = 16;
 
     /** 录音文件根目录 */
-    private String audioBasePath = "/data/huiyi/audio";
+    private String audioBasePath = "/home/shao/project/conference-management-java/audio";
 
     /**
      * ASR 调用并发线程池大小：不同会议室并发录制时，所有分片共享这一个线程池，

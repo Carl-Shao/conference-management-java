@@ -35,19 +35,20 @@ public class MeetingHandshakeInterceptor implements HandshakeInterceptor {
             return false;
         }
         HttpServletRequest servletRequest = ((ServletServerHttpRequest) request).getServletRequest();
-        Map<String, String> uriTemplateVars = (Map<String, String>)
-                servletRequest.getAttribute(HandlerMapping.URI_TEMPLATE_VARIABLES_ATTRIBUTE);
+        String path = request.getURI().getPath();
 
-        if (uriTemplateVars == null || uriTemplateVars.get("meetingId") == null){
-            log.warn("WebSocket握手缺少meetingId路径参数");
-            return false;
-        }
+        log.info("WebSocket握手路径: {}", path);
+
+        String[] parts = path.split("/");
+
+        String meetingIdStr = parts[parts.length - 1];
 
         Long meetingId;
+
         try {
-            meetingId = Long.valueOf(uriTemplateVars.get("meetingId"));
+            meetingId = Long.valueOf(meetingIdStr);
         } catch (NumberFormatException e) {
-            log.warn("WebSocket握手meetingId格式非法: {}", uriTemplateVars.get("meetingId"));
+            log.warn("WebSocket握手meetingId格式非法: {}", meetingIdStr);
             return false;
         }
 
@@ -56,7 +57,7 @@ public class MeetingHandshakeInterceptor implements HandshakeInterceptor {
             return false;
         }
 
-        attributes.put(MeetingAudioWebSocketHandler.ATTR_MEETING_ID, "meetingId");
+        attributes.put(MeetingAudioWebSocketHandler.ATTR_MEETING_ID, meetingId);
         return true;
     }
 
