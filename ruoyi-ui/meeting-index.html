@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>摘要 · Summary</title>
+<style>
+  :root{
+    --side-bg:#ececf4;
+    --side-bg2:#e7e7f1;
+    --main-bg:#fafbfd;
+    --search-bg:#ebedf2;
+    --ink:#2b2f36;
+    --ink-soft:#5a606b;
+    --muted:#9aa1ad;
+    --gray-soft:rgba(255,255,255,.85);
+    --blue:#2f7bff;
+    --blue-deep:#1f6bf0;
+    --blue-soft:#d1e0fa;
+    --gold1:#ffce4d;
+    --gold2:#f5a623;
+    --pink:#f4a3c0;
+    --pink-deep:#e982a8;
+    --chip-blue:#d3e3ff;
+    --line:rgba(20,24,40,.06);
+    --shadow-sm:0 1px 2px rgba(20,24,40,.06);
+    --shadow-md:0 10px 30px rgba(31,107,240,.28);
+    --font:-apple-system,BlinkMacSystemFont,"PingFang SC","Hiragino Sans GB","Microsoft YaHei","Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%}
+  body{
+    font-family:var(--font);
+    color:var(--ink);
+    background:var(--main-bg);
+    -webkit-font-smoothing:antialiased;
+    overflow:hidden;
+  }
+  .app{display:flex;height:100vh;width:100%}
+
+  /* ---------- 侧边栏 ---------- */
+  .sidebar{
+    width:300px;flex:0 0 300px;
+    background:linear-gradient(180deg,var(--side-bg),var(--side-bg2));
+    display:flex;flex-direction:column;
+    padding:44px 22px 22px 38px;
+    border-right:1px solid var(--line);
+    position:relative;z-index:40;
+    transition:transform .35s cubic-bezier(.4,0,.2,1);
+  }
+  .brand{display:flex;align-items:center;gap:14px;padding:0 8px 30px}
+  .logo{
+    width:42px;height:42px;border-radius:50%;flex:0 0 42px;   /* 13px → 50% */
+    background:linear-gradient(150deg,#4f93ff,#2f7bff);
+    display:grid;place-items:center;position:relative;
+    box-shadow:0 6px 16px rgba(47,123,255,.35);
+  }
+  .logo::after{
+    content:"";position:absolute;inset:-5px;border-radius:50%;   /* 17px → 50% */
+    border:2px solid rgba(47,123,255,.35);
+    animation:breathe 2.8s ease-in-out infinite;
+  }
+  .logo svg{width:22px;height:22px}
+  .brand h1{font-size:26px;font-weight:800;letter-spacing:-.5px;color:#1c2026}
+
+  .nav{display:flex;flex-direction:column;gap:4px;flex:1}
+  .nav-item{
+    display:flex;align-items:center;gap:16px;
+    padding:13px 16px;border-radius:20px;cursor:pointer;
+    color:var(--ink-soft);font-size:18px;font-weight:600;
+    border:none;background:transparent;width:100%;text-align:left;
+    transition:background .2s,color .2s,transform .2s;
+    opacity:0;transform:translateX(-10px);
+    animation:fadeUp .5s ease forwards;
+    position:relative;
+    isolation:isolate;   
+  }
+  .nav-item:nth-child(1){animation-delay:.05s}
+  .nav-item:nth-child(2){animation-delay:.10s}
+  .nav-item:nth-child(3){animation-delay:.15s}
+  .nav-item:nth-child(4){animation-delay:.20s}
+  .nav-item:nth-child(5){animation-delay:.25s}
+  .nav-item:nth-child(6){animation-delay:.30s}
+  .nav-item:nth-child(7){animation-delay:.35s}
+  .nav-item:nth-child(8){animation-delay:.40s}
+  .nav-item svg{width:23px;height:23px;flex:0 0 23px;color:#4a4f57;transition:color .2s,transform .2s}
+  .nav-item:hover svg{color:var(--blue);transform:scale(1.06)}
+  .nav-item.active{background:none;color:var(--blue)}
+  .nav-item.active svg{color:var(--blue)}
+  .nav-item::before{
+    content:"";
+    position:absolute;
+    inset:3px 50px 3px 2px;        
+    border-radius:20px;
+    background:transparent;
+    transition:background .18s ease, box-shadow .18s ease;
+    z-index:-1;
+  }
+  .nav-item:hover::before{
+    background:var(--gray-soft);  
+  }
+  .nav-item.active::before{
+    content:"";
+    position:absolute;
+    inset:3px 50px 3px 2px;
+    border-radius:20px;
+    background:var(--blue-soft);
+    z-index:-1;
+  }
+
+  .download{
+    margin-top:14px;display:flex;align-items:center;justify-content:center;gap:10px;
+    background:#fff;border-radius:14px;padding:14px;cursor:pointer;
+    font-size:16px;font-weight:700;color:#1c2026;border:1px solid var(--line);
+    box-shadow:var(--shadow-sm);transition:transform .2s,box-shadow .2s;
+  }
+  .download:hover{transform:translateY(-2px);box-shadow:0 8px 20px rgba(20,24,40,.12)}
+  .download svg{width:20px;height:20px}
+
+  .record-btn{
+    display:flex;align-items:center;justify-content:center;gap:10px;
+    background:linear-gradient(180deg,#3b86ff,var(--blue));
+    border-radius:14px;padding:12px;cursor:pointer;
+    font-size:16px;font-weight:700;color:#fff;border:none;
+    box-shadow:var(--shadow-sm);transition:transform .2s,box-shadow .2s;
+    width:100%;
+  }
+  .record-btn:hover{transform:translateY(-2px);box-shadow:0 8px 20px rgba(20,24,40,.12)}
+  .record-btn:active{transform:translateY(-1px)}
+  .record-btn::after{content:"";position:absolute;inset:0;
+    background:radial-gradient(120px 60px at var(--mx,50%) var(--my,50%),rgba(255,255,255,.35),transparent 70%);
+    opacity:0;transition:opacity .25s}
+  .record-btn:hover::after{opacity:1}
+  .ripple{position:absolute;border-radius:50%;background:rgba(255,255,255,.5);
+    transform:scale(0);animation:ripple .6s ease-out;pointer-events:none}
+
+  /* ---------- 主区 ---------- */
+  .main{flex:1;display:flex;flex-direction:column;min-width:0;position:relative;
+    background:
+      radial-gradient(900px 500px at 70% -10%,rgba(47,123,255,.05),transparent 60%),
+      radial-gradient(700px 600px at 100% 110%,rgba(244,163,192,.05),transparent 60%),
+      var(--main-bg);
+  }
+  .topbar{
+    display:flex;align-items:center;gap:18px;
+    padding:26px 34px;
+  }
+  .hamburger{display:none;width:42px;height:42px;border-radius:12px;border:1px solid var(--line);
+    background:#fff;cursor:pointer;place-items:center;color:var(--ink-soft)}
+  .search{
+    flex:1;display:flex;align-items:center;gap:12px;
+    background:var(--search-bg);border-radius:14px;padding:8px 20px;
+    border:1.5px solid transparent;transition:border-color .2s,box-shadow .2s,background .2s;
+  }
+  .search:focus-within{background:#fff;border-color:rgba(47,123,255,.45);box-shadow:0 0 0 4px rgba(47,123,255,.12)}
+  .search svg{width:20px;height:20px;color:var(--muted);flex:0 0 20px}
+  .search input{border:none;background:transparent;outline:none;font-size:16px;color:var(--ink);width:100%;font-family:var(--font)}
+  .search input::placeholder{color:var(--muted)}
+  .top-actions{display:flex;align-items:center;gap:14px}
+  .icon-btn{width:42px;height:42px;border-radius:50%;display:grid;place-items:center;
+    background:transparent;border:none;cursor:pointer;color:#3a3f47;transition:background .2s,transform .2s}
+  .icon-btn:hover{background:rgba(20,24,40,.06);transform:rotate(-15deg)}
+  .icon-btn svg{width:22px;height:22px}
+  .pro{
+    display:flex;align-items:center;gap:7px;
+    background:linear-gradient(135deg,var(--gold1),var(--gold2));
+    color:#fff;font-weight:800;font-size:14px;letter-spacing:.5px;
+    padding:10px 18px;border-radius:999px;cursor:pointer;position:relative;overflow:hidden;
+    box-shadow:0 6px 16px rgba(245,166,35,.35);transition:transform .2s;
+  }
+  .pro:hover{transform:translateY(-2px)}
+  .pro svg{width:16px;height:16px}
+  .pro::before{content:"";position:absolute;top:0;left:-60%;width:40%;height:100%;
+    background:linear-gradient(100deg,transparent,rgba(255,255,255,.6),transparent);
+    transform:skewX(-20deg);animation:sheen 4.5s ease-in-out infinite}
+
+  /* ---------- 内容 / 空状态 ---------- */
+  .content{flex:1;position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:20px}
+  .empty{display:flex;flex-direction:column;align-items:center;gap:18px;transform:translateY(120px)}
+  .folder-wrap{width:170px;height:140px;animation:float 5s ease-in-out infinite}
+  .folder-wrap svg{width:100%;height:100%;overflow:visible}
+  .qmark{transform-box:fill-box;transform-origin:center;animation:wiggle 4s ease-in-out infinite}
+  .empty p{font-size:22px;font-weight:500;color:var(--muted);letter-spacing:.3px}
+
+  .button-container {
+    margin-top: auto;
+    display: flex;
+    justify-content: center;
+    width: 100%;
+    padding: 20px 0;
+  }
+
+  .new-btn{
+    background:linear-gradient(180deg,#3b86ff,var(--blue));
+    color:#fff;border:none;cursor:pointer;
+    font-size:20px;font-weight:700;font-family:var(--font);
+    padding:16px 32px;width:auto;min-width:400px;max-width:600px;border-radius:999px;
+    box-shadow:var(--shadow-md);position:relative;overflow:hidden;
+    transition:transform .2s,box-shadow .2s;
+  }
+  .new-btn:hover{transform:translateY(-3px);box-shadow:0 16px 38px rgba(31,107,240,.4)}
+  .new-btn:active{transform:translateY(-1px)}
+  .new-btn::after{content:"";position:absolute;inset:0;
+    background:radial-gradient(120px 60px at var(--mx,50%) var(--my,50%),rgba(255,255,255,.35),transparent 70%);
+    opacity:0;transition:opacity .25s}
+  .new-btn:hover::after{opacity:1}
+  .ripple{position:absolute;border-radius:50%;background:rgba(255,255,255,.5);
+    transform:scale(0);animation:ripple .6s ease-out;pointer-events:none}
+
+  /* ---------- 悬浮按钮 ---------- */
+  .fab{position:fixed;display:grid;place-items:center;border:none;cursor:pointer;
+    box-shadow:0 8px 22px rgba(20,24,40,.18);transition:transform .25s,box-shadow .25s;z-index:50}
+  .fab:hover{transform:scale(1.1)}
+  .fab-translate{right:0;top:50%;transform:translateY(-50%);
+    width:46px;height:46px;border-radius:23px 0 0 23px;background:linear-gradient(135deg,var(--pink),var(--pink-deep))}
+  .fab-translate:hover{transform:translateY(-50%) scale(1.08)}
+  .fab-translate svg,.fab-translate .glyph{width:24px;height:24px;color:#fff}
+  .fab-chat{right:26px;bottom:26px;width:52px;height:52px;border-radius:50%;background:var(--chip-blue)}
+  .fab-chat svg{width:26px;height:26px;color:#1f2a44}
+  .fab .tip{position:absolute;right:120%;top:50%;transform:translateY(-50%) translateX(6px);
+    background:#1c2026;color:#fff;font-size:12px;font-weight:600;padding:6px 10px;border-radius:8px;
+    white-space:nowrap;opacity:0;pointer-events:none;transition:opacity .2s,transform .2s}
+  .fab-chat .tip{right:auto;left:120%;transform:translateY(-50%) translateX(-6px)}
+  .fab:hover .tip{opacity:1;transform:translateY(-50%) translateX(0)}
+
+  /* ---------- toast ---------- */
+  .toast{position:fixed;left:50%;bottom:30px;transform:translate(-50%,30px);
+    background:#1c2026;color:#fff;padding:13px 22px;border-radius:12px;font-size:14px;font-weight:600;
+    box-shadow:0 12px 30px rgba(0,0,0,.25);opacity:0;pointer-events:none;transition:opacity .3s,transform .3s;z-index:80}
+  .toast.show{opacity:1;transform:translate(-50%,0)}
+
+  .scrim{display:none;position:fixed;inset:0;background:rgba(20,24,40,.35);z-index:35}
+
+  @keyframes breathe{0%,100%{transform:scale(1);opacity:.6}50%{transform:scale(1.18);opacity:0}}
+  @keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-12px)}}
+  @keyframes wiggle{0%,100%{transform:rotate(0)}25%{transform:rotate(8deg)}75%{transform:rotate(-8deg)}}
+  @keyframes sheen{0%,60%{left:-60%}80%,100%{left:130%}}
+  @keyframes fadeUp{to{opacity:1;transform:translateX(0)}}
+  @keyframes ripple{to{transform:scale(3.5);opacity:0}}
+
+  @media(max-width:860px){
+    .sidebar{position:fixed;top:0;left:0;height:100%;transform:translateX(-100%);box-shadow:0 0 40px rgba(0,0,0,.18)}
+    .sidebar.open{transform:translateX(0)}
+    .scrim.show{display:block}
+    .hamburger{display:grid}
+    .topbar{padding:18px}
+    .new-btn{width:84%}
+  }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <!-- 侧边栏 -->
+  <aside class="sidebar" id="sidebar">
+    <div class="brand">
+      <span class="logo" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none">
+          <rect x="9" y="3" width="6" height="11" rx="3" fill="#fff"/>
+          <path d="M5 11a7 7 0 0 0 14 0" stroke="#fff" stroke-width="2" stroke-linecap="round"/>
+          <line x1="12" y1="18" x2="12" y2="21" stroke="#fff" stroke-width="2" stroke-linecap="round"/>
+        </svg>
+      </span>
+      <h1>摘要</h1>
+    </div>
+
+    <nav class="nav" id="nav">
+      <button class="nav-item active">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="4" width="18" height="16" rx="3"/><line x1="8" y1="9" x2="17" y2="9"/><line x1="8" y1="13" x2="17" y2="13"/><line x1="8" y1="17" x2="13" y2="17"/></svg>
+        全部
+      </button>
+      <button class="nav-item">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M17 10.5V7c0-.55-.45-1-1-1H4c-.55 0-1 .45-1 1v10c0 .55.45 1 1 1h12c.55 0 1-.45 1-1v-3.5l4 4v-11l-4 4z"/></svg>
+        会议
+      </button>
+      <button class="nav-item">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
+        收藏
+      </button>
+      <button class="nav-item">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M3 6a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>
+        文件夹
+      </button>
+      <button class="nav-item">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 2h8l4 4v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2z"/><path d="M12 17v-6m0 0l-2.6 2.6M12 11l2.6 2.6" stroke="#fff" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        已导入
+      </button>
+      <button class="nav-item">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 2h8l4 4v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2z"/><text x="12" y="17" font-size="6.2" font-weight="800" fill="#fff" text-anchor="middle" font-family="Arial">PDF</text></svg>
+        PDF
+      </button>
+      <button class="nav-item">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 2h8l4 4v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2z"/><g stroke="#fff" stroke-width="1.6" stroke-linecap="round"><line x1="8" y1="11" x2="16" y2="11"/><line x1="8" y1="14.5" x2="16" y2="14.5"/><line x1="8" y1="18" x2="13" y2="18"/></g></svg>
+        我的笔记
+      </button>
+      <button class="nav-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+        设置
+      </button>
+    </nav>
+
+  </aside>
+  <div class="scrim" id="scrim"></div>
+
+  <!-- 主区 -->
+  <main class="main">
+    <header class="topbar">
+      <button class="hamburger" id="hamburger" aria-label="菜单">
+        <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="4" y1="7" x2="20" y2="7"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="17" x2="20" y2="17"/></svg>
+      </button>
+      <label class="search">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.5" y2="16.5"/></svg>
+        <input type="text" placeholder="搜索录音、会议或笔记…">
+      </label>
+      <div class="top-actions">
+        <button class="icon-btn" aria-label="历史记录" onclick="toast('暂无历史记录')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 12a8.5 8.5 0 1 0 2.6-6.1"/><path d="M3 4v4h4"/><path d="M12 8v4l3 2"/></svg>
+        </button>
+      </div>
+    </header>
+
+    <section class="content">
+      <div class="empty">
+        <div class="folder-wrap" aria-hidden="true">
+          <svg viewBox="0 0 200 160">
+            <defs>
+              <linearGradient id="back" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0" stop-color="#dfe4ea"/><stop offset="1" stop-color="#c2c8d2"/>
+              </linearGradient>
+              <linearGradient id="front" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0" stop-color="#eef1f5"/><stop offset="1" stop-color="#cfd6df"/>
+              </linearGradient>
+              <linearGradient id="qg" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0" stop-color="#8194a9"/><stop offset="1" stop-color="#56697f"/>
+              </linearGradient>
+              <filter id="ds" x="-30%" y="-30%" width="160%" height="160%">
+                <feDropShadow dx="0" dy="8" stdDeviation="7" flood-color="#3a4658" flood-opacity=".18"/>
+              </filter>
+            </defs>
+            <!-- 后片 -->
+            <path d="M30 42 q0-9 9-9 h32 l11 13 h72 q9 0 9 9 v62 q0 9-9 9 H39 q-9 0-9-9 z" fill="url(#back)"/>
+            <!-- 问号 -->
+            <g class="qmark" filter="url(#ds)">
+              <text x="148" y="66" font-size="62" font-weight="800" fill="#3f4f63" font-family="Arial" opacity=".35" transform="translate(2,3)">?</text>
+              <text x="148" y="66" font-size="62" font-weight="800" fill="url(#qg)" font-family="Arial">?</text>
+            </g>
+            <!-- 前片 -->
+            <path d="M22 72 q0-7 7-7 h58 l9 11 h76 q7 0 7 7 v40 q0 9-9 9 H31 q-9 0-9-9 z" fill="url(#front)" filter="url(#ds)"/>
+            <path d="M24 73 q0-6 6-6 h56 l8 10" fill="none" stroke="#ffffff" stroke-width="2.5" stroke-linecap="round" opacity=".7"/>
+          </svg>
+        </div>
+        <p>暂无录音记录</p>
+      </div>
+      <div class="button-container">
+        <button class="new-btn" id="newBtn">开始听记</button>
+      </div>
+    </section>
+
+    </section>
+  </main>
+
+  <div class="toast" id="toast"></div>
+</div>
+
+<script>
+  // 侧边栏选中切换
+  document.getElementById('nav').addEventListener('click',e=>{
+    const item=e.target.closest('.nav-item'); if(!item) return;
+    document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+    item.classList.add('active');
+    closeMenu();
+  });
+
+  // 新建按钮：水波纹 + 跳转到录音界面
+  const newBtn=document.getElementById('newBtn');
+  if(newBtn) {
+    newBtn.addEventListener('mousemove',e=>{
+      const r=newBtn.getBoundingClientRect();
+      newBtn.style.setProperty('--mx',(e.clientX-r.left)+'px');
+      newBtn.style.setProperty('--my',(e.clientY-r.top)+'px');
+    });
+    newBtn.addEventListener('click',e=>{
+      const r=newBtn.getBoundingClientRect();
+      const s=document.createElement('span'); s.className='ripple';
+      const d=Math.max(r.width,r.height);
+      s.style.width=s.style.height=d+'px';
+      s.style.left=(e.clientX-r.left-d/2)+'px';
+      s.style.top=(e.clientY-r.top-d/2)+'px';
+      newBtn.appendChild(s); setTimeout(()=>s.remove(),600);
+      // 跳转到会议录音界面
+      window.location.href = 'meeting-recorder.html';
+    });
+  }
+
+  // 移动端菜单
+  const sb=document.getElementById('sidebar'), scrim=document.getElementById('scrim');
+  document.getElementById('hamburger').onclick=()=>{sb.classList.add('open');scrim.classList.add('show')};
+  function closeMenu(){sb.classList.remove('open');scrim.classList.remove('show')}
+  scrim.onclick=closeMenu;
+
+  // toast
+  let tT;
+  function toast(msg){
+    const t=document.getElementById('toast');
+    t.textContent=msg; t.classList.add('show');
+    clearTimeout(tT); tT=setTimeout(()=>t.classList.remove('show'),1800);
+  }
+</script>
+</body>
+</html>

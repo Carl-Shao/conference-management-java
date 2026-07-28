@@ -41,11 +41,13 @@
         }
 
         .navbar-title {
-            font-size: 18px;
+            font-size: 20px; /* 增大字体 */
             font-weight: 600;
             display: flex;
             align-items: center;
             gap: 8px;
+            position: relative;
+            top: -8px; /* 向上进一步调整位置 */
         }
 
         .navbar-actions {
@@ -59,7 +61,7 @@
             border: none;
             border-radius: 8px;
             padding: 10px;
-            color: #636366; 
+            color: #0a0a0a; 
             font-size: 20px;
             cursor: pointer;
             transition: background 0.2s;
@@ -119,11 +121,30 @@
             box-shadow: 0 1px 4px rgba(0, 122, 255, 0.3);
         }
 
+        .action-right-gray {
+            background: linear-gradient(135deg, #131313, #111112); 
+            border: none;
+            border-radius: 20px;
+            padding: 8px 16px;
+            color: white;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            box-shadow: 0 2px 8px rgba(174, 176, 180, 0.25);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .action-right-gray:active {
+            transform: scale(0.95);
+            box-shadow: 0 1px 4px rgba(174, 176, 180, 0.3);
+        }
+
         /* 内联搜索栏 */
         .search-container-inline {
             position: absolute;
             left: 50%;
-            transform: translateX(-50%);
+            top: 55%;
+            transform: translate(-50%, -50%);
             background: #f2f2f7;
             border-radius: 10px;
             padding: 6px 12px;
@@ -256,7 +277,7 @@
             position: sticky;
             bottom: 0;
             background: white;
-            padding: 20px 16px 34px; /* iOS安全边距 */
+            padding: 20px 16px 34px; /* 安全边距 */
             border-top: 1px solid #e0e0e0;
             box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.05);
         }
@@ -312,6 +333,10 @@
                 >
             </div>
             <div class="navbar-actions">
+                <button class="action-right-gray" @click="uploadFile" style="margin-right: 12px;">
+                    <i class="el-icon-folder-opened" style="margin-right: 6px; color: white;"></i>
+                    <span style="color: white;">上传</span>
+                </button>
                 <button class="action-right" @click="startRecording">
                     <i class="el-icon-microphone" style="margin-right: 6px;"></i>
                     <span>听记</span>
@@ -502,6 +527,12 @@
                 showFilter() {
                     // 显示筛选选项
                     this.$message.info('显示筛选选项');
+                },
+
+                uploadFile() {
+                    // 上传文件功能
+                    alert('上传文件功能');
+                    // 这里可以实现实际的文件上传功能
                 },
 
                 // 加载会议数据的方法
