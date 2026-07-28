@@ -90,14 +90,14 @@
   .nav-item::before{
     content:"";
     position:absolute;
-    inset:3px 50px 3px 2px;
+    inset:3px 50px 3px 2px;        
     border-radius:20px;
     background:transparent;
     transition:background .18s ease, box-shadow .18s ease;
-    z-index:-1; /* 放在内容后面，但确保波纹在其上 */
+    z-index:-1;
   }
   .nav-item:hover::before{
-    background:var(--gray-soft);
+    background:var(--gray-soft);  
   }
   .nav-item.active::before{
     content:"";
@@ -105,25 +105,7 @@
     inset:3px 50px 3px 2px;
     border-radius:20px;
     background:var(--blue-soft);
-    z-index:-1; /* 确保在内容下面 */
-  }
-
-  /* 波纹效果 */
-  .ripple {
-    position: absolute;
-    border-radius: 50%;
-    background: radial-gradient(circle, rgba(47,123,255,0.4) 0%, transparent 70%);
-    transform: scale(0);
-    animation: ripple-animation 0.6s ease-out;
-    pointer-events: none;
-    z-index: 1; 
-  }
-
-  @keyframes ripple-animation {
-    to {
-      transform: scale(4);
-      opacity: 0;
-    }
+    z-index:-1;
   }
 
   .download{
@@ -249,144 +231,6 @@
 
   .scrim{display:none;position:fixed;inset:0;background:rgba(20,24,40,.35);z-index:35}
 
-  /* 会议记录项样式 */
-  .meeting-record {
-    display: flex;
-    align-items: center;
-    padding: 16px 24px;
-    margin: 0 34px 12px;
-    border-radius: 20px; /* 增大圆角 */
-    background: var(--main-bg); /* 与主背景同色 */
-    transition: all 0.3s ease;
-    cursor: pointer;
-    position: relative; /* 添加相对定位以建立层叠上下文 */
-  }
-
-  .meeting-record:hover {
-    background: #e6f0ff; /* 稍微浅一些的蓝色背景 */
-    border-radius: 20px; /* 确保悬停时也有相同圆角 */
-  }
-
-  /* 点击反弹动画 */
-  .clicked {
-    animation: clickEffect 0.3s ease;
-  }
-
-  @keyframes clickEffect {
-    0% { transform: scale(1); }
-    50% { transform: scale(0.98); }
-    100% { transform: scale(1); }
-  }
-
-  .meeting-icon {
-    font-size: 24px;
-    margin-right: 16px;
-    flex-shrink: 0;
-  }
-
-  .meeting-details {
-    flex: 1;
-  }
-
-  .meeting-title {
-    font-size: 16px;
-    font-weight: 600;
-    color: var(--ink);
-    margin-bottom: 6px;
-  }
-
-  .meeting-meta {
-    display: flex;
-    font-size: 14px;
-    color: var(--ink-soft);
-    gap: 16px;
-  }
-
-  .meeting-actions {
-    flex-shrink: 0;
-    width: 36px;
-    height: 36px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: 50%;
-    cursor: pointer;
-    transition: background 0.2s;
-    position: relative;
-    z-index: 2; /* 确保按钮在记录项上方 */
-  }
-
-  .meeting-actions:hover {
-    background: var(--search-bg);
-  }
-
-  .dots {
-    display: flex;
-    flex-direction: column;
-    justify-content: space-around;
-    width: 4px;
-    height: 16px;
-  }
-
-  .dot {
-    width: 4px;
-    height: 4px;
-    background: var(--ink-soft);
-    border-radius: 50%;
-  }
-
-  /* 弹出菜单样式 */
-  .dropdown-menu {
-    position: absolute;
-    top: 100%;
-    right: 0;
-    background: white;
-    border-radius: 12px;
-    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.12);
-    padding: 8px 0;
-    min-width: 180px;
-    z-index: 10; /* 提高层级确保菜单在最上方 */
-    display: none;
-    transform-origin: top right; /* 设置变换原点 */
-    margin-top: 4px; /* 轻微间隔 */
-  }
-
-  .dropdown-menu.show {
-    display: block;
-    animation: expandFromButton 0.2s ease;
-  }
-
-  @keyframes expandFromButton {
-    from {
-      opacity: 0;
-      transform: scale(0.8) translateY(0);
-    }
-    to {
-      opacity: 1;
-      transform: scale(1) translateY(0);
-    }
-  }
-
-  .menu-item {
-    display: flex;
-    align-items: center;
-    padding: 10px 16px;
-    cursor: pointer;
-    color: #000;
-    text-decoration: none;
-    font-size: 14px;
-  }
-
-  .menu-item:hover {
-    background: var(--search-bg);
-  }
-
-  .menu-icon {
-    margin-right: 12px;
-    width: 18px;
-    text-align: center;
-  }
-
   @keyframes breathe{0%,100%{transform:scale(1);opacity:.6}50%{transform:scale(1.18);opacity:0}}
   @keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-12px)}}
   @keyframes wiggle{0%,100%{transform:rotate(0)}25%{transform:rotate(8deg)}75%{transform:rotate(-8deg)}}
@@ -475,105 +319,38 @@
       </div>
     </header>
 
-    <!-- 添加"我的记录"标题 -->
-    <div style="padding: 0 34px; margin-bottom: 20px;">
-      <h2 style="font-size: 22px; font-weight: 600; color: var(--ink-soft); letter-spacing: 1px;">我的记录</h2>
-    </div>
-
-    <!-- 会议记录列表 -->
-    <div class="meeting-records">
-      <!-- 第一条记录 -->
-      <div class="meeting-record" onclick="handleRecordClick(this)">
-        <div class="meeting-icon">📝</div>
-        <div class="meeting-details">
-          <div class="meeting-title">产品规划会议</div>
-          <div class="meeting-meta">
-            <span>2026.01.25 12:01</span>
-            <span>01:20:05</span>
-          </div>
-        </div>
-        <div class="meeting-actions" onclick="toggleDropdown(event, 'menu1')">
-          <div class="dots">
-            <div class="dot"></div>
-            <div class="dot"></div>
-            <div class="dot"></div>
-          </div>
-          <div class="dropdown-menu" id="menu1">
-            <a href="#" class="menu-item" onclick="event.stopPropagation(); alert('下载')">
-              <span class="menu-icon"><svg style="width:18px;height:18px;fill:#52c41a;" viewBox="0 0 24 24"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg></span>
-              <span>下载</span>
-            </a>
-            <a href="#" class="menu-item" onclick="event.stopPropagation(); alert('添加到喜欢')">
-              <span class="menu-icon"><svg style="width:18px;height:18px;fill:none;stroke:#f759ab;stroke-width:2;" viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg></span>
-              <span>添加到喜欢</span>
-            </a>
-            <a href="#" class="menu-item" onclick="event.stopPropagation(); alert('移动到')">
-              <span class="menu-icon"><svg style="width:18px;height:18px;fill:#1890ff;" viewBox="0 0 24 24"><path d="M10 4H4c-1.11 0-2 .89-2 2v12c0 1.11.89 2 2 2h16c1.11 0 2-.89 2-2V8c0-1.11-.89-2-2-2h-8l-2-2z"/></svg></span>
-              <span>移动到</span>
-            </a>
-            <a href="#" class="menu-item" onclick="event.stopPropagation(); alert('重命名')">
-              <span class="menu-icon"><svg style="width:18px;height:18px;fill:#722ed1;" viewBox="0 0 24 24"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg></span>
-              <span>重命名</span>
-            </a>
-            <a href="#" class="menu-item" onclick="event.stopPropagation(); alert('合并')">
-              <span class="menu-icon"><svg style="width:18px;height:18px;fill:none;stroke:#faad14;stroke-width:2;" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg></span>
-              <span>合并</span>
-            </a>
-            <a href="#" class="menu-item" onclick="event.stopPropagation(); alert('删除')">
-              <span class="menu-icon"><svg style="width:18px;height:18px;fill:#f5222d;" viewBox="0 0 24 24"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg></span>
-              <span>删除</span>
-            </a>
-          </div>
-        </div>
-      </div>
-
-      <!-- 第二条记录 -->
-      <div class="meeting-record" onclick="handleRecordClick(this)">
-        <div class="meeting-icon">👥</div>
-        <div class="meeting-details">
-          <div class="meeting-title">团队周例会</div>
-          <div class="meeting-meta">
-            <span>2026.01.23 09:15</span>
-            <span>00:45:20</span>
-          </div>
-        </div>
-        <div class="meeting-actions" onclick="toggleDropdown(event, 'menu2')">
-          <div class="dots">
-            <div class="dot"></div>
-            <div class="dot"></div>
-            <div class="dot"></div>
-          </div>
-          <div class="dropdown-menu" id="menu2">
-            <a href="#" class="menu-item" onclick="event.stopPropagation(); alert('下载')">
-              <span class="menu-icon"><svg style="width:18px;height:18px;fill:#52c41a;" viewBox="0 0 24 24"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg></span>
-              <span>下载</span>
-            </a>
-            <a href="#" class="menu-item" onclick="event.stopPropagation(); alert('添加到喜欢')">
-              <span class="menu-icon"><svg style="width:18px;height:18px;fill:none;stroke:#f759ab;stroke-width:2;" viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg></span>
-              <span>添加到喜欢</span>
-            </a>
-            <a href="#" class="menu-item" onclick="event.stopPropagation(); alert('移动到')">
-              <span class="menu-icon"><svg style="width:18px;height:18px;fill:#1890ff;" viewBox="0 0 24 24"><path d="M10 4H4c-1.11 0-2 .89-2 2v12c0 1.11.89 2 2 2h16c1.11 0 2-.89 2-2V8c0-1.11-.89-2-2-2h-8l-2-2z"/></svg></span>
-              <span>移动到</span>
-            </a>
-            <a href="#" class="menu-item" onclick="event.stopPropagation(); alert('重命名')">
-              <span class="menu-icon"><svg style="width:18px;height:18px;fill:#722ed1;" viewBox="0 0 24 24"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg></span>
-              <span>重命名</span>
-            </a>
-            <a href="#" class="menu-item" onclick="event.stopPropagation(); alert('合并')">
-              <span class="menu-icon"><svg style="width:18px;height:18px;fill:none;stroke:#faad14;stroke-width:2;" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg></span>
-              <span>合并</span>
-            </a>
-            <a href="#" class="menu-item" onclick="event.stopPropagation(); alert('删除')">
-              <span class="menu-icon"><svg style="width:18px;height:18px;fill:#f5222d;" viewBox="0 0 24 24"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg></span>
-              <span>删除</span>
-            </a>
-          </div>
-        </div>
-      </div>
-    </div>
-
     <section class="content">
+      <div class="empty">
+        <div class="folder-wrap" aria-hidden="true">
+          <svg viewBox="0 0 200 160">
+            <defs>
+              <linearGradient id="back" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0" stop-color="#dfe4ea"/><stop offset="1" stop-color="#c2c8d2"/>
+              </linearGradient>
+              <linearGradient id="front" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0" stop-color="#eef1f5"/><stop offset="1" stop-color="#cfd6df"/>
+              </linearGradient>
+              <linearGradient id="qg" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0" stop-color="#8194a9"/><stop offset="1" stop-color="#56697f"/>
+              </linearGradient>
+              <filter id="ds" x="-30%" y="-30%" width="160%" height="160%">
+                <feDropShadow dx="0" dy="8" stdDeviation="7" flood-color="#3a4658" flood-opacity=".18"/>
+              </filter>
+            </defs>
+            <!-- 后片 -->
+            <path d="M30 42 q0-9 9-9 h32 l11 13 h72 q9 0 9 9 v62 q0 9-9 9 H39 q-9 0-9-9 z" fill="url(#back)"/>
+            <!-- 问号 -->
+            <g class="qmark" filter="url(#ds)">
+              <text x="148" y="66" font-size="62" font-weight="800" fill="#3f4f63" font-family="Arial" opacity=".35" transform="translate(2,3)">?</text>
+              <text x="148" y="66" font-size="62" font-weight="800" fill="url(#qg)" font-family="Arial">?</text>
+            </g>
+            <!-- 前片 -->
+            <path d="M22 72 q0-7 7-7 h58 l9 11 h76 q7 0 7 7 v40 q0 9-9 9 H31 q-9 0-9-9 z" fill="url(#front)" filter="url(#ds)"/>
+            <path d="M24 73 q0-6 6-6 h56 l8 10" fill="none" stroke="#ffffff" stroke-width="2.5" stroke-linecap="round" opacity=".7"/>
+          </svg>
+        </div>
+        <p>暂无录音记录</p>
+      </div>
       <div class="button-container">
         <button class="new-btn" id="newBtn">开始听记</button>
       </div>
@@ -589,29 +366,6 @@
   // 侧边栏选中切换
   document.getElementById('nav').addEventListener('click',e=>{
     const item=e.target.closest('.nav-item'); if(!item) return;
-
-    // 为点击的项目添加波纹效果
-    const rect = item.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
-
-    const ripple = document.createElement('span');
-    ripple.classList.add('ripple');
-    ripple.style.left = `${x}px`;
-    ripple.style.top = `${y}px`;
-
-    // 确保波纹在内容之上
-    ripple.style.zIndex = '2';
-
-    item.appendChild(ripple);
-
-    // 动画结束后移除波纹元素
-    setTimeout(() => {
-      if(ripple.parentNode === item) {
-        ripple.remove();
-      }
-    }, 600);
-
     document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
     item.classList.add('active');
     closeMenu();
@@ -651,57 +405,6 @@
     t.textContent=msg; t.classList.add('show');
     clearTimeout(tT); tT=setTimeout(()=>t.classList.remove('show'),1800);
   }
-
-  // 点击记录行处理函数
-  function handleRecordClick(element) {
-    // 添加点击动画效果
-    element.classList.add('clicked');
-
-    // 在动画结束后移除类名，以便下次点击时可以重新触发动画
-    setTimeout(() => {
-      element.classList.remove('clicked');
-    }, 300);
-  }
-
-  // 下拉菜单功能
-  function toggleDropdown(event, menuId) {
-    event.stopPropagation();
-
-    // 添加点击动画效果
-    const button = event.currentTarget;
-    button.style.transform = 'scale(0.95)'; // 按压收缩效果
-    button.style.transition = 'transform 0.1s ease';
-
-    setTimeout(() => {
-      button.style.transform = 'scale(1)'; // 反弹效果
-
-      // 等待反弹完成后再显示菜单
-      setTimeout(() => {
-        const menu = document.getElementById(menuId);
-        const allMenus = document.querySelectorAll('.dropdown-menu');
-
-        // 关闭其他所有打开的菜单
-        allMenus.forEach(m => {
-          if (m.id !== menuId) {
-            m.classList.remove('show');
-          }
-        });
-
-        // 切换当前菜单
-        menu.classList.toggle('show');
-      }, 100);
-    }, 100);
-  }
-
-  // 点击页面其他地方关闭菜单
-  document.addEventListener('click', function(event) {
-    if (!event.target.closest('.meeting-actions')) {
-      const allMenus = document.querySelectorAll('.dropdown-menu');
-      allMenus.forEach(menu => {
-        menu.classList.remove('show');
-      });
-    }
-  });
 </script>
 </body>
 </html>

@@ -61,7 +61,7 @@
     animation:breathe 2.8s ease-in-out infinite;
   }
   .logo svg{width:22px;height:22px}
-  .brand h1{font-size:26px;font-weight:800;letter-spacing:-.5px;color:#1c2026}
+  .brand h1{font-size:26px;font-weight:800;letter-spacing:2px;color:#1c2026}
 
   .nav{display:flex;flex-direction:column;gap:4px;flex:1}
   .nav-item{
@@ -143,7 +143,8 @@
   }
   .topbar{
     display:flex;align-items:center;gap:18px;
-    padding:26px 34px;
+    padding:16px 0; /* 移除左右边距 */
+    border-bottom: none;
   }
   .hamburger{display:none;width:42px;height:42px;border-radius:12px;border:1px solid var(--line);
     background:#fff;cursor:pointer;place-items:center;color:var(--ink-soft)}
@@ -231,6 +232,253 @@
 
   .scrim{display:none;position:fixed;inset:0;background:rgba(20,24,40,.35);z-index:35}
 
+  /* 顶部栏调整 */
+  .topbar{
+    display:flex;align-items:center;gap:18px;
+    padding:16px 24px; /* 减小内边距使整体上移 */
+    border-bottom: none; /* 移除底部边框线 */
+  }
+
+  /* 返回按钮样式 */
+  .back-btn{
+    width:36px;height:36px;border-radius:10px;border:1px solid var(--line);
+    background:#fff;cursor:pointer;place-items:center;color:var(--ink-soft);
+    display:grid;
+  }
+  .back-btn:hover{background:var(--search-bg)}
+
+  /* 记录信息样式 */
+  .record-info{
+    display:flex;flex-direction:column;align-items:flex-start;margin-left:12px;
+    flex:1;
+  }
+  .record-icon{
+    font-size:26px;margin-bottom:6px; /* 缩小图标 */
+  }
+  .record-title{
+    font-size:18px;font-weight:600;color:var(--ink); /* 缩小字体 */
+  }
+
+  /* 功能按钮组 */
+  .top-actions{
+    display:flex;align-items:center;gap:10px; /* 减小间距 */
+  }
+  .icon-btn{
+    width:36px;height:36px;border-radius:50%;display:grid;place-items:center;
+    background:transparent;border:none;cursor:pointer;color:#3a3f47;transition:background .2s,transform .2s;
+  }
+  .icon-btn:hover{background:rgba(20,24,40,.06);transform:rotate(-15deg)}
+  .icon-btn svg{width:18px;height:18px} /* 缩小图标 */
+
+  /* 爱心按钮特殊样式 */
+  .favorite-btn svg{
+    fill: #ff69b4; /* 粉红色 */
+  }
+  .favorite-btn:hover svg{
+    fill: #ff1493; /* 悬停时更深的粉红色 */
+  }
+
+  /* 选项卡按钮组容器 */
+  .tab-group {
+    position: relative;
+    display: flex;
+    width:100%; /* 占满可用宽度 */
+    max-width:unset; /* 移除最大宽度限制 */
+    margin-left: 0; /* 重置左边距 */
+    margin-right: 0; /* 重置右边距 */
+    margin-top: -8px; /* 调整向上移动量，让整个按钮组靠近标题 */
+  }
+
+  /* 灰色大胶囊容器 */
+  .tab-buttons{
+    display:flex;
+    gap:2px; /* 减小按钮间距 */
+    margin-bottom:0px; /* 移除底部边距 */
+    width:100%; /* 宽度占满容器 */
+    background: var(--search-bg); /* 灰色背景 */
+    border-radius: 999px; /* 大的圆角 */
+    padding: 2px; /* 增加内边距，加大上下宽度 */
+    height: 44px; /* 增加高度以适应更大的白色胶囊 */
+    position: relative; /* 添加定位 */
+    z-index: 10; /* 确保在合适层级 */
+  }
+
+  /* 滑动指示器 */
+  .tab-indicator {
+    position: absolute;
+    background: white; /* 白色背景 */
+    border-radius: 999px; /* 圆角 */
+    transition: transform 0.3s ease, width 0.3s ease;
+    height: 80px; /* 调整高度，与之前一致 */
+    width: 80px; /* 减小宽度，避免超出边界 */
+    z-index: 1;
+    top: 7px; /* 调整垂直居中 */
+    left: 4px; /* 起始位置 */
+  }
+
+  /* 选项卡按钮 */
+  .tab-btn{
+    flex:1;
+    display:flex;align-items:center;justify-content:center;gap:4px;
+    padding:6px 8px; /* 调整内边距，让白色胶囊更小 */
+    border-radius:999px; /* 小的圆角 */
+    cursor:pointer;
+    font-size:15px; /* 保持字体大小不变 */
+    font-weight:570;
+    color:var(--ink);
+    background:transparent; /* 透明背景，由指示器覆盖 */
+    border:none;
+    position:relative;
+    z-index: 2; /* 确保按钮在指示器上方 */
+    transition: color 0.3s ease;
+  }
+  .tab-btn.active{
+    color:var(--blue); /* 选中时文字变蓝 */
+  }
+  .tab-btn:hover:not(.active){
+    color:var(--blue); /* 悬停时文字变蓝 */
+  }
+  .tab-btn svg{
+    width:12px; /* 进一步减小图标 */
+    height:12px;
+  }
+
+  /* 内容区域 */
+  .tab-content{
+    width:100%;
+    max-width:unset; /* 移除最大宽度限制 */
+    flex:1;
+    display:flex;
+    flex-direction:column;
+    align-items:flex-start; /* 改为左对齐 */
+    padding:0; /* 移除所有边距 */
+  }
+
+  /* 内容卡片 */
+  .content-card{
+    width:100%;
+    padding:18px; /* 减小内边距 */
+    background:white;
+    border-radius:18px; /* 稍微调整圆角 */
+    box-shadow:var(--shadow-sm);
+    margin-bottom:16px; /* 减小底部间距 */
+  }
+
+  .card-title{
+    font-size:17px; /* 减小字体 */
+    font-weight:600;
+    margin-bottom:14px; /* 减小间距 */
+    color:var(--ink);
+    border-bottom: none; /* 移除下划线 */
+  }
+
+  .card-content{
+    color:var(--ink-soft);
+    line-height:1.5; /* 调整行高 */
+    font-size:14px; /* 减小字体 */
+  }
+
+  /* 音频播放器 */
+  .audio-player{
+    width:100%;
+    max-width:600px;
+    background:white;
+    border-radius:18px; /* 调整圆角 */
+    padding:16px; /* 减小内边距 */
+    box-shadow:0 10px 30px rgba(0,0,0,.25); /* 黑色阴影 */
+    display:flex;
+    flex-direction:column;
+    gap:14px; /* 减小间距 */
+  }
+
+  .progress-container{
+    display:flex;align-items:center;gap:10px; /* 减小间距 */
+  }
+  .time{
+    font-size:13px; /* 减小字体 */
+    color:var(--ink-soft);
+    min-width:36px; /* 减小宽度 */
+  }
+  .progress-bar{
+    flex:1;
+    height:5px; /* 减小高度 */
+    background:var(--search-bg);
+    border-radius:2.5px; /* 调整圆角 */
+    position:relative;
+    cursor:pointer;
+  }
+  .progress{
+    height:100%;
+    background:var(--blue);
+    border-radius:2.5px;
+    width:30%;
+    position:relative;
+  }
+  .progress-handle{
+    width:14px; /* 减小尺寸 */
+    height:14px;
+    background:white;
+    border:2px solid var(--blue);
+    border-radius:50%;
+    position:absolute;
+    right:-7px;
+    top:50%;
+    transform:translateY(-50%);
+    cursor:pointer;
+  }
+
+  .controls{
+    display:flex;align-items:center;justify-content:center;gap:20px; /* 减小间距 */
+  }
+  .control-btn{
+    width:46px; /* 减小按钮尺寸 */
+    height:46px;
+    border-radius:50%;
+    background:var(--blue);
+    color:white;
+    border:none;
+    cursor:pointer;
+    display:grid;
+    place-items:center;
+    font-size:18px; /* 减小字体 */
+  }
+  .control-btn.play-pause{
+    width:56px; /* 减小播放按钮尺寸 */
+    height:56px;
+  }
+  .control-btn svg{
+    width:20px; /* 减小图标 */
+    height:20px;
+  }
+
+  .more-controls{
+    display:flex;align-items:center;gap:14px; /* 减小间距 */
+  }
+  .more-control-btn{
+    width:36px; /* 减小按钮尺寸 */
+    height:36px;
+    border-radius:50%;
+    background:var(--search-bg);
+    border:none;
+    cursor:pointer;
+    display:grid;
+    place-items:center;
+  }
+  .more-control-btn svg{
+    width:16px; /* 减小图标 */
+    height:16px;
+  }
+
+  /* 爱心按钮特殊样式 */
+  .favorite-btn svg{
+    fill: none; /* 空心效果 */
+    stroke: #ff69b4; /* 粉红色边框 */
+    stroke-width: 2; /* 边框宽度 */
+  }
+  .favorite-btn:hover svg{
+    fill: #ff69b4; /* 悬停时填充粉色 */
+  }
+
   @keyframes breathe{0%,100%{transform:scale(1);opacity:.6}50%{transform:scale(1.18);opacity:0}}
   @keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-12px)}}
   @keyframes wiggle{0%,100%{transform:rotate(0)}25%{transform:rotate(8deg)}75%{transform:rotate(-8deg)}}
@@ -308,55 +556,181 @@
       <button class="hamburger" id="hamburger" aria-label="菜单">
         <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="4" y1="7" x2="20" y2="7"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="17" x2="20" y2="17"/></svg>
       </button>
-      <label class="search">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.5" y2="16.5"/></svg>
-        <input type="text" placeholder="搜索录音、会议或笔记…">
-      </label>
+
+      <!-- 返回按钮 -->
+      <button class="back-btn" id="backBtn" aria-label="返回">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+          <polyline points="15,18 9,12 15,6"/>
+        </svg>
+      </button>
+
+      <!-- 记录图标和标题 -->
+      <div class="record-info">
+        <div class="record-icon">🎙️</div>
+        <div class="record-title">产品规划会议</div>
+      </div>
+
+      <!-- 右上角功能按钮 -->
       <div class="top-actions">
-        <button class="icon-btn" aria-label="历史记录" onclick="toast('暂无历史记录')">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 12a8.5 8.5 0 1 0 2.6-6.1"/><path d="M3 4v4h4"/><path d="M12 8v4l3 2"/></svg>
+        <!-- 添加到喜欢 -->
+        <button class="icon-btn favorite-btn" aria-label="添加到喜欢">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+            <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
+          </svg>
+        </button>
+        <!-- 下载 -->
+        <button class="icon-btn" aria-label="下载">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+            <polyline points="7,10 12,15 17,10"/>
+            <line x1="12" y1="15" x2="12" y2="3"/>
+          </svg>
+        </button>
+        <!-- 更多选项 -->
+        <button class="icon-btn" aria-label="更多选项">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+            <circle cx="12" cy="12" r="1"/>
+            <circle cx="12" cy="5" r="1"/>
+            <circle cx="12" cy="19" r="1"/>
+          </svg>
         </button>
       </div>
     </header>
 
-    <section class="content">
-      <div class="empty">
-        <div class="folder-wrap" aria-hidden="true">
-          <svg viewBox="0 0 200 160">
-            <defs>
-              <linearGradient id="back" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0" stop-color="#dfe4ea"/><stop offset="1" stop-color="#c2c8d2"/>
-              </linearGradient>
-              <linearGradient id="front" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0" stop-color="#eef1f5"/><stop offset="1" stop-color="#cfd6df"/>
-              </linearGradient>
-              <linearGradient id="qg" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0" stop-color="#8194a9"/><stop offset="1" stop-color="#56697f"/>
-              </linearGradient>
-              <filter id="ds" x="-30%" y="-30%" width="160%" height="160%">
-                <feDropShadow dx="0" dy="8" stdDeviation="7" flood-color="#3a4658" flood-opacity=".18"/>
-              </filter>
-            </defs>
-            <!-- 后片 -->
-            <path d="M30 42 q0-9 9-9 h32 l11 13 h72 q9 0 9 9 v62 q0 9-9 9 H39 q-9 0-9-9 z" fill="url(#back)"/>
-            <!-- 问号 -->
-            <g class="qmark" filter="url(#ds)">
-              <text x="148" y="66" font-size="62" font-weight="800" fill="#3f4f63" font-family="Arial" opacity=".35" transform="translate(2,3)">?</text>
-              <text x="148" y="66" font-size="62" font-weight="800" fill="url(#qg)" font-family="Arial">?</text>
-            </g>
-            <!-- 前片 -->
-            <path d="M22 72 q0-7 7-7 h58 l9 11 h76 q7 0 7 7 v40 q0 9-9 9 H31 q-9 0-9-9 z" fill="url(#front)" filter="url(#ds)"/>
-            <path d="M24 73 q0-6 6-6 h56 l8 10" fill="none" stroke="#ffffff" stroke-width="2.5" stroke-linecap="round" opacity=".7"/>
-          </svg>
+    <div class="content">
+      <!-- 选项卡按钮 -->
+      <div class="tab-group" style="width: calc(100% - 30px); margin-left: 15px;">
+        <div class="tab-buttons">
+          <div class="tab-indicator"></div>  <!-- 将指示器移到按钮容器内部 -->
+          <button class="tab-btn active" data-tab="summary">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+              <polyline points="14,2 14,8 20,8"/>
+              <line x1="16" y1="13" x2="8" y2="13"/>
+              <line x1="16" y1="17" x2="8" y2="17"/>
+              <polyline points="10,9 9,9 8,9"/>
+            </svg>
+            纪要
+          </button>
+          <button class="tab-btn" data-tab="transcript">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+              <polyline points="14,2 14,8 20,8"/>
+              <line x1="16" y1="13" x2="8" y2="13"/>
+              <line x1="16" y1="17" x2="8" y2="17"/>
+              <line x1="10" y1="9" x2="8" y2="9"/>
+            </svg>
+            转写
+          </button>
+          <button class="tab-btn" data-tab="notes">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+              <path d="M12 20h9"/>
+              <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/>
+            </svg>
+            笔记
+          </button>
         </div>
-        <p>暂无录音记录</p>
       </div>
-      <div class="button-container">
-        <button class="new-btn" id="newBtn">开始听记</button>
-      </div>
-    </section>
 
-    </section>
+      <!-- 内容区域减少间距 -->
+      <div class="tab-content" style="width: calc(100% - 30px); margin-left: 15px; margin-top: 12px;">
+        <!-- 纪要内容 -->
+        <div id="summary-content" class="content-section">
+          <div class="summary-content" style="font-size: 14px;">
+            <h2 style="color: var(--blue); margin: 14px 0; font-size: 18px;">会议主题：Q2产品规划讨论</h2>
+            <p><strong style="font-size: 15px;">参会人员：</strong>张三、李四、王五</p>
+            <p><strong style="font-size: 15px;">会议时间：</strong>2026年01月25日 12:01-13:21</p>
+            <br>
+            <h2 style="color: var(--blue); margin: 14px 0; font-size: 18px;">主要议题</h2>
+            <p>1. Q2产品路线图确认</p>
+            <p>2. 新功能优先级排序</p>
+            <p>3. 开发资源分配</p>
+            <br>
+            <h2 style="color: var(--blue); margin: 14px 0; font-size: 18px;">决议事项</h2>
+            <p>• 确定P0功能：用户管理系统优化</p>
+            <p>• P1功能延后：报表模块重构</p>
+            <p>• 产品经理需在下周提交详细需求文档</p>
+          </div>
+        </div>
+
+        <!-- 转写内容 -->
+        <div id="transcript-content" class="content-section" style="display:none;">
+          <div class="transcript-content" style="font-size: 14px;">
+            <h2 style="color: var(--blue); margin: 14px 0; font-size: 18px;">会议转写</h2>
+            <p><strong style="font-size: 15px;">12:01:05</strong> 张三：大家下午好，我们开始今天的Q2产品规划会议...</p>
+            <br>
+            <p><strong style="font-size: 15px;">12:03:12</strong> 李四：我觉得用户管理系统的优化确实比较急迫...</p>
+            <br>
+            <p><strong style="font-size: 15px;">12:08:30</strong> 王五：技术方面我们需要考虑现有的架构扩展性...</p>
+            <br>
+            <p><strong style="font-size: 15px;">12:15:45</strong> 张三：关于报表模块，是否可以延后到下个季度？...</p>
+            <br>
+            <p><strong style="font-size: 15px;">12:20:18</strong> 李四：同意，目前资源更应该投入到核心功能上...</p>
+            <br>
+            <p><strong style="font-size: 15px;">13:18:03</strong> 王五：那么我们总结一下今天的主要决策...</p>
+            <br>
+            <p><strong style="font-size: 15px;">13:20:25</strong> 张三：好的，本次会议就到这里，感谢大家参与。</p>
+          </div>
+        </div>
+
+        <!-- 笔记内容 -->
+        <div id="notes-content" class="content-section" style="display:none;">
+          <div class="notes-content" style="font-size: 14px;">
+            <h2 style="color: var(--blue); margin: 14px 0; font-size: 18px;">个人笔记</h2>
+            <h3 style="margin: 10px 0; font-size: 16px; font-weight: bold;">会议要点：</h3>
+            <p>• 用户管理系统优化为Q2 P0任务</p>
+            <p>• 报表模块重构延期至Q3</p>
+            <p>• 需要更详细的UI/UX设计稿</p>
+            <br>
+            <h3 style="margin: 10px 0; font-size: 16px; font-weight: bold;">后续行动：</h3>
+            <p>• 产品经理下周提供完整需求文档</p>
+            <p>• 技术团队评估开发工作量</p>
+            <p>• 设计师准备新的交互原型</p>
+            <br>
+            <h3 style="margin: 10px 0; font-size: 16px; font-weight: bold;">备注：</h3>
+            <p>• 需要和市场部门同步更新计划</p>
+            <p>• 考虑加入A/B测试功能</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- 音频播放器 -->
+      <div class="audio-player">
+        <div class="progress-container">
+          <span class="time">12:01</span>
+          <div class="progress-bar">
+            <div class="progress">
+              <div class="progress-handle"></div>
+            </div>
+          </div>
+          <span class="time">13:21</span>
+        </div>
+        <div class="controls">
+          <div class="more-controls">
+            <button class="more-control-btn" aria-label="静音">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
+                <path d="M15.54 8.46a5 5 0 0 1 0 7.07"/>
+                <path d="M19.07 4.93a10 10 0 0 1 0 14.14"/>
+              </svg>
+            </button>
+          </div>
+          <button class="control-btn play-pause" id="playPauseBtn" aria-label="播放/暂停">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+              <polygon points="5 3 19 12 5 21 5 3"/>
+            </svg>
+          </button>
+          <div class="more-controls">
+            <button class="more-control-btn" aria-label="倍速">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                <circle cx="12" cy="12" r="10"/>
+                <polyline points="12 6 12 12 16 14"/>
+              </svg>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
   </main>
 
   <div class="toast" id="toast"></div>
@@ -371,26 +745,99 @@
     closeMenu();
   });
 
-  // 新建按钮：水波纹 + 跳转到录音界面
-  const newBtn=document.getElementById('newBtn');
-  if(newBtn) {
-    newBtn.addEventListener('mousemove',e=>{
-      const r=newBtn.getBoundingClientRect();
-      newBtn.style.setProperty('--mx',(e.clientX-r.left)+'px');
-      newBtn.style.setProperty('--my',(e.clientY-r.top)+'px');
-    });
-    newBtn.addEventListener('click',e=>{
-      const r=newBtn.getBoundingClientRect();
-      const s=document.createElement('span'); s.className='ripple';
-      const d=Math.max(r.width,r.height);
-      s.style.width=s.style.height=d+'px';
-      s.style.left=(e.clientX-r.left-d/2)+'px';
-      s.style.top=(e.clientY-r.top-d/2)+'px';
-      newBtn.appendChild(s); setTimeout(()=>s.remove(),600);
-      // 跳转到会议录音界面
-      window.location.href = 'meeting-recorder.html';
-    });
+  // 返回按钮功能
+  document.getElementById('backBtn').addEventListener('click', function() {
+    // 这里可以设置返回到首页或其他逻辑
+    window.location.href = 'meeting-index.html';
+  });
+
+  // 选项卡切换功能
+  const tabButtons = document.querySelectorAll('.tab-btn');
+  const contentSections = document.querySelectorAll('.content-section');
+  const indicator = document.querySelector('.tab-indicator');
+
+  // 初始化指示器位置
+  function initIndicator() {
+    const activeTab = document.querySelector('.tab-btn.active');
+    if (activeTab && indicator) {
+      const rect = activeTab.getBoundingClientRect();
+      const parentRect = activeTab.parentElement.getBoundingClientRect();
+
+      indicator.style.width = `${rect.width}px`;
+      indicator.style.transform = `translateX(${rect.left - parentRect.left}px)`;
+      indicator.style.height = `${rect.height - 10}px`; // 稍微调整高度
+    }
   }
+
+  // 页面加载完成后初始化
+  document.addEventListener('DOMContentLoaded', initIndicator);
+
+  // 监听窗口大小变化，重新计算位置
+  window.addEventListener('resize', initIndicator);
+
+  tabButtons.forEach(button => {
+    button.addEventListener('click', function() {
+      const tabId = this.getAttribute('data-tab');
+
+      // 更新按钮状态
+      tabButtons.forEach(btn => btn.classList.remove('active'));
+      this.classList.add('active');
+
+      // 更新指示器位置
+      if (indicator) {
+        const rect = this.getBoundingClientRect();
+        const parentRect = this.parentElement.getBoundingClientRect();
+        indicator.style.width = `${rect.width}px`;
+        indicator.style.transform = `translateX(${rect.left - parentRect.left}px)`;
+      }
+
+      // 显示对应内容
+      contentSections.forEach(section => {
+        section.style.display = 'none';
+      });
+      document.getElementById(`${tabId}-content`).style.display = 'block';
+    });
+  });
+
+  // 播放/暂停功能
+  const playPauseBtn = document.getElementById('playPauseBtn');
+  let isPlaying = false;
+
+  playPauseBtn.addEventListener('click', function() {
+    isPlaying = !isPlaying;
+
+    if (isPlaying) {
+      // 播放状态
+      this.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>';
+    } else {
+      // 暂停状态
+      this.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>';
+    }
+  });
+
+  // 进度条拖拽功能
+  const progressBar = document.querySelector('.progress-bar');
+  const progress = document.querySelector('.progress');
+  const progressHandle = document.querySelector('.progress-handle');
+
+  function updateProgress(e) {
+    const rect = progressBar.getBoundingClientRect();
+    const pos = (e.clientX - rect.left) / rect.width;
+    const percentage = Math.min(Math.max(pos, 0), 1) * 100;
+    progress.style.width = `${percentage}%`;
+  }
+
+  progressBar.addEventListener('click', function(e) {
+    updateProgress(e);
+  });
+
+  progressHandle.addEventListener('mousedown', function(e) {
+    e.preventDefault();
+    document.addEventListener('mousemove', updateProgress);
+    document.addEventListener('mouseup', function() {
+      document.removeEventListener('mousemove', updateProgress);
+    });
+  });
 
   // 移动端菜单
   const sb=document.getElementById('sidebar'), scrim=document.getElementById('scrim');

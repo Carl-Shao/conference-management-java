@@ -53,14 +53,14 @@
         }
 
         .meeting-info {
-            margin-left: 16px;
+            margin-left: 20px;
         }
 
         .meeting-title {
-            font-size: 16px;
+            font-size: 20px;
             font-weight: 600;
             color: #1d2129;
-            margin-bottom: 4px;
+            margin-right: 16px; /* 添加右边距 */
         }
 
         .meeting-meta {
@@ -71,7 +71,7 @@
 
         .timer {
             font-family: 'SF Pro Display', 'Helvetica Neue', Arial, sans-serif;
-            font-size: 14px;
+            font-size: 18px;
             font-weight: 600;
             color: #1d2129;
         }
@@ -80,7 +80,7 @@
             display: flex;
             align-items: center;
             gap: 6px;
-            font-size: 12px;
+            font-size: 16px;
             color: #52c41a;
         }
 
@@ -88,9 +88,13 @@
             color: #faad14;
         }
 
+        .rec-status.rec-ended {
+            color: #f56c6c;
+        }
+
         .rec-dot {
-            width: 8px;
-            height: 8px;
+            width: 12px;
+            height: 12px;
             border-radius: 50%;
             background: #52c41a;
             animation: blink 1.2s infinite;
@@ -98,6 +102,11 @@
 
         .rec-dot.rec-paused {
             background: #faad14;
+            animation: none;
+        }
+
+        .rec-dot.rec-ended {
+            background: #f56c6c;
             animation: none;
         }
 
@@ -127,32 +136,32 @@
         .panel-header {
             display: flex;
             align-items: center;
-            padding: 16px 20px;
+            padding: 20px 24px;
             border-bottom: 1px solid #f0f0f0;
         }
 
         .panel-header i {
-            font-size: 16px;
+            font-size: 20px;
             color: #1890ff;
             margin-right: 8px;
         }
 
         .panel-title {
-            font-size: 15px;
+            font-size: 18px;
             font-weight: 600;
             color: #1d2129;
         }
 
         .save-status {
             margin-left: auto;
-            font-size: 12px;
+            font-size: 16px;
             color: #86909c;
         }
 
         .transcript-content {
             flex: 1;
             overflow-y: auto;
-            padding: 16px 20px 80px 20px; /* 底部留出空间放置控件 */
+            padding: 20px 24px 100px 24px; /* 底部留出空间放置控件 */
         }
 
         .empty-transcript {
@@ -165,52 +174,52 @@
         }
 
         .empty-transcript i {
-            font-size: 48px;
-            margin-bottom: 16px;
+            font-size: 64px;
+            margin-bottom: 20px;
         }
 
         .empty-transcript p {
-            font-size: 14px;
+            font-size: 18px;
         }
 
         .transcript-item {
-            padding: 12px 0;
+            padding: 16px 0;
             border-bottom: 1px solid #f5f5f5;
         }
 
         .transcript-item.marked {
             background: #f0f9ff;
-            border-left: 3px solid #1890ff;
-            padding-left: 16px;
+            border-left: 4px solid #1890ff;
+            padding-left: 20px;
         }
 
         .speaker-info {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 8px;
+            margin-bottom: 10px;
         }
 
         .speaker-name {
-            font-size: 13px;
+            font-size: 16px;
             font-weight: 600;
             color: #1890ff;
         }
 
         .timestamp {
-            font-size: 12px;
+            font-size: 14px;
             color: #c0c4cc;
         }
 
         .transcript-text {
-            font-size: 14px;
-            line-height: 1.6;
+            font-size: 16px;
+            line-height: 1.8;
             color: #1d2129;
         }
 
         .notes-content {
             flex: 1;
-            padding: 0 20px 20px;
+            padding: 0 24px 24px;
         }
 
         .notes-textarea textarea {
@@ -218,8 +227,8 @@
             border: none;
             height: 100% !important;
             padding: 0;
-            font-size: 14px;
-            line-height: 1.6;
+            font-size: 16px;
+            line-height: 1.8;
         }
 
         /* 在实时转写面板底部添加控件区域 */
@@ -242,36 +251,46 @@
             display: flex;
             flex-direction: column;
             align-items: center;
-            margin-right: 30px;
+            margin-left: 30px; /* 修改为左边距 */
         }
 
         .wave-container {
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 3px;
-            height: 30px;
-            width: 200px;
+            gap: 5px;
+            height: 40px;
+            width: 250px;
         }
 
         .wave-bar {
-            width: 3px;
+            width: 5px;
             background: #52c41a;
-            border-radius: 1px;
+            border-radius: 2px;
             transition: height 0.1s ease;
-            min-height: 2px;
+            min-height: 3px;
         }
 
         .wave-bar.paused {
-            height: 2px !important;
+            height: 3px !important;
             background: #c0c4cc;
         }
 
         .visualizer-label {
             text-align: center;
-            font-size: 11px;
+            font-size: 14px;
             color: #86909c;
-            margin-top: 3px;
+            margin-top: 5px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px; /* 添加间隔 */
+        }
+
+        .visualizer-label .timer {
+            font-size: 14px;
+            font-weight: 600;
+            color: #1d2129;
         }
 
         /* 控制按钮 */
@@ -287,12 +306,12 @@
             justify-content: center;
             width: auto; /* 改为自动宽度 */
             height: auto; /* 改为自动高度 */
-            border-radius: 8px;
+            border-radius: 10px;
             cursor: pointer;
             transition: all 0.2s;
             color: #606266;
-            font-size: 20px; /* 增大图标大小 */
-            padding: 8px; /* 添加内边距 */
+            font-size: 28px; /* 增大图标大小 */
+            padding: 12px; /* 添加内边距 */
             background: transparent; /* 透明背景 */
             border: none;
             outline: none;
@@ -304,8 +323,8 @@
         }
 
         .control-btn span {
-            margin-top: 4px;
-            font-size: 10px;
+            margin-top: 6px;
+            font-size: 14px;
             color: #606266;
             display: none; /* 隐藏文字 */
         }
@@ -340,23 +359,22 @@
             <!-- 顶部信息栏 -->
             <div class="recording-header">
                 <div class="header-left">
-                    <button class="el-button el-button--default is-circle" @click="handleBack" style="padding: 6px;">
-                        <i class="el-icon-arrow-left"></i>
+                    <button class="el-button el-button--default is-circle" @click="handleBack" style="padding: 10px;">
+                        <i class="el-icon-arrow-left" style="font-size: 20px;"></i>
                     </button>
                     <div class="meeting-info">
-                        <div class="meeting-title">{{ meeting.title || '会议进行中' }}</div>
                         <div class="meeting-meta">
-                            <span class="timer">{{ formattedTimer }}</span>
-                            <span class="rec-status" :class="{ 'rec-paused': recordStatus === 'paused' }">
-                                <span class="rec-dot" :class="{ 'rec-paused': recordStatus === 'paused' }"></span>
-                                {{ recordStatus === 'paused' ? '已暂停' : '录制中' }}
+                            <div class="meeting-title">{{ meeting.title || 'AI听记' }}</div>
+                            <span class="rec-status" :class="{ 'rec-paused': recordStatus === 'paused', 'rec-ended': recordStatus === 'ended' }">
+                                <span class="rec-dot" :class="{ 'rec-paused': recordStatus === 'paused', 'rec-ended': recordStatus === 'ended' }"></span>
+                                {{ recordStatus === 'paused' ? '已暂停' : recordStatus === 'ended' ? '已结束' : '录制中' }}
                             </span>
                         </div>
                     </div>
                 </div>
                 <div class="header-right">
-                    <el-tag v-if="connected" type="success" size="small" effect="plain">麦克风已连接</el-tag>
-                    <el-tag v-else type="info" size="small" effect="plain">连接中...</el-tag>
+                    <el-tag v-if="connected" type="success" size="medium" effect="plain" style="font-size: 14px;">麦克风已连接</el-tag>
+                    <el-tag v-else type="info" size="medium" effect="plain" style="font-size: 14px;">连接中...</el-tag>
                 </div>
             </div>
 
@@ -388,35 +406,37 @@
                     </div>
                     <!-- 控制组件覆盖在实时转写面板底部 -->
                     <div class="controls-overlay">
-                        <!-- 音频可视化区域 -->
+                        <!-- 底部控制按钮 -->
+                        <div class="control-buttons">
+                            <!-- 标记按钮 -->
+                            <div class="control-btn" @click="handleMark">
+                                <i class="el-icon-collection-tag" style="font-size: 32px;"></i>
+                            </div>
+
+                            <!-- 暂停/继续按钮 -->
+                            <div class="control-btn" @click="handleToggleRecord" :style="{ opacity: recordStatus === 'ended' ? 0.5 : 1, cursor: recordStatus === 'ended' ? 'not-allowed' : 'pointer' }">
+                                <i :class="recordStatus === 'paused' ? 'el-icon-video-play' : 'el-icon-video-pause'" style="font-size: 32px;" :disabled="recordStatus === 'ended'"></i>
+                            </div>
+
+                            <!-- 结束会议按钮 -->
+                            <div class="control-btn" @click="handleEnd">
+                                <i class="el-icon-switch-button" style="font-size: 32px;"></i>
+                            </div>
+                        </div>
+
+                        <!-- 音频可视化区域 和 计时器 -->
                         <div class="audio-visualizer">
                             <div class="wave-container">
                                 <div
                                     class="wave-bar"
                                     v-for="n in 30"
                                     :key="n"
-                                    :style="{ height: recordStatus === 'paused' ? '2px' : waveHeights[n-1] + 'px' }"
+                                    :style="{ height: recordStatus === 'paused' ? '3px' : waveHeights[n-1] + 'px' }"
                                     :class="{ paused: recordStatus === 'paused' }"
                                 ></div>
                             </div>
-                            <div class="visualizer-label">麦克风声音</div>
-                        </div>
-
-                        <!-- 底部控制按钮 -->
-                        <div class="control-buttons">
-                            <!-- 标记按钮 -->
-                            <div class="control-btn" @click="handleMark">
-                                <i class="el-icon-collection-tag" style="font-size: 24px;"></i>
-                            </div>
-
-                            <!-- 暂停/继续按钮 -->
-                            <div class="control-btn" @click="handleToggleRecord">
-                                <i :class="recordStatus === 'paused' ? 'el-icon-video-play' : 'el-icon-video-pause'" style="font-size: 24px;"></i>
-                            </div>
-
-                            <!-- 结束会议按钮 -->
-                            <div class="control-btn" @click="handleEnd">
-                                <i class="el-icon-switch-button" style="font-size: 24px;"></i>
+                            <div class="visualizer-label">
+                                <span class="timer">{{ formattedTimer }}</span>
                             </div>
                         </div>
                     </div>
@@ -450,9 +470,9 @@
 
             data: {
                 meeting: {
-                    title: '智能会议助手演示'
+                    title: 'AI听记'
                 },
-                recordStatus: 'ongoing', // ongoing | paused
+                recordStatus: 'ongoing', // ongoing | paused | ended
                 elapsedSeconds: 0,
                 timerInterval: null,
 
@@ -565,8 +585,8 @@
                 // 模拟音频可视化（当无法访问麦克风时）
                 simulateAudioVisualization() {
                     setInterval(() => {
-                        if (this.recordStatus === 'paused') {
-                            // 暂停时显示平直线
+                        if (this.recordStatus === 'paused' || this.recordStatus === 'ended') {
+                            // 暂停或结束后显示平直线
                             for (let i = 0; i < 30; i++) {
                                 this.$set(this.waveHeights, i, 2);
                             }
@@ -608,6 +628,11 @@
 
                 // 暂停/继续会议
                 handleToggleRecord() {
+                    if (this.recordStatus === 'ended') {
+                        // 如果已经结束，则不执行任何操作
+                        return;
+                    }
+
                     if (this.recordStatus === 'ongoing') {
                         this.recordStatus = 'paused';
                         this.$message.success('会议已暂停');
@@ -655,8 +680,8 @@
                             this.audioContext.close();
                         }
 
-                        // 重置界面
-                        this.recordStatus = 'paused';
+                        // 设置为已结束状态
+                        this.recordStatus = 'ended';
                         // 结束后也显示平直线
                         for (let i = 0; i < 30; i++) {
                             this.$set(this.waveHeights, i, 2);
