@@ -154,10 +154,7 @@
 
   /* ---------- 主区 ---------- */
   .main{flex:1;display:flex;flex-direction:column;min-width:0;position:relative;
-    background:
-      radial-gradient(900px 500px at 70% -10%,rgba(47,123,255,.05),transparent 60%),
-      radial-gradient(700px 600px at 100% 110%,rgba(244,163,192,.05),transparent 60%),
-      var(--main-bg);
+    background:var(--main-bg);
   }
   .topbar{
     display:flex;align-items:center;gap:18px;
@@ -257,6 +254,7 @@
     margin: 0 34px 12px;
     border-radius: 20px; /* 增大圆角 */
     background: var(--main-bg); /* 与主背景同色 */
+    box-shadow: var(--shadow-md); /* 蓝色阴影 */
     transition: all 0.3s ease;
     cursor: pointer;
     position: relative; /* 添加相对定位以建立层叠上下文 */
@@ -335,6 +333,23 @@
     border-radius: 50%;
   }
 
+  /* 详情按钮样式 */
+  .detail-btn {
+    padding: 8px 16px;
+    background: var(--blue);
+    color: white;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 500;
+    transition: background 0.2s;
+  }
+
+  .detail-btn:hover {
+    background: var(--blue-deep);
+  }
+
   /* 弹出菜单样式 */
   .dropdown-menu {
     position: absolute;
@@ -385,6 +400,157 @@
     margin-right: 12px;
     width: 18px;
     text-align: center;
+  }
+
+  /* MacBook风格设置列表样式 */
+  .settings-container {
+    width: 100%;
+    padding: 0 34px; /* 保留侧边距 */
+    margin-top: 20px;
+  }
+
+  .setting-group {
+    background: var(--search-bg); /* 灰色背景 */
+    border-radius: 12px; /* 圆角矩形 */
+    margin-bottom: 20px;
+    overflow: hidden;
+    border: none;
+    box-shadow: none; /* 去除阴影 */
+  }
+
+  .setting-group:last-child {
+    margin-bottom: 0;
+  }
+
+  .setting-item {
+    display: flex;
+    align-items: center;
+    padding: 12px 20px; /* 减少内边距 */
+    border-bottom: 0.5px solid var(--line);
+    cursor: pointer;
+    transition: background 0.2s;
+  }
+
+  .setting-item:last-child {
+    border-bottom: none;
+  }
+
+  .setting-item.version-info {
+    justify-content: flex-start;
+    text-align: left;
+  }
+
+  .setting-icon-wrapper {
+    margin-right: 12px; /* 减少图标右边距 */
+    flex-shrink: 0;
+  }
+
+  .setting-icon-bg {
+    width: 30px; /* 减小图标背景尺寸 */
+    height: 30px;
+    border-radius: 6px; /* 减小圆角 */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .blue-bg { background: var(--blue); }
+  .red-bg { background: #FF3B30; }
+  .green-bg { background: #34C759; }
+  .yellow-bg { background: #FFCC02; }
+  .orange-bg { background: #FF9500; }
+  .purple-bg { background: #AF52DE; }
+  .teal-bg { background: #5AC8FA; }
+  .pink-bg { background: #FF2D75; }
+  .gray-bg { background: var(--muted); }
+
+  .setting-content {
+    flex: 1;
+  }
+
+  .setting-content.center {
+    text-align: left;
+  }
+
+  .setting-title {
+    font-size: 15px; /* 减小标题字体 */
+    font-weight: 500;
+    color: var(--ink);
+    margin-bottom: 1px;
+  }
+
+  .setting-subtitle {
+    font-size: 12px; /* 减小子标题字体 */
+    color: var(--ink-soft);
+  }
+
+  .setting-value {
+    font-size: 15px; /* 减小值字体 */
+    color: var(--ink-soft);
+    margin-right: 8px;
+  }
+
+  .setting-chevron {
+    margin-left: 8px;
+    flex-shrink: 0;
+  }
+
+  .setting-toggle {
+    position: relative;
+    margin-left: 8px;
+    flex-shrink: 0;
+  }
+
+  .setting-toggle input[type="checkbox"] {
+    opacity: 0;
+    width: 0;
+    height: 0;
+  }
+
+  .setting-toggle label {
+    display: block;
+    width: 44px; /* 减小开关宽度 */
+    height: 24px; /* 减小开关高度 */
+    background: var(--muted);
+    border-radius: 12px;
+    position: relative;
+    cursor: pointer;
+    transition: background 0.3s;
+  }
+
+  .setting-toggle label::after {
+    content: '';
+    position: absolute;
+    width: 20px; /* 减小滑块尺寸 */
+    height: 20px;
+    border-radius: 50%;
+    background: white;
+    top: 2px;
+    left: 2px;
+    transition: transform 0.3s;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+  }
+
+  .setting-toggle input[type="checkbox"]:checked + label {
+    background: var(--blue);
+  }
+
+  .setting-toggle input[type="checkbox"]:checked + label::after {
+    transform: translateX(20px);
+  }
+
+  .setting-item:hover {
+    background: var(--search-bg);
+  }
+
+  /* 底部灰色区域 */
+  .main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    position: relative;
+    background: var(--main-bg);
   }
 
   @keyframes breathe{0%,100%{transform:scale(1);opacity:.6}50%{transform:scale(1.18);opacity:0}}
@@ -466,7 +632,7 @@
       </button>
       <label class="search">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.5" y2="16.5"/></svg>
-        <input type="text" placeholder="搜索录音、会议或笔记…">
+        <input type="text" placeholder="搜索设置">
       </label>
       <div class="top-actions">
         <button class="icon-btn" aria-label="历史记录" onclick="toast('暂无历史记录')">
@@ -477,112 +643,196 @@
 
     <!-- 添加"我的记录"标题 -->
     <div style="padding: 0 34px; margin-bottom: 20px;">
-      <h2 style="font-size: 22px; font-weight: 600; color: var(--ink-soft); letter-spacing: 1px;">我的记录</h2>
+      <h2 style="font-size: 22px; font-weight: 600; color: var(--ink-soft); letter-spacing: 1px;">设置</h2>
     </div>
 
-    <!-- 会议记录列表 -->
-    <div class="meeting-records">
-      <!-- 第一条记录 -->
-      <div class="meeting-record" onclick="handleRecordClick(this)">
-        <div class="meeting-icon">📝</div>
-        <div class="meeting-details">
-          <div class="meeting-title">产品规划会议</div>
-          <div class="meeting-meta">
-            <span>2026.01.25 12:01</span>
-            <span>01:20:05</span>
+    <!-- MacBook风格的设置列表 -->
+    <div class="settings-container" id="settingsContainer">
+      <!-- 账户设置分组 -->
+      <div class="setting-group">
+        <div class="setting-item" onclick="handleSettingClick('account')">
+          <div class="setting-icon-wrapper">
+            <div class="setting-icon-bg blue-bg">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
+                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                <circle cx="12" cy="7" r="4"></circle>
+              </svg>
+            </div>
+          </div>
+          <div class="setting-content">
+            <div class="setting-title">账户信息</div>
+            <div class="setting-subtitle">用户名、头像、个人信息</div>
+          </div>
+          <div class="setting-chevron">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--muted)" stroke-width="2">
+              <polyline points="9,18 15,12 9,6"></polyline>
+            </svg>
           </div>
         </div>
-        <div class="meeting-actions" onclick="toggleDropdown(event, 'menu1')">
-          <div class="dots">
-            <div class="dot"></div>
-            <div class="dot"></div>
-            <div class="dot"></div>
+
+        <div class="setting-item" onclick="handleSettingClick('security')">
+          <div class="setting-icon-wrapper">
+            <div class="setting-icon-bg red-bg">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
+                <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+              </svg>
+            </div>
           </div>
-          <div class="dropdown-menu" id="menu1">
-            <a href="#" class="menu-item" onclick="event.stopPropagation(); alert('下载')">
-              <span class="menu-icon"><svg style="width:18px;height:18px;fill:#52c41a;" viewBox="0 0 24 24"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg></span>
-              <span>下载</span>
-            </a>
-            <a href="#" class="menu-item" onclick="event.stopPropagation(); alert('添加到喜欢')">
-              <span class="menu-icon"><svg style="width:18px;height:18px;fill:none;stroke:#f759ab;stroke-width:2;" viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg></span>
-              <span>添加到喜欢</span>
-            </a>
-            <a href="#" class="menu-item" onclick="event.stopPropagation(); alert('移动到')">
-              <span class="menu-icon"><svg style="width:18px;height:18px;fill:#1890ff;" viewBox="0 0 24 24"><path d="M10 4H4c-1.11 0-2 .89-2 2v12c0 1.11.89 2 2 2h16c1.11 0 2-.89 2-2V8c0-1.11-.89-2-2-2h-8l-2-2z"/></svg></span>
-              <span>移动到</span>
-            </a>
-            <a href="#" class="menu-item" onclick="event.stopPropagation(); alert('重命名')">
-              <span class="menu-icon"><svg style="width:18px;height:18px;fill:#722ed1;" viewBox="0 0 24 24"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg></span>
-              <span>重命名</span>
-            </a>
-            <a href="#" class="menu-item" onclick="event.stopPropagation(); alert('合并')">
-              <span class="menu-icon"><svg style="width:18px;height:18px;fill:none;stroke:#faad14;stroke-width:2;" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg></span>
-              <span>合并</span>
-            </a>
-            <a href="#" class="menu-item" onclick="event.stopPropagation(); alert('删除')">
-              <span class="menu-icon"><svg style="width:18px;height:18px;fill:#f5222d;" viewBox="0 0 24 24"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg></span>
-              <span>删除</span>
-            </a>
+          <div class="setting-content">
+            <div class="setting-title">安全设置</div>
+            <div class="setting-subtitle">密码、隐私、双重验证</div>
+          </div>
+          <div class="setting-chevron">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--muted)" stroke-width="2">
+              <polyline points="9,18 15,12 9,6"></polyline>
+            </svg>
           </div>
         </div>
       </div>
 
-      <!-- 第二条记录 -->
-      <div class="meeting-record" onclick="handleRecordClick(this)">
-        <div class="meeting-icon" style="position: relative; display: inline-block;">
-          <svg style="position: absolute; top: -5px; left: -5px; width: 14px; height: 14px; z-index: 2; fill:#e91e63;" viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
-          <span>👥</span>
+      <!-- 音频设置分组 -->
+      <div class="setting-group">
+        <div class="setting-item" onclick="handleSettingClick('audio')">
+          <div class="setting-icon-wrapper">
+            <div class="setting-icon-bg green-bg">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
+                <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+                <path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path>
+              </svg>
+            </div>
+          </div>
+          <div class="setting-content">
+            <div class="setting-title">音频质量</div>
+            <div class="setting-subtitle">选择录音和播放音质</div>
+          </div>
+          <div class="setting-value">高音质</div>
         </div>
-        <div class="meeting-details">
-          <div class="meeting-title">团队周例会</div>
-          <div class="meeting-meta">
-            <span>2026.01.23 09:15</span>
-            <span>00:45:20</span>
+
+        <div class="setting-item">
+          <div class="setting-icon-wrapper">
+            <div class="setting-icon-bg yellow-bg">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
+                <path d="M12 19.2C12.2 19.6 12.6 20 13 20h2c1 0 2-1 2-2v-6c0-1-1-2-2-2H9c-1 0-2 1-2 2v6c0 1 1 2 2 2h2c0.4 0 0.8-0.4 1-0.8z"></path>
+                <path d="M15 4V2C15 1.4 14.6 1 14 1H4C3.4 1 3 1.4 3 2v16c0 0.6 0.4 1 1 1h2"></path>
+                <path d="M17 8H7c-0.6 0-1 0.4-1 1v2c0 0.6 0.4 1 1 1h10c0.6 0 1-0.4 1-1V9c0-0.6-0.4-1-1-1z"></path>
+              </svg>
+            </div>
+          </div>
+          <div class="setting-content">
+            <div class="setting-title">自动保存</div>
+            <div class="setting-subtitle">会议记录自动保存设置</div>
+          </div>
+          <div class="setting-toggle">
+            <input type="checkbox" id="autoSaveToggle" checked>
+            <label for="autoSaveToggle"></label>
           </div>
         </div>
-        <div class="meeting-actions" onclick="toggleDropdown(event, 'menu2')">
-          <div class="dots">
-            <div class="dot"></div>
-            <div class="dot"></div>
-            <div class="dot"></div>
+      </div>
+
+      <!-- 通知设置分组 -->
+      <div class="setting-group">
+        <div class="setting-item">
+          <div class="setting-icon-wrapper">
+            <div class="setting-icon-bg orange-bg">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
+                <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+                <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+              </svg>
+            </div>
           </div>
-          <div class="dropdown-menu" id="menu2">
-            <a href="#" class="menu-item" onclick="event.stopPropagation(); alert('下载')">
-              <span class="menu-icon"><svg style="width:18px;height:18px;fill:#52c41a;" viewBox="0 0 24 24"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg></span>
-              <span>下载</span>
-            </a>
-            <a href="#" class="menu-item" onclick="event.stopPropagation(); alert('从喜欢列表移除')">
-              <span class="menu-icon"><svg style="width:18px;height:18px;fill:#f759ab;stroke:none;" viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg></span>
-              <span>从喜欢列表移除</span>
-            </a>
-            <a href="#" class="menu-item" onclick="event.stopPropagation(); alert('移动到')">
-              <span class="menu-icon"><svg style="width:18px;height:18px;fill:#1890ff;" viewBox="0 0 24 24"><path d="M10 4H4c-1.11 0-2 .89-2 2v12c0 1.11.89 2 2 2h16c1.11 0 2-.89 2-2V8c0-1.11-.89-2-2-2h-8l-2-2z"/></svg></span>
-              <span>移动到</span>
-            </a>
-            <a href="#" class="menu-item" onclick="event.stopPropagation(); alert('重命名')">
-              <span class="menu-icon"><svg style="width:18px;height:18px;fill:#722ed1;" viewBox="0 0 24 24"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg></span>
-              <span>重命名</span>
-            </a>
-            <a href="#" class="menu-item" onclick="event.stopPropagation(); alert('合并')">
-              <span class="menu-icon"><svg style="width:18px;height:18px;fill:none;stroke:#faad14;stroke-width:2;" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg></span>
-              <span>合并</span>
-            </a>
-            <a href="#" class="menu-item" onclick="event.stopPropagation(); alert('删除')">
-              <span class="menu-icon"><svg style="width:18px;height:18px;fill:#f5222d;" viewBox="0 0 24 24"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg></span>
-              <span>删除</span>
-            </a>
+          <div class="setting-content">
+            <div class="setting-title">通知设置</div>
+            <div class="setting-subtitle">提醒和通知方式</div>
+          </div>
+          <div class="setting-toggle">
+            <input type="checkbox" id="notificationToggle" checked>
+            <label for="notificationToggle"></label>
+          </div>
+        </div>
+
+        <div class="setting-item" onclick="handleSettingClick('meeting-reminders')">
+          <div class="setting-icon-wrapper">
+            <div class="setting-icon-bg purple-bg">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
+                <circle cx="12" cy="13" r="8"></circle>
+                <path d="M12 9v4l2 2"></path>
+                <path d="M5 3L3 5"></path>
+                <path d="M21 3l-2 2"></path>
+              </svg>
+            </div>
+          </div>
+          <div class="setting-content">
+            <div class="setting-title">会议提醒</div>
+            <div class="setting-subtitle">即将开始的会议提醒</div>
+          </div>
+          <div class="setting-value">15分钟前</div>
+        </div>
+      </div>
+
+      <!-- 存储设置分组 -->
+      <div class="setting-group">
+        <div class="setting-item" onclick="handleSettingClick('storage')">
+          <div class="setting-icon-wrapper">
+            <div class="setting-icon-bg teal-bg">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
+                <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
+                <polyline points="3.27,6.96 12,12.01 20.73,6.96"></polyline>
+                <line x1="12" y1="22.08" x2="12" y2="12"></line>
+              </svg>
+            </div>
+          </div>
+          <div class="setting-content">
+            <div class="setting-title">存储空间</div>
+            <div class="setting-subtitle">已使用 2.5 GB / 10 GB</div>
+          </div>
+          <div class="setting-chevron">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--muted)" stroke-width="2">
+              <polyline points="9,18 15,12 9,6"></polyline>
+            </svg>
+          </div>
+        </div>
+
+        <div class="setting-item" onclick="handleSettingClick('help')">
+          <div class="setting-icon-wrapper">
+            <div class="setting-icon-bg pink-bg">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
+                <path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"></path>
+              </svg>
+            </div>
+          </div>
+          <div class="setting-content">
+            <div class="setting-title">帮助与反馈</div>
+            <div class="setting-subtitle">常见问题和技术支持</div>
+          </div>
+          <div class="setting-chevron">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--muted)" stroke-width="2">
+              <polyline points="9,18 15,12 9,6"></polyline>
+            </svg>
+          </div>
+        </div>
+      </div>
+
+      <!-- 应用信息 -->
+      <div class="setting-group">
+        <div class="setting-item version-info">
+          <div class="setting-icon-wrapper">
+            <div class="setting-icon-bg gray-bg">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
+                <circle cx="12" cy="12" r="10"></circle>
+                <line x1="12" y1="8" x2="12" y2="12"></line>
+                <line x1="12" y1="16" x2="12.01" y2="16"></line>
+              </svg>
+            </div>
+          </div>
+          <div class="setting-content center">
+            <div class="setting-title">应用版本</div>
+            <div class="setting-subtitle">v1.2.3</div>
           </div>
         </div>
       </div>
     </div>
 
-    <section class="content">
-      <div class="button-container">
-        <button class="new-btn" id="newBtn">开始听记</button>
-      </div>
-    </section>
-
-    </section>
   </main>
 
   <div class="toast" id="toast"></div>
@@ -653,6 +903,29 @@
     const t=document.getElementById('toast');
     t.textContent=msg; t.classList.add('show');
     clearTimeout(tT); tT=setTimeout(()=>t.classList.remove('show'),1800);
+  }
+
+  // 处理设置项点击
+  function handleSettingClick(settingName) {
+    switch(settingName) {
+      case 'account':
+        toast('跳转到账户信息页面');
+        break;
+      case 'security':
+        toast('跳转到安全设置页面');
+        break;
+      case 'audio':
+        toast('调整音频质量设置');
+        break;
+      case 'storage':
+        toast('跳转到存储空间管理');
+        break;
+      case 'help':
+        toast('跳转到帮助与反馈页面');
+        break;
+      default:
+        toast('打开设置项');
+    }
   }
 
   // 点击记录行处理函数

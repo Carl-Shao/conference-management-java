@@ -387,6 +387,122 @@
     text-align: center;
   }
 
+  /* 音频上传区域样式 */
+  .audio-upload-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+  }
+
+  .upload-area {
+    width: 100%;
+    max-width: 600px;
+    padding: 40px;
+    border: 2px dashed var(--blue-soft);
+    border-radius: 16px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    background: var(--search-bg);
+  }
+
+  .upload-area:hover {
+    background: var(--blue-soft);
+    border-color: var(--blue);
+  }
+
+  .upload-icon {
+    margin-bottom: 20px;
+  }
+
+  .upload-area h3 {
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--ink);
+    margin-bottom: 8px;
+  }
+
+  .upload-area p {
+    font-size: 14px;
+    color: var(--ink-soft);
+    margin-bottom: 4px;
+  }
+
+  .file-size-limit {
+    font-size: 12px;
+    color: var(--muted);
+  }
+
+  /* 已上传文件列表样式 */
+  .uploaded-files {
+    margin-top: 30px;
+  }
+
+  .file-item {
+    display: flex;
+    align-items: center;
+    padding: 12px 16px;
+    background: white;
+    border-radius: 12px;
+    margin-bottom: 10px;
+    box-shadow: var(--shadow-sm);
+  }
+
+  .file-icon {
+    width: 36px;
+    height: 36px;
+    background: var(--blue-soft);
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 16px;
+  }
+
+  .file-info {
+    flex: 1;
+  }
+
+  .file-name {
+    font-weight: 500;
+    color: var(--ink);
+  }
+
+  .file-size {
+    font-size: 12px;
+    color: var(--muted);
+  }
+
+  .file-actions {
+    display: flex;
+    gap: 10px;
+  }
+
+  .action-btn {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    background: var(--search-bg);
+    border: none;
+    color: var(--ink-soft);
+  }
+
+  .action-btn:hover {
+    background: var(--blue-soft);
+    color: var(--blue);
+  }
+
+  /* 加载动画 */
+  @keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+  }
+
   @keyframes breathe{0%,100%{transform:scale(1);opacity:.6}50%{transform:scale(1.18);opacity:0}}
   @keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-12px)}}
   @keyframes wiggle{0%,100%{transform:rotate(0)}25%{transform:rotate(8deg)}75%{transform:rotate(-8deg)}}
@@ -464,125 +580,36 @@
       <button class="hamburger" id="hamburger" aria-label="菜单">
         <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="4" y1="7" x2="20" y2="7"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="17" x2="20" y2="17"/></svg>
       </button>
-      <label class="search">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.5" y2="16.5"/></svg>
-        <input type="text" placeholder="搜索录音、会议或笔记…">
-      </label>
-      <div class="top-actions">
-        <button class="icon-btn" aria-label="历史记录" onclick="toast('暂无历史记录')">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 12a8.5 8.5 0 1 0 2.6-6.1"/><path d="M3 4v4h4"/><path d="M12 8v4l3 2"/></svg>
-        </button>
-      </div>
     </header>
 
     <!-- 添加"我的记录"标题 -->
     <div style="padding: 0 34px; margin-bottom: 20px;">
-      <h2 style="font-size: 22px; font-weight: 600; color: var(--ink-soft); letter-spacing: 1px;">我的记录</h2>
+      <h2 style="font-size: 22px; font-weight: 600; color: var(--ink-soft); letter-spacing: 1px;">上传文件</h2>
     </div>
 
-    <!-- 会议记录列表 -->
-    <div class="meeting-records">
-      <!-- 第一条记录 -->
-      <div class="meeting-record" onclick="handleRecordClick(this)">
-        <div class="meeting-icon">📝</div>
-        <div class="meeting-details">
-          <div class="meeting-title">产品规划会议</div>
-          <div class="meeting-meta">
-            <span>2026.01.25 12:01</span>
-            <span>01:20:05</span>
-          </div>
-        </div>
-        <div class="meeting-actions" onclick="toggleDropdown(event, 'menu1')">
-          <div class="dots">
-            <div class="dot"></div>
-            <div class="dot"></div>
-            <div class="dot"></div>
-          </div>
-          <div class="dropdown-menu" id="menu1">
-            <a href="#" class="menu-item" onclick="event.stopPropagation(); alert('下载')">
-              <span class="menu-icon"><svg style="width:18px;height:18px;fill:#52c41a;" viewBox="0 0 24 24"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg></span>
-              <span>下载</span>
-            </a>
-            <a href="#" class="menu-item" onclick="event.stopPropagation(); alert('添加到喜欢')">
-              <span class="menu-icon"><svg style="width:18px;height:18px;fill:none;stroke:#f759ab;stroke-width:2;" viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg></span>
-              <span>添加到喜欢</span>
-            </a>
-            <a href="#" class="menu-item" onclick="event.stopPropagation(); alert('移动到')">
-              <span class="menu-icon"><svg style="width:18px;height:18px;fill:#1890ff;" viewBox="0 0 24 24"><path d="M10 4H4c-1.11 0-2 .89-2 2v12c0 1.11.89 2 2 2h16c1.11 0 2-.89 2-2V8c0-1.11-.89-2-2-2h-8l-2-2z"/></svg></span>
-              <span>移动到</span>
-            </a>
-            <a href="#" class="menu-item" onclick="event.stopPropagation(); alert('重命名')">
-              <span class="menu-icon"><svg style="width:18px;height:18px;fill:#722ed1;" viewBox="0 0 24 24"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg></span>
-              <span>重命名</span>
-            </a>
-            <a href="#" class="menu-item" onclick="event.stopPropagation(); alert('合并')">
-              <span class="menu-icon"><svg style="width:18px;height:18px;fill:none;stroke:#faad14;stroke-width:2;" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg></span>
-              <span>合并</span>
-            </a>
-            <a href="#" class="menu-item" onclick="event.stopPropagation(); alert('删除')">
-              <span class="menu-icon"><svg style="width:18px;height:18px;fill:#f5222d;" viewBox="0 0 24 24"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg></span>
-              <span>删除</span>
-            </a>
-          </div>
-        </div>
-      </div>
+    <!-- 占位内容，使上传入口往下移动 -->
+    <div style="height: 100px; display: flex; align-items: center; justify-content: center; padding: 0 34px;">
+    </div>
 
-      <!-- 第二条记录 -->
-      <div class="meeting-record" onclick="handleRecordClick(this)">
-        <div class="meeting-icon" style="position: relative; display: inline-block;">
-          <svg style="position: absolute; top: -5px; left: -5px; width: 14px; height: 14px; z-index: 2; fill:#e91e63;" viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
-          <span>👥</span>
-        </div>
-        <div class="meeting-details">
-          <div class="meeting-title">团队周例会</div>
-          <div class="meeting-meta">
-            <span>2026.01.23 09:15</span>
-            <span>00:45:20</span>
+    <!-- 音频上传区域 -->
+    <div class="upload-section" style="padding: 0 34px;">
+      <div class="audio-upload-container">
+        <div class="upload-area" id="uploadArea" onclick="document.getElementById('audioFileInput').click()">
+          <div class="upload-icon">
+            <svg viewBox="0 0 24 24" width="48" height="48" fill="none" stroke="var(--blue)" stroke-width="1.5">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+              <polyline points="17 8 12 3 7 8"></polyline>
+              <line x1="12" y1="3" x2="12" y2="15"></line>
+            </svg>
           </div>
+          <h3>上传音频</h3>
+          <p>支持 MP3, WAV, M4A</p>
+          <p class="file-size-limit">不超过 200MB</p>
         </div>
-        <div class="meeting-actions" onclick="toggleDropdown(event, 'menu2')">
-          <div class="dots">
-            <div class="dot"></div>
-            <div class="dot"></div>
-            <div class="dot"></div>
-          </div>
-          <div class="dropdown-menu" id="menu2">
-            <a href="#" class="menu-item" onclick="event.stopPropagation(); alert('下载')">
-              <span class="menu-icon"><svg style="width:18px;height:18px;fill:#52c41a;" viewBox="0 0 24 24"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg></span>
-              <span>下载</span>
-            </a>
-            <a href="#" class="menu-item" onclick="event.stopPropagation(); alert('从喜欢列表移除')">
-              <span class="menu-icon"><svg style="width:18px;height:18px;fill:#f759ab;stroke:none;" viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg></span>
-              <span>从喜欢列表移除</span>
-            </a>
-            <a href="#" class="menu-item" onclick="event.stopPropagation(); alert('移动到')">
-              <span class="menu-icon"><svg style="width:18px;height:18px;fill:#1890ff;" viewBox="0 0 24 24"><path d="M10 4H4c-1.11 0-2 .89-2 2v12c0 1.11.89 2 2 2h16c1.11 0 2-.89 2-2V8c0-1.11-.89-2-2-2h-8l-2-2z"/></svg></span>
-              <span>移动到</span>
-            </a>
-            <a href="#" class="menu-item" onclick="event.stopPropagation(); alert('重命名')">
-              <span class="menu-icon"><svg style="width:18px;height:18px;fill:#722ed1;" viewBox="0 0 24 24"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg></span>
-              <span>重命名</span>
-            </a>
-            <a href="#" class="menu-item" onclick="event.stopPropagation(); alert('合并')">
-              <span class="menu-icon"><svg style="width:18px;height:18px;fill:none;stroke:#faad14;stroke-width:2;" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg></span>
-              <span>合并</span>
-            </a>
-            <a href="#" class="menu-item" onclick="event.stopPropagation(); alert('删除')">
-              <span class="menu-icon"><svg style="width:18px;height:18px;fill:#f5222d;" viewBox="0 0 24 24"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg></span>
-              <span>删除</span>
-            </a>
-          </div>
-        </div>
+        <input type="file" id="audioFileInput" accept="audio/*" multiple style="display: none;" onchange="handleAudioFiles(this.files)">
       </div>
     </div>
 
-    <section class="content">
-      <div class="button-container">
-        <button class="new-btn" id="newBtn">开始听记</button>
-      </div>
-    </section>
-
-    </section>
   </main>
 
   <div class="toast" id="toast"></div>
@@ -653,6 +680,108 @@
     const t=document.getElementById('toast');
     t.textContent=msg; t.classList.add('show');
     clearTimeout(tT); tT=setTimeout(()=>t.classList.remove('show'),1800);
+  }
+
+  // 处理音频文件上传
+  function handleAudioFiles(files) {
+    const validTypes = ['audio/mpeg', 'audio/wav', 'audio/x-wav', 'audio/mp4', 'audio/aac', 'audio/x-aiff', 'audio/x-m4a'];
+
+    for (let i = 0; i < files.length; i++) {
+      const file = files[i];
+
+      // 验证文件类型
+      if (!validTypes.includes(file.type)) {
+        toast(`文件 "${file.name}" 不是有效的音频文件`);
+        continue;
+      }
+
+      // 验证文件大小（200MB限制）
+      if (file.size > 200 * 1024 * 1024) {
+        toast(`文件 "${file.name}" 超过200MB限制`);
+        continue;
+      }
+
+      // 显示上传进度或添加到列表
+      addFileToList(file);
+    }
+  }
+
+  // 将文件添加到上传列表
+  function addFileToList(file) {
+    // 获取已上传文件列表容器
+    let fileListContainer = document.querySelector('.uploaded-files');
+    if (!fileListContainer) {
+      fileListContainer = document.createElement('div');
+      fileListContainer.className = 'uploaded-files';
+      document.querySelector('.upload-section').appendChild(fileListContainer);
+    }
+
+    // 创建文件项元素
+    const fileItem = document.createElement('div');
+    fileItem.className = 'file-item';
+    fileItem.innerHTML = `
+      <div class="file-icon">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="var(--blue)">
+          <path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z" />
+        </svg>
+      </div>
+      <div class="file-info">
+        <div class="file-name">${file.name}</div>
+        <div class="file-size">${formatFileSize(file.size)}</div>
+      </div>
+      <div class="file-actions">
+        <button class="action-btn" onclick="uploadSingleFile(this, '${file.name}')" title="上传">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="15,10 20,15 15,20"></polyline>
+            <path d="M4 4v7a4 4 0 0 0 4 4h12"></path>
+          </svg>
+        </button>
+        <button class="action-btn" onclick="removeFile(this)" title="删除">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+          </svg>
+        </button>
+      </div>
+    `;
+
+    fileListContainer.insertBefore(fileItem, fileListContainer.firstChild);
+  }
+
+  // 格式化文件大小
+  function formatFileSize(bytes) {
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+  }
+
+  // 上传单个文件
+  function uploadSingleFile(button, fileName) {
+    // 更改按钮状态为上传中
+    const originalHTML = button.innerHTML;
+    button.innerHTML = '<div class="loading-spinner" style="width: 16px; height: 16px; border: 2px solid var(--blue-soft); border-top: 2px solid var(--blue); border-radius: 50%; animation: spin 1s linear infinite;"></div>';
+    button.disabled = true;
+
+    // 这里应该实际执行文件上传逻辑
+    // 为了演示，我们模拟上传过程
+    setTimeout(() => {
+      button.innerHTML = originalHTML;
+      button.disabled = false;
+      toast(`"${fileName}" 上传成功！`);
+    }, 2000);
+  }
+
+  // 删除文件
+  function removeFile(button) {
+    const fileItem = button.closest('.file-item');
+    fileItem.remove();
+
+    // 如果没有更多文件，则移除列表容器
+    const fileListContainer = document.querySelector('.uploaded-files');
+    if (fileListContainer && fileListContainer.children.length === 0) {
+      fileListContainer.remove();
+    }
   }
 
   // 点击记录行处理函数

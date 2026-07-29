@@ -257,6 +257,7 @@
     margin: 0 34px 12px;
     border-radius: 20px; /* 增大圆角 */
     background: var(--main-bg); /* 与主背景同色 */
+    box-shadow: var(--shadow-md); /* 蓝色阴影 */
     transition: all 0.3s ease;
     cursor: pointer;
     position: relative; /* 添加相对定位以建立层叠上下文 */
@@ -333,6 +334,23 @@
     height: 4px;
     background: var(--ink-soft);
     border-radius: 50%;
+  }
+
+  /* 详情按钮样式 */
+  .detail-btn {
+    padding: 8px 16px;
+    background: var(--blue);
+    color: white;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 500;
+    transition: background 0.2s;
+  }
+
+  .detail-btn:hover {
+    background: var(--blue-deep);
   }
 
   /* 弹出菜单样式 */
@@ -466,7 +484,7 @@
       </button>
       <label class="search">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.5" y2="16.5"/></svg>
-        <input type="text" placeholder="搜索录音、会议或笔记…">
+        <input type="text" placeholder="搜索会议…">
       </label>
       <div class="top-actions">
         <button class="icon-btn" aria-label="历史记录" onclick="toast('暂无历史记录')">
@@ -477,14 +495,14 @@
 
     <!-- 添加"我的记录"标题 -->
     <div style="padding: 0 34px; margin-bottom: 20px;">
-      <h2 style="font-size: 22px; font-weight: 600; color: var(--ink-soft); letter-spacing: 1px;">我的记录</h2>
+      <h2 style="font-size: 22px; font-weight: 600; color: var(--ink-soft); letter-spacing: 1px;">我的会议</h2>
     </div>
 
     <!-- 会议记录列表 -->
     <div class="meeting-records">
       <!-- 第一条记录 -->
       <div class="meeting-record" onclick="handleRecordClick(this)">
-        <div class="meeting-icon">📝</div>
+        <div class="meeting-icon">📊</div>
         <div class="meeting-details">
           <div class="meeting-title">产品规划会议</div>
           <div class="meeting-meta">
@@ -492,47 +510,12 @@
             <span>01:20:05</span>
           </div>
         </div>
-        <div class="meeting-actions" onclick="toggleDropdown(event, 'menu1')">
-          <div class="dots">
-            <div class="dot"></div>
-            <div class="dot"></div>
-            <div class="dot"></div>
-          </div>
-          <div class="dropdown-menu" id="menu1">
-            <a href="#" class="menu-item" onclick="event.stopPropagation(); alert('下载')">
-              <span class="menu-icon"><svg style="width:18px;height:18px;fill:#52c41a;" viewBox="0 0 24 24"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg></span>
-              <span>下载</span>
-            </a>
-            <a href="#" class="menu-item" onclick="event.stopPropagation(); alert('添加到喜欢')">
-              <span class="menu-icon"><svg style="width:18px;height:18px;fill:none;stroke:#f759ab;stroke-width:2;" viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg></span>
-              <span>添加到喜欢</span>
-            </a>
-            <a href="#" class="menu-item" onclick="event.stopPropagation(); alert('移动到')">
-              <span class="menu-icon"><svg style="width:18px;height:18px;fill:#1890ff;" viewBox="0 0 24 24"><path d="M10 4H4c-1.11 0-2 .89-2 2v12c0 1.11.89 2 2 2h16c1.11 0 2-.89 2-2V8c0-1.11-.89-2-2-2h-8l-2-2z"/></svg></span>
-              <span>移动到</span>
-            </a>
-            <a href="#" class="menu-item" onclick="event.stopPropagation(); alert('重命名')">
-              <span class="menu-icon"><svg style="width:18px;height:18px;fill:#722ed1;" viewBox="0 0 24 24"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg></span>
-              <span>重命名</span>
-            </a>
-            <a href="#" class="menu-item" onclick="event.stopPropagation(); alert('合并')">
-              <span class="menu-icon"><svg style="width:18px;height:18px;fill:none;stroke:#faad14;stroke-width:2;" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg></span>
-              <span>合并</span>
-            </a>
-            <a href="#" class="menu-item" onclick="event.stopPropagation(); alert('删除')">
-              <span class="menu-icon"><svg style="width:18px;height:18px;fill:#f5222d;" viewBox="0 0 24 24"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg></span>
-              <span>删除</span>
-            </a>
-          </div>
-        </div>
+        <button class="detail-btn" onclick="location.href='meeting-index.html'">详情</button>
       </div>
 
       <!-- 第二条记录 -->
       <div class="meeting-record" onclick="handleRecordClick(this)">
-        <div class="meeting-icon" style="position: relative; display: inline-block;">
-          <svg style="position: absolute; top: -5px; left: -5px; width: 14px; height: 14px; z-index: 2; fill:#e91e63;" viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
-          <span>👥</span>
-        </div>
+        <div class="meeting-icon">👥</div>
         <div class="meeting-details">
           <div class="meeting-title">团队周例会</div>
           <div class="meeting-meta">
@@ -540,49 +523,35 @@
             <span>00:45:20</span>
           </div>
         </div>
-        <div class="meeting-actions" onclick="toggleDropdown(event, 'menu2')">
-          <div class="dots">
-            <div class="dot"></div>
-            <div class="dot"></div>
-            <div class="dot"></div>
-          </div>
-          <div class="dropdown-menu" id="menu2">
-            <a href="#" class="menu-item" onclick="event.stopPropagation(); alert('下载')">
-              <span class="menu-icon"><svg style="width:18px;height:18px;fill:#52c41a;" viewBox="0 0 24 24"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg></span>
-              <span>下载</span>
-            </a>
-            <a href="#" class="menu-item" onclick="event.stopPropagation(); alert('从喜欢列表移除')">
-              <span class="menu-icon"><svg style="width:18px;height:18px;fill:#f759ab;stroke:none;" viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg></span>
-              <span>从喜欢列表移除</span>
-            </a>
-            <a href="#" class="menu-item" onclick="event.stopPropagation(); alert('移动到')">
-              <span class="menu-icon"><svg style="width:18px;height:18px;fill:#1890ff;" viewBox="0 0 24 24"><path d="M10 4H4c-1.11 0-2 .89-2 2v12c0 1.11.89 2 2 2h16c1.11 0 2-.89 2-2V8c0-1.11-.89-2-2-2h-8l-2-2z"/></svg></span>
-              <span>移动到</span>
-            </a>
-            <a href="#" class="menu-item" onclick="event.stopPropagation(); alert('重命名')">
-              <span class="menu-icon"><svg style="width:18px;height:18px;fill:#722ed1;" viewBox="0 0 24 24"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg></span>
-              <span>重命名</span>
-            </a>
-            <a href="#" class="menu-item" onclick="event.stopPropagation(); alert('合并')">
-              <span class="menu-icon"><svg style="width:18px;height:18px;fill:none;stroke:#faad14;stroke-width:2;" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg></span>
-              <span>合并</span>
-            </a>
-            <a href="#" class="menu-item" onclick="event.stopPropagation(); alert('删除')">
-              <span class="menu-icon"><svg style="width:18px;height:18px;fill:#f5222d;" viewBox="0 0 24 24"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg></span>
-              <span>删除</span>
-            </a>
+        <button class="detail-btn" onclick="location.href='meeting-record-detail.html'">详情</button>
+      </div>
+
+      <!-- 第三条记录 -->
+      <div class="meeting-record" onclick="handleRecordClick(this)">
+        <div class="meeting-icon">🚀</div>
+        <div class="meeting-details">
+          <div class="meeting-title">项目启动会</div>
+          <div class="meeting-meta">
+            <span>2026.01.20 14:30</span>
+            <span>00:55:10</span>
           </div>
         </div>
+        <button class="detail-btn" onclick="location.href='meeting-record-detail.html'">详情</button>
+      </div>
+
+      <!-- 第四条记录 -->
+      <div class="meeting-record" onclick="handleRecordClick(this)">
+        <div class="meeting-icon">💡</div>
+        <div class="meeting-details">
+          <div class="meeting-title">头脑风暴会议</div>
+          <div class="meeting-meta">
+            <span>2026.01.18 16:00</span>
+            <span>01:10:30</span>
+          </div>
+        </div>
+        <button class="detail-btn" onclick="location.href='meeting-record-detail.html'">详情</button>
       </div>
     </div>
-
-    <section class="content">
-      <div class="button-container">
-        <button class="new-btn" id="newBtn">开始听记</button>
-      </div>
-    </section>
-
-    </section>
   </main>
 
   <div class="toast" id="toast"></div>

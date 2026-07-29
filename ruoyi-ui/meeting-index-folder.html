@@ -24,7 +24,7 @@
     --chip-blue:#d3e3ff;
     --line:rgba(20,24,40,.06);
     --shadow-sm:0 1px 2px rgba(20,24,40,.06);
-    --shadow-md:0 10px 30px rgba(31,107,240,.28);
+    --shadow-md:0 10px 30px rgba(0,0,0,.28);
     --font:-apple-system,BlinkMacSystemFont,"PingFang SC","Hiragino Sans GB","Microsoft YaHei","Segoe UI",Roboto,Helvetica,Arial,sans-serif;
   }
   *{box-sizing:border-box;margin:0;padding:0}
@@ -335,6 +335,64 @@
     border-radius: 50%;
   }
 
+  /* 文件夹卡片样式 */
+  .folder-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); /* 一行最多3个，自适应 */
+    gap: 20px;
+    padding: 0 34px;
+    margin-top: 20px;
+  }
+
+  .folder-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: space-between;
+    padding: 20px;
+    border-radius: 20px;
+    background: white;
+    box-shadow: var(--shadow-md);
+    transition: all 0.3s ease;
+    cursor: pointer;
+    position: relative;
+    height: 180px;
+    text-align: center;
+  }
+
+  .folder-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 6px 20px rgba(31,107,240,.4);
+  }
+
+  .folder-top-left {
+    align-self: flex-start;
+    font-size: 12px;
+    color: var(--muted);
+    width: 100%;
+  }
+
+  .folder-center {
+    font-size: 60px;
+    margin: 10px 0;
+    width: 60px;
+    height: 60px;
+  }
+
+  .folder-bottom-left {
+    align-self: flex-start;
+    font-size: 16px;
+    font-weight: 500;
+    color: var(--ink);
+    width: 100%;
+  }
+
+  /* 自定义蓝色文件夹SVG */
+  .blue-folder-svg {
+    width: 100%;
+    height: 100%;
+  }
+
   /* 弹出菜单样式 */
   .dropdown-menu {
     position: absolute;
@@ -466,7 +524,7 @@
       </button>
       <label class="search">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.5" y2="16.5"/></svg>
-        <input type="text" placeholder="搜索录音、会议或笔记…">
+        <input type="text" placeholder="搜索文件夹…">
       </label>
       <div class="top-actions">
         <button class="icon-btn" aria-label="历史记录" onclick="toast('暂无历史记录')">
@@ -477,102 +535,81 @@
 
     <!-- 添加"我的记录"标题 -->
     <div style="padding: 0 34px; margin-bottom: 20px;">
-      <h2 style="font-size: 22px; font-weight: 600; color: var(--ink-soft); letter-spacing: 1px;">我的记录</h2>
+      <h2 style="font-size: 22px; font-weight: 600; color: var(--ink-soft); letter-spacing: 1px;">我的文件夹</h2>
     </div>
 
     <!-- 会议记录列表 -->
-    <div class="meeting-records">
-      <!-- 第一条记录 -->
-      <div class="meeting-record" onclick="handleRecordClick(this)">
-        <div class="meeting-icon">📝</div>
-        <div class="meeting-details">
-          <div class="meeting-title">产品规划会议</div>
-          <div class="meeting-meta">
-            <span>2026.01.25 12:01</span>
-            <span>01:20:05</span>
-          </div>
+    <div class="folder-grid">
+      <!-- 文件夹卡片 1 -->
+      <div class="folder-card" onclick="handleRecordClick(this)">
+        <div class="folder-top-left">12个文件</div>
+        <div class="folder-center">
+          <svg class="blue-folder-svg" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M5 7C5 6.44772 5.44772 6 6 6H10L12 8H18C18.5523 8 19 8.44772 19 9V19C19 19.5523 18.5523 20 18 20H6C5.44772 20 5 19.5523 5 19V7Z" fill="#2f7bff"/>
+            <path d="M10 6L8 4H4C3.44772 4 3 4.44772 3 5V18C3 18.5523 3.44772 19 4 19H6" stroke="#1f6bf0" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
         </div>
-        <div class="meeting-actions" onclick="toggleDropdown(event, 'menu1')">
-          <div class="dots">
-            <div class="dot"></div>
-            <div class="dot"></div>
-            <div class="dot"></div>
-          </div>
-          <div class="dropdown-menu" id="menu1">
-            <a href="#" class="menu-item" onclick="event.stopPropagation(); alert('下载')">
-              <span class="menu-icon"><svg style="width:18px;height:18px;fill:#52c41a;" viewBox="0 0 24 24"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg></span>
-              <span>下载</span>
-            </a>
-            <a href="#" class="menu-item" onclick="event.stopPropagation(); alert('添加到喜欢')">
-              <span class="menu-icon"><svg style="width:18px;height:18px;fill:none;stroke:#f759ab;stroke-width:2;" viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg></span>
-              <span>添加到喜欢</span>
-            </a>
-            <a href="#" class="menu-item" onclick="event.stopPropagation(); alert('移动到')">
-              <span class="menu-icon"><svg style="width:18px;height:18px;fill:#1890ff;" viewBox="0 0 24 24"><path d="M10 4H4c-1.11 0-2 .89-2 2v12c0 1.11.89 2 2 2h16c1.11 0 2-.89 2-2V8c0-1.11-.89-2-2-2h-8l-2-2z"/></svg></span>
-              <span>移动到</span>
-            </a>
-            <a href="#" class="menu-item" onclick="event.stopPropagation(); alert('重命名')">
-              <span class="menu-icon"><svg style="width:18px;height:18px;fill:#722ed1;" viewBox="0 0 24 24"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg></span>
-              <span>重命名</span>
-            </a>
-            <a href="#" class="menu-item" onclick="event.stopPropagation(); alert('合并')">
-              <span class="menu-icon"><svg style="width:18px;height:18px;fill:none;stroke:#faad14;stroke-width:2;" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg></span>
-              <span>合并</span>
-            </a>
-            <a href="#" class="menu-item" onclick="event.stopPropagation(); alert('删除')">
-              <span class="menu-icon"><svg style="width:18px;height:18px;fill:#f5222d;" viewBox="0 0 24 24"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg></span>
-              <span>删除</span>
-            </a>
-          </div>
-        </div>
+        <div class="folder-bottom-left">会议记录</div>
       </div>
 
-      <!-- 第二条记录 -->
-      <div class="meeting-record" onclick="handleRecordClick(this)">
-        <div class="meeting-icon" style="position: relative; display: inline-block;">
-          <svg style="position: absolute; top: -5px; left: -5px; width: 14px; height: 14px; z-index: 2; fill:#e91e63;" viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
-          <span>👥</span>
+      <!-- 文件夹卡片 2 -->
+      <div class="folder-card" onclick="handleRecordClick(this)">
+        <div class="folder-top-left">8个文件</div>
+        <div class="folder-center">
+          <svg class="blue-folder-svg" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M5 7C5 6.44772 5.44772 6 6 6H10L12 8H18C18.5523 8 19 8.44772 19 9V19C19 19.5523 18.5523 20 18 20H6C5.44772 20 5 19.5523 5 19V7Z" fill="#2f7bff"/>
+            <path d="M10 6L8 4H4C3.44772 4 3 4.44772 3 5V18C3 18.5523 3.44772 19 4 19H6" stroke="#1f6bf0" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
         </div>
-        <div class="meeting-details">
-          <div class="meeting-title">团队周例会</div>
-          <div class="meeting-meta">
-            <span>2026.01.23 09:15</span>
-            <span>00:45:20</span>
-          </div>
+        <div class="folder-bottom-left">项目文档</div>
+      </div>
+
+      <!-- 文件夹卡片 3 -->
+      <div class="folder-card" onclick="handleRecordClick(this)">
+        <div class="folder-top-left">5个文件</div>
+        <div class="folder-center">
+          <svg class="blue-folder-svg" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M5 7C5 6.44772 5.44772 6 6 6H10L12 8H18C18.5523 8 19 8.44772 19 9V19C19 19.5523 18.5523 20 18 20H6C5.44772 20 5 19.5523 5 19V7Z" fill="#2f7bff"/>
+            <path d="M10 6L8 4H4C3.44772 4 3 4.44772 3 5V18C3 18.5523 3.44772 19 4 19H6" stroke="#1f6bf0" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
         </div>
-        <div class="meeting-actions" onclick="toggleDropdown(event, 'menu2')">
-          <div class="dots">
-            <div class="dot"></div>
-            <div class="dot"></div>
-            <div class="dot"></div>
-          </div>
-          <div class="dropdown-menu" id="menu2">
-            <a href="#" class="menu-item" onclick="event.stopPropagation(); alert('下载')">
-              <span class="menu-icon"><svg style="width:18px;height:18px;fill:#52c41a;" viewBox="0 0 24 24"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg></span>
-              <span>下载</span>
-            </a>
-            <a href="#" class="menu-item" onclick="event.stopPropagation(); alert('从喜欢列表移除')">
-              <span class="menu-icon"><svg style="width:18px;height:18px;fill:#f759ab;stroke:none;" viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg></span>
-              <span>从喜欢列表移除</span>
-            </a>
-            <a href="#" class="menu-item" onclick="event.stopPropagation(); alert('移动到')">
-              <span class="menu-icon"><svg style="width:18px;height:18px;fill:#1890ff;" viewBox="0 0 24 24"><path d="M10 4H4c-1.11 0-2 .89-2 2v12c0 1.11.89 2 2 2h16c1.11 0 2-.89 2-2V8c0-1.11-.89-2-2-2h-8l-2-2z"/></svg></span>
-              <span>移动到</span>
-            </a>
-            <a href="#" class="menu-item" onclick="event.stopPropagation(); alert('重命名')">
-              <span class="menu-icon"><svg style="width:18px;height:18px;fill:#722ed1;" viewBox="0 0 24 24"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg></span>
-              <span>重命名</span>
-            </a>
-            <a href="#" class="menu-item" onclick="event.stopPropagation(); alert('合并')">
-              <span class="menu-icon"><svg style="width:18px;height:18px;fill:none;stroke:#faad14;stroke-width:2;" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg></span>
-              <span>合并</span>
-            </a>
-            <a href="#" class="menu-item" onclick="event.stopPropagation(); alert('删除')">
-              <span class="menu-icon"><svg style="width:18px;height:18px;fill:#f5222d;" viewBox="0 0 24 24"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg></span>
-              <span>删除</span>
-            </a>
-          </div>
+        <div class="folder-bottom-left">设计素材</div>
+      </div>
+
+      <!-- 文件夹卡片 4 -->
+      <div class="folder-card" onclick="handleRecordClick(this)">
+        <div class="folder-top-left">15个文件</div>
+        <div class="folder-center">
+          <svg class="blue-folder-svg" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M5 7C5 6.44772 5.44772 6 6 6H10L12 8H18C18.5523 8 19 8.44772 19 9V19C19 19.5523 18.5523 20 18 20H6C5.44772 20 5 19.5523 5 19V7Z" fill="#2f7bff"/>
+            <path d="M10 6L8 4H4C3.44772 4 3 4.44772 3 5V18C3 18.5523 3.44772 19 4 19H6" stroke="#1f6bf0" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
         </div>
+        <div class="folder-bottom-left">音频文件</div>
+      </div>
+
+      <!-- 文件夹卡片 5 -->
+      <div class="folder-card" onclick="handleRecordClick(this)">
+        <div class="folder-top-left">7个文件</div>
+        <div class="folder-center">
+          <svg class="blue-folder-svg" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M5 7C5 6.44772 5.44772 6 6 6H10L12 8H18C18.5523 8 19 8.44772 19 9V19C19 19.5523 18.5523 20 18 20H6C5.44772 20 5 19.5523 5 19V7Z" fill="#2f7bff"/>
+            <path d="M10 6L8 4H4C3.44772 4 3 4.44772 3 5V18C3 18.5523 3.44772 19 4 19H6" stroke="#1f6bf0" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </div>
+        <div class="folder-bottom-left">视频资料</div>
+      </div>
+
+      <!-- 文件夹卡片 6 -->
+      <div class="folder-card" onclick="handleRecordClick(this)">
+        <div class="folder-top-left">23个文件</div>
+        <div class="folder-center">
+          <svg class="blue-folder-svg" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M5 7C5 6.44772 5.44772 6 6 6H10L12 8H18C18.5523 8 19 8.44772 19 9V19C19 19.5523 18.5523 20 18 20H6C5.44772 20 5 19.5523 5 19V7Z" fill="#2f7bff"/>
+            <path d="M10 6L8 4H4C3.44772 4 3 4.44772 3 5V18C3 18.5523 3.44772 19 4 19H6" stroke="#1f6bf0" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </div>
+        <div class="folder-bottom-left">归档文件</div>
       </div>
     </div>
 
