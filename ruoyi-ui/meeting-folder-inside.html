@@ -192,6 +192,112 @@
     background:linear-gradient(100deg,transparent,rgba(255,255,255,.6),transparent);
     transform:skewX(-20deg);animation:sheen 4.5s ease-in-out infinite}
 
+  /* 通用下拉菜单样式 */
+  .dropdown-menu {
+    position: absolute;
+    top: 100%;
+    right: 0;
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.12);
+    padding: 8px 0;
+    min-width: 180px;
+    z-index: 1000; /* 极高层级，确保显示在所有元素之上 */
+    display: none;
+    transform-origin: top right;
+    margin-top: 4px;
+  }
+
+  .dropdown-menu.show {
+    display: block;
+    animation: expandFromButton 0.2s ease;
+  }
+
+  @keyframes expandFromButton {
+    from {
+      opacity: 0;
+      transform: scale(0.8) translateY(0);
+    }
+    to {
+      opacity: 1;
+      transform: scale(1) translateY(0);
+    }
+  }
+
+  .menu-item, .sort-option, .filter-option {
+    display: flex;
+    align-items: center;
+    padding: 10px 16px;
+    cursor: pointer;
+    color: #000;
+    text-decoration: none;
+    font-size: 14px;
+  }
+
+  .menu-item:hover, .sort-option:hover, .filter-option:hover {
+    background: var(--search-bg);
+  }
+
+  .menu-icon, .sort-icon, .filter-icon {
+    margin-right: 12px;
+    width: 18px;
+    text-align: center;
+  }
+
+  .sort-button {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 42px;
+    height: 42px;
+    border: none;
+    background: transparent;
+    border-radius: 50%;
+    cursor: pointer;
+    color: var(--ink-soft);
+    transition: background .2s, transform .2s;
+    margin-left: 8px;
+    z-index: 1001; /* 确保排序按钮在其他元素之上 */
+  }
+
+  .sort-button:hover {
+    background: rgba(20,24,40,.06);
+    transform: rotate(-15deg);
+  }
+
+  .sort-button svg {
+    width: 22px;
+    height: 22px;
+  }
+
+  .filter-button {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 42px;
+    height: 42px;
+    border: none;
+    background: transparent;
+    border-radius: 50%;
+    cursor: pointer;
+    color: var(--ink-soft);
+    transition: background .2s, transform .2s;
+    margin-left: 8px;
+    z-index: 1002; /* 确保过滤按钮在其他元素之上 */
+  }
+
+  .filter-button:hover {
+    background: rgba(20,24,40,.06);
+    transform: rotate(-15deg);
+  }
+
+  .filter-button svg {
+    width: 22px;
+    height: 22px;
+  }
+
   /* ---------- 内容 / 空状态 ---------- */
   .content{flex:1;position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:20px}
   .empty{display:flex;flex-direction:column;align-items:center;gap:18px;transform:translateY(120px)}
@@ -426,28 +532,12 @@
         全部
       </button>
       <button class="nav-item">
-        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M17 10.5V7c0-.55-.45-1-1-1H4c-.55 0-1 .45-1 1v10c0 .55.45 1 1 1h12c.55 0 1-.45 1-1v-3.5l4 4v-11l-4 4z"/></svg>
-        会议
-      </button>
-      <button class="nav-item">
         <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
         收藏
       </button>
       <button class="nav-item">
         <svg viewBox="0 0 24 24" fill="currentColor"><path d="M3 6a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>
         文件夹
-      </button>
-      <button class="nav-item">
-        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 2h8l4 4v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2z"/><path d="M12 17v-6m0 0l-2.6 2.6M12 11l2.6 2.6" stroke="#fff" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
-        已导入
-      </button>
-      <button class="nav-item">
-        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 2h8l4 4v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2z"/><text x="12" y="17" font-size="6.2" font-weight="800" fill="#fff" text-anchor="middle" font-family="Arial">PDF</text></svg>
-        PDF
-      </button>
-      <button class="nav-item">
-        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 2h8l4 4v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2z"/><g stroke="#fff" stroke-width="1.6" stroke-linecap="round"><line x1="8" y1="11" x2="16" y2="11"/><line x1="8" y1="14.5" x2="16" y2="14.5"/><line x1="8" y1="18" x2="13" y2="18"/></g></svg>
-        我的笔记
       </button>
       <button class="nav-item">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
@@ -477,10 +567,51 @@
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.5" y2="16.5"/></svg>
             <input type="text" placeholder="搜索文件…">
           </label>
-          <div class="top-actions">
-            <button class="icon-btn" aria-label="历史记录" onclick="toast('暂无历史记录')">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 12a8.5 8.5 0 1 0 2.6-6.1"/><path d="M3 4v4h4"/><path d="M12 8v4l3 2"/></svg>
-            </button>
+          <div style="width: 20px;"></div> <!-- 增加间距 -->
+          <div class="sort-button" id="sortButton">
+            <svg style="width:26px;height:26px;fill:var(--ink-soft);" viewBox="0 0 24 24">
+              <path d="M3 6h18v2H3V6zm0 4h12v2H3v-2zm0 4h6v2H3v-2zm0 4h18v2H3v-2z" fill="currentColor"/>
+            </svg>
+            <div class="dropdown-menu" id="sortDropdown">
+              <div class="sort-option" data-sort="recent">
+                <svg style="width:22px;height:22px;fill:currentColor;margin-right:16px;" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm.5-13H11v6l5.25 3.25.75-1.25-4.5-3V7z" fill="currentColor"/></svg>
+                <span style="font-size: 16px;">最近</span>
+              </div>
+              <div class="sort-option" data-sort="oldest">
+                <svg style="width:22px;height:22px;fill:currentColor;margin-right:16px;" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm.5-13H11v6l5.25 3.25.75-1.25-4.5-3V7z" transform="scale(-1,1) translate(-24,0)" fill="currentColor"/></svg>
+                <span style="font-size: 16px;">最旧</span>
+              </div>
+              <div class="sort-option" data-sort="title-desc">
+                <svg style="width:22px;height:22px;fill:currentColor;margin-right:16px;" viewBox="0 0 24 24"><path d="M3 18h18v-2H3v2zm0-4h12v-2H3v2zm0-4h6v-2H3v2zm0-4h18V6H3v2z" fill="currentColor"/></svg>
+                <span style="font-size: 16px;">标题 (A-Z)</span>
+              </div>
+              <div class="sort-option" data-sort="title-asc">
+                <svg style="width:22px;height:22px;fill:currentColor;margin-right:16px;" viewBox="0 0 24 24"><path d="M3 18h18v-2H3v2zm0-4h12v-2H3v2zm0-4h6v-2H3v2zm0-4h18V6H3v2z" transform="scale(1,-1) translate(0,-24)" fill="currentColor"/></svg>
+                <span style="font-size: 16px;">标题 (Z-A)</span>
+              </div>
+            </div>
+          </div>
+          <div class="filter-button" id="filterButton">
+            <svg style="width:26px;height:26px;fill:var(--ink-soft);" viewBox="0 0 24 24">
+              <path d="M4 4h16l-8 8v8H8v-8L4 4z" fill="none" stroke="currentColor" stroke-width="2"/>
+            </svg>
+            <div class="dropdown-menu" id="filterDropdown">
+              <div class="filter-option" data-filter="audio-record">
+                <svg style="width:22px;height:22px;fill:#2f7bff;margin-right:16px;" viewBox="0 0 24 24">
+                  <path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3z"/>
+                  <path d="M17 11c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z"/>
+                </svg>
+                <span style="font-size: 16px;">录制音频文件</span>
+              </div>
+              <div class="filter-option" data-filter="audio-upload">
+                <svg style="width:22px;height:22px;fill:#52c41a;margin-right:16px;" viewBox="0 0 24 24">
+                  <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8" fill="none" stroke="#52c41a" stroke-width="2"/>
+                  <path d="M16 6l-4-4-4 4" fill="none" stroke="#52c41a" stroke-width="2"/>
+                  <path d="M12 2v11" fill="none" stroke="#52c41a" stroke-width="2"/>
+                </svg>
+                <span style="font-size: 16px;">上传音频文件</span>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -495,7 +626,12 @@
     <div class="meeting-records">
       <!-- 第一条记录 -->
       <div class="meeting-record" onclick="handleRecordClick(this)">
-        <div class="meeting-icon">📝</div>
+        <div class="meeting-icon">
+          <svg style="width:32px;height:32px;fill:#2f7bff;" viewBox="0 0 24 24">
+            <path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3z"/>
+            <path d="M17 11c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z"/>
+          </svg>
+        </div>
         <div class="meeting-details">
           <div class="meeting-title">产品规划会议</div>
           <div class="meeting-meta">
@@ -658,12 +794,127 @@
 
   // 点击页面其他地方关闭菜单
   document.addEventListener('click', function(event) {
-    if (!event.target.closest('.meeting-actions')) {
+    if (!event.target.closest('.meeting-actions') && !event.target.closest('.sort-button') && !event.target.closest('.filter-button')) {
       const allMenus = document.querySelectorAll('.dropdown-menu');
       allMenus.forEach(menu => {
         menu.classList.remove('show');
       });
     }
+  });
+
+  // 排序按钮功能
+  const sortButton = document.getElementById('sortButton');
+  sortButton.addEventListener('click', function(event) {
+    event.stopPropagation();
+
+    // 添加点击动画效果
+    const button = event.currentTarget;
+    button.style.transform = 'scale(0.95)'; // 按压收缩效果
+    button.style.transition = 'transform 0.1s ease';
+
+    setTimeout(() => {
+      button.style.transform = 'scale(1)'; // 反弹效果
+
+      // 等待反弹完成后再显示菜单
+      setTimeout(() => {
+        const dropdown = document.getElementById('sortDropdown');
+        const allMenus = document.querySelectorAll('.dropdown-menu');
+
+        // 关闭其他所有打开的菜单
+        allMenus.forEach(m => {
+          if (m.id !== 'sortDropdown') {
+            m.classList.remove('show');
+          }
+        });
+
+        // 切换当前菜单
+        dropdown.classList.toggle('show');
+      }, 100);
+    }, 100);
+  });
+
+  // 处理排序选项的点击
+  const sortOptions = document.querySelectorAll('.sort-option');
+  sortOptions.forEach(option => {
+    option.addEventListener('click', function() {
+      // 在这里可以添加排序逻辑
+      const sortBy = this.getAttribute('data-sort');
+      console.log('排序方式:', sortBy);
+
+      // 关闭下拉菜单
+      document.getElementById('sortDropdown').classList.remove('show');
+
+      // 可以在这里添加实际的排序逻辑
+      // 比如根据不同的排序方式对会议记录进行排序
+      switch(sortBy) {
+        case 'recent':
+          // 最近排序逻辑
+          break;
+        case 'oldest':
+          // 最旧排序逻辑
+          break;
+        case 'title-asc':
+          // 标题升序排序逻辑
+          break;
+        case 'title-desc':
+          // 标题降序排序逻辑
+          break;
+      }
+    });
+  });
+
+  // 过滤按钮功能
+  const filterButton = document.getElementById('filterButton');
+  filterButton.addEventListener('click', function(event) {
+    event.stopPropagation();
+
+    // 添加点击动画效果
+    const button = event.currentTarget;
+    button.style.transform = 'scale(0.95)'; // 按压收缩效果
+    button.style.transition = 'transform 0.1s ease';
+
+    setTimeout(() => {
+      button.style.transform = 'scale(1)'; // 反弹效果
+
+      // 等待反弹完成后再显示菜单
+      setTimeout(() => {
+        const dropdown = document.getElementById('filterDropdown');
+        const allMenus = document.querySelectorAll('.dropdown-menu');
+
+        // 关闭其他所有打开的菜单
+        allMenus.forEach(m => {
+          if (m.id !== 'filterDropdown') {
+            m.classList.remove('show');
+          }
+        });
+
+        // 切换当前菜单
+        dropdown.classList.toggle('show');
+      }, 100);
+    }, 100);
+  });
+
+  // 处理过滤选项的点击
+  const filterOptions = document.querySelectorAll('.filter-option');
+  filterOptions.forEach(option => {
+    option.addEventListener('click', function() {
+      // 在这里可以添加过滤逻辑
+      const filterBy = this.getAttribute('data-filter');
+      console.log('过滤方式:', filterBy);
+
+      // 关闭下拉菜单
+      document.getElementById('filterDropdown').classList.remove('show');
+
+      // 可以在这里添加实际的过滤逻辑
+      switch(filterBy) {
+        case 'audio-record':
+          // 录制音频文件逻辑
+          break;
+        case 'audio-upload':
+          // 上传音频文件逻辑
+          break;
+      }
+    });
   });
 </script>
 </body>
