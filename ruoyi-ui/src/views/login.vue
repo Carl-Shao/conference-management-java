@@ -1,7 +1,7 @@
 <template>
   <div class="login">
     <el-form ref="loginForm" :model="loginForm" :rules="loginRules" class="login-form">
-      <h3 class="title">登录</h3>
+      <h3 class="title">离线会议纪要</h3>
       <el-form-item prop="username">
         <el-input
           v-model="loginForm.username"
@@ -226,7 +226,7 @@ export default {
 .title {
   text-align:left;
   padding-left:5px;
-  letter-spacing:5px;
+  letter-spacing:4px;
 }
 .el-button--primary {
   height: 40px;
