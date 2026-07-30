@@ -1,6 +1,6 @@
 <template>
   <div class="navbar" :class="'nav' + navType">
-    <hamburger id="hamburger-container" :is-active="sidebar.opened" class="hamburger-container" @toggleClick="toggleSideBar" />
+    <!-- <hamburger id="hamburger-container" :is-active="sidebar.opened" class="hamburger-container" @toggleClick="toggleSideBar" /> -->
 
     <breadcrumb v-if="navType == 1" id="breadcrumb-container" class="breadcrumb-container" />
     <top-nav v-if="navType == 2" id="topmenu-container" class="topmenu-container" />
@@ -10,7 +10,7 @@
     </template>
     <div class="right-menu">
       <template v-if="device!=='mobile'">
-        <search id="header-search" class="right-menu-item" />
+        <!-- <search id="header-search" class="right-menu-item" /> -->
 
         <!-- <el-tooltip content="源码地址" effect="dark" placement="bottom">
           <ruo-yi-git id="ruoyi-git" class="right-menu-item hover-effect" />
@@ -20,15 +20,15 @@
           <ruo-yi-doc id="ruoyi-doc" class="right-menu-item hover-effect" />
         </el-tooltip> -->
 
-        <screenfull id="screenfull" class="right-menu-item hover-effect" />
+        <!-- <screenfull id="screenfull" class="right-menu-item hover-effect" /> -->
 
-        <el-tooltip content="布局大小" effect="dark" placement="bottom">
+        <!-- <el-tooltip content="布局大小" effect="dark" placement="bottom">
           <size-select id="size-select" class="right-menu-item hover-effect" />
-        </el-tooltip>
+        </el-tooltip> -->
 
-        <el-tooltip content="消息通知" effect="dark" placement="bottom">
+        <!-- <el-tooltip content="消息通知" effect="dark" placement="bottom">
           <header-notice id="header-notice" class="right-menu-item hover-effect" />
-        </el-tooltip>
+        </el-tooltip> -->
 
       </template>
 
@@ -62,7 +62,7 @@ import Breadcrumb from '@/components/Breadcrumb'
 import TopNav from '@/components/TopNav'
 import TopBar from './TopBar'
 import Logo from './Sidebar/Logo'
-import Hamburger from '@/components/Hamburger'
+// import Hamburger from '@/components/Hamburger'
 import Screenfull from '@/components/Screenfull'
 import SizeSelect from '@/components/SizeSelect'
 import Search from '@/components/HeaderSearch'
@@ -76,7 +76,7 @@ export default {
     Logo,
     TopNav,
     TopBar,
-    Hamburger,
+    //Hamburger,
     Screenfull,
     SizeSelect,
     Search,
@@ -222,8 +222,8 @@ export default {
 
       .avatar-wrapper {
         margin-top: 10px;
-        right: 8px;
         position: relative;
+        margin-right: 40px;
 
         .user-avatar {
           cursor: pointer;

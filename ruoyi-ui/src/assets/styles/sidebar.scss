@@ -149,7 +149,7 @@
         height: 50px !important;
         line-height: 50px !important;
         border-radius: 20px; // 添加圆角
-        margin: 4px 16px; // 添加边距
+        margin: 1px 16px; // 添加边距
         padding: 0 16px !important;
 
         // 添加波纹效果容器
@@ -225,6 +225,11 @@
         }
       }
 
+      .el-submenu .el-menu,
+      .nest-menu {
+        padding-left: 16px !important;  // 👈 改这个值控制整体右移距离
+      }
+
       // 为菜单项添加背景效果 - 这是关键部分，用于非活动项目的悬停背景
       .el-menu-item,
       .el-submenu__title {
@@ -250,6 +255,27 @@
         // 活动时的背景
         &.is-active::before {
           background: var(--blue-soft, #d1e0fa); // 选中时的背景色
+        }
+      }
+
+      .el-submenu .el-menu .el-menu-item {
+        height: 36px !important;         // 👈 改这个值控制行间距
+        line-height: 36px !important;    // 👈 必须与 height 完全一致
+        font-size: 15px !important;      // 字体同步缩小
+        margin: 2px 16px !important;     // 上下外边距也适当收紧
+
+         // ⚠️ 伪元素背景胶囊必须同步调整，否则会错位/溢出
+        &::before {
+          top: 2px !important;
+          bottom: 2px !important;
+          right: 30px !important;
+          border-radius: 16px !important;
+        }
+
+        // 子目录图标也同步缩小
+        i {
+          font-size: 18px !important;
+          margin-right: 12px !important;
         }
       }
 
@@ -304,7 +330,7 @@
       .el-menu-item,
       .el-submenu__title {
         color: var(--ink-soft, #5a606b) !important; // 使用与示例一致的颜色
-        font-size: 18px;
+        font-size: 14px;
         font-weight: 600;
         height: 50px !important;
         line-height: 50px !important;
@@ -337,6 +363,11 @@
             transform: scale(1.06); // 悬停时放大图标
           }
         }
+      }
+
+      .el-submenu .el-menu,
+      .nest-menu {
+        padding-left: 16px !important;  // 👈 改这个值控制整体右移距离
       }
 
       .el-menu-item.is-active {
@@ -376,6 +407,27 @@
 
         i {
           color: var(--blue, #2f7bff) !important; // 子菜单图标也是蓝色
+        }
+      }
+
+      .el-submenu .el-menu .el-menu-item {
+        height: 36px !important;         // 👈 改这个值控制行间距
+        line-height: 36px !important;    // 👈 必须与 height 完全一致
+        font-size: 14px !important;      // 字体同步缩小
+        margin: 2px 16px !important;     // 上下外边距也适当收紧
+
+         // ⚠️ 伪元素背景胶囊必须同步调整，否则会错位/溢出
+        &::before {
+          top: 2px !important;
+          bottom: 2px !important;
+          right: 30px !important;
+          border-radius: 16px !important;
+        }
+
+        // 子目录图标也同步缩小
+        i {
+          font-size: 18px !important;
+          margin-right: 12px !important;
         }
       }
 

@@ -70,7 +70,7 @@ public class SysConfigController extends BaseController
      * 根据参数键名查询参数值
      */
     @GetMapping(value = "/configKey/{configKey}")
-    public AjaxResult getConfigKey(@PathVariable String configKey)
+    public AjaxResult getConfigKey(@PathVariable("configKey") String configKey)
     {
         return success(configService.selectConfigByKey(configKey));
     }
