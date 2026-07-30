@@ -1,7 +1,7 @@
 <template>
   <div class="login">
     <el-form ref="loginForm" :model="loginForm" :rules="loginRules" class="login-form">
-      <h3 class="title">{{title}}</h3>
+      <h3 class="title">登录</h3>
       <el-form-item prop="username">
         <el-input
           v-model="loginForm.username"
@@ -43,7 +43,6 @@
           :loading="loading"
           size="medium"
           type="primary"
-          style="width:100%;"
           @click.native.prevent="handleLogin"
         >
           <span v-if="!loading">登 录</span>
@@ -161,23 +160,27 @@ export default {
 <style rel="stylesheet/scss" lang="scss" scoped>
 .login {
   display: flex;
-  justify-content: center;
+  justify-content: flex-end;
   align-items: center;
   height: 100%;
+  padding-right: 10%;
   background-image: url("../assets/images/login-background.jpg");
   background-size: cover;
 }
 .title {
-  margin: 0px auto 30px auto;
-  text-align: center;
-  color: #707070;
+  font-size:32px;
+  font-weight:600;
+  margin-bottom:40px;
+  color: #292828;
 }
 
 .login-form {
-  border-radius: 6px;
+  border-radius: 20px;
   background: #ffffff;
-  width: 400px;
-  padding: 25px 25px 5px 25px;
+  width: 480px;
+  padding: 45px 45px 25px 45px;
+  border-radius: 20px;
+  box-shadow: 0 16px 48px rgba(15, 23, 42, 0.12);
   z-index: 1;
   .el-input {
     height: 38px;
@@ -219,5 +222,43 @@ export default {
 }
 .login-code-img {
   height: 38px;
+}
+.title {
+  text-align:left;
+  padding-left:5px;
+  letter-spacing:5px;
+}
+.el-button--primary {
+  height: 40px;
+  border-color: #1f6bf0;
+  border-radius: 20px;
+}
+::v-deep .el-button--primary {
+  width: 260px;
+  height: 45px;
+  border-radius: 20px;
+  font-size: 18px;
+  background:#1f6bf0;
+  border-color:#1f6bf0;
+}
+::v-deep .el-input__prefix {
+  transform: translateY(2px);
+  left:10px;
+}
+::v-deep .el-input__inner {
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Helvetica Neue", Arial, sans-serif;
+  font-size:15px;        /* 字体变大 */
+  font-weight:530;       /* 字体加粗 */
+  letter-spacing:2px;    /* 字间距 */
+  height:45px;
+  border-radius:14px;
+  padding-left:35px;
+}
+::v-deep .el-form-item {
+    margin-bottom:28px;
+}
+::v-deep .el-form-item:last-child {
+    display:flex;
+    justify-content:center;
 }
 </style>
