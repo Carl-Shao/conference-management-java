@@ -1,15 +1,15 @@
-<template>
-  <div class="navbar" :class="'nav' + navType">
+<!-- <template> -->
+  <!-- <div class="navbar" :class="'nav' + navType"> -->
     <!-- <hamburger id="hamburger-container" :is-active="sidebar.opened" class="hamburger-container" @toggleClick="toggleSideBar" /> -->
 
-    <breadcrumb v-if="navType == 1" id="breadcrumb-container" class="breadcrumb-container" />
+    <!-- <breadcrumb v-if="navType == 1" id="breadcrumb-container" class="breadcrumb-container" />
     <top-nav v-if="navType == 2" id="topmenu-container" class="topmenu-container" />
     <template v-if="navType == 3">
       <logo v-show="showLogo" :collapse="false"></logo>
-      <top-bar id="topbar-container" class="topbar-container" />
-    </template>
-    <div class="right-menu">
-      <template v-if="device!=='mobile'">
+      <top-bar id="topbar-container" class="topbar-container" /> -->
+    <!-- </template> -->
+    <!-- <div class="right-menu">
+      <template v-if="device!=='mobile'"> -->
         <!-- <search id="header-search" class="right-menu-item" /> -->
 
         <!-- <el-tooltip content="源码地址" effect="dark" placement="bottom">
@@ -30,9 +30,9 @@
           <header-notice id="header-notice" class="right-menu-item hover-effect" />
         </el-tooltip> -->
 
-      </template>
+      <!-- </template> -->
 
-      <el-dropdown class="avatar-container right-menu-item hover-effect" trigger="hover">
+      <!-- <el-dropdown class="avatar-container right-menu-item hover-effect" trigger="hover">
         <div class="avatar-wrapper">
           <img :src="avatar" class="user-avatar">
           <span class="user-nickname"> {{ nickName }} </span>
@@ -51,26 +51,26 @@
             <span>退出登录</span>
           </el-dropdown-item>
         </el-dropdown-menu>
-      </el-dropdown>
-    </div>
-  </div>
-</template>
+      </el-dropdown> -->
+    <!-- </div>
+  </div> -->
+<!-- </template> -->
 
-<script>
-import { mapGetters } from 'vuex'
-import Breadcrumb from '@/components/Breadcrumb'
-import TopNav from '@/components/TopNav'
-import TopBar from './TopBar'
-import Logo from './Sidebar/Logo'
-// import Hamburger from '@/components/Hamburger'
-import Screenfull from '@/components/Screenfull'
-import SizeSelect from '@/components/SizeSelect'
-import Search from '@/components/HeaderSearch'
-import RuoYiGit from '@/components/RuoYi/Git'
-import RuoYiDoc from '@/components/RuoYi/Doc'
-import HeaderNotice from './HeaderNotice'
+<!-- <script> -->
+<!-- // import { mapGetters } from 'vuex'
+// import Breadcrumb from '@/components/Breadcrumb'
+// import TopNav from '@/components/TopNav'
+// import TopBar from './TopBar'
+// import Logo from './Sidebar/Logo'
+// // import Hamburger from '@/components/Hamburger'
+// import Screenfull from '@/components/Screenfull'
+// import SizeSelect from '@/components/SizeSelect'
+// import Search from '@/components/HeaderSearch'
+// import RuoYiGit from '@/components/RuoYi/Git'
+// import RuoYiDoc from '@/components/RuoYi/Doc'
+// import HeaderNotice from './HeaderNotice' -->
 
-export default {
+<!-- export default {
   components: {
     Breadcrumb,
     Logo,
@@ -132,10 +132,10 @@ export default {
       }).catch(() => {})
     }
   }
-}
-</script>
+} -->
+<!-- </script> -->
 
-<style lang="scss" scoped>
+<!-- <style lang="scss" scoped>
 .navbar.nav3 {
   .hamburger-container {
     display: none !important;
@@ -251,4 +251,4 @@ export default {
     }
   }
 }
-</style>
+</style> -->

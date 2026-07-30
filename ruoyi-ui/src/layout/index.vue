@@ -3,10 +3,10 @@
     <div v-if="device==='mobile'&&sidebar.opened" class="drawer-bg" @click="handleClickOutside"/>
     <sidebar v-if="!sidebar.hide" class="sidebar-container"/>
     <div :class="{sidebarHide:sidebar.hide}" class="main-container">
-      <div :class="{'fixed-header':fixedHeader}">
+      <!-- <div :class="{'fixed-header':fixedHeader}">
         <navbar @setLayout="setLayout"/>
         <!-- <tags-view v-if="needTagsView"/> -->
-      </div>
+      <!-- </div> -->
       <app-main/>
       <settings ref="settingRef"/>
     </div>
@@ -14,7 +14,7 @@
 </template>
 
 <script>
-import { AppMain, Navbar, Settings, Sidebar, TagsView } from './components'
+import { AppMain, Settings, Sidebar, TagsView } from './components'
 import ResizeMixin from './mixin/ResizeHandler'
 import { mapState } from 'vuex'
 import variables from '@/assets/styles/variables.scss'
@@ -23,7 +23,7 @@ export default {
   name: 'Layout',
   components: {
     AppMain,
-    Navbar,
+    // Navbar,
     Settings,
     Sidebar,
     TagsView
