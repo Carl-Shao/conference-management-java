@@ -15,7 +15,6 @@
     -webkit-transition: width .28s;
     transition: width 0.28s;
     width: $base-sidebar-width !important;
-    background-color: $base-menu-background;
     height: 100%;
     position: fixed;
     font-size: 0px;
@@ -24,10 +23,15 @@
     left: 0;
     z-index: 1001;
     overflow: hidden;
-    -webkit-box-shadow: 2px 0 6px rgba(0,21,41,.35);
-    box-shadow: 0px 0px 8px 0px rgba(0, 0, 0, 0.1);
-
     // reset element-ui css
+    .el-menu-item {
+      background-color: transparent !important;
+    }
+
+    .el-submenu__title {
+      background-color: transparent !important;
+    }
+
     .horizontal-collapse-transition {
       transition: 0s width ease-in-out, 0s padding-left ease-in-out, 0s padding-right ease-in-out;
     }
@@ -74,15 +78,15 @@
       overflow: hidden !important;
       text-overflow: ellipsis !important;
       white-space: nowrap !important;
-      height: 44px !important;
-      line-height: 44px !important;
+      height: 50px !important;
+      line-height: 50px !important;
     }
 
     // menu hover
     .submenu-title-noDropdown,
     .el-submenu__title {
       &:hover {
-        background-color: rgba(0, 0, 0, 0.06) !important;
+        background-color:  transparent !important;
       }
     }
 
@@ -95,7 +99,7 @@
       min-width: $base-sidebar-width !important;
 
       &:hover {
-        background-color: rgba(0, 0, 0, 0.06) !important;
+        background-color: transparent !important;
       }
     }
 
@@ -104,96 +108,317 @@
       background-color: $base-sub-menu-background !important;
 
       &:hover {
-        background-color: $base-sub-menu-hover !important;
+        background-color: transparent !important;
       }
     }
 
     // theme-dark 深色主题
     &.theme-dark {
-      box-shadow: 2px 0 8px rgba(0, 0, 0, 0.4);
+      box-shadow: 2px 0 8px rgba(90,96,107, 0.2);
       border-right: none;
+      background: linear-gradient(180deg, #ececf4, #e7e7f1) !important;
 
-      .el-menu-item.is-active {
-        position: relative;
-
-        &::before {
-          content: '';
-          position: absolute;
-          inset: 0;
-          background-color: var(--current-color-dark-bg, rgba(64, 158, 255, 0.2));
-          border-right: 3px solid var(--current-color, #409eff);
-          pointer-events: none;
-          z-index: 1;
-        }
+      // 定义CSS变量以匹配示例样式
+      *, *::before, *::after {
+        --side-bg: #ececf4;
+        --side-bg2: #e7e7f1;
+        --main-bg: #fafbfd;
+        --search-bg: #ebedf2;
+        --ink: #2b2f36;
+        --ink-soft: #5a606b;
+        --muted: #9aa1ad;
+        --gray-soft: rgba(255,255,255,.85);
+        --blue: #2f7bff;
+        --blue-deep: #1f6bf0;
+        --blue-soft: #d1e0fa;
+        --gold1: #ffce4d;
+        --gold2: #f5a623;
+        --pink: #f4a3c0;
+        --pink-deep: #e982a8;
+        --chip-blue: #d3e3ff;
+        --line: rgba(20,24,40,.06);
+        --shadow-sm: 0 1px 2px rgba(20,24,40,.06);
+        --shadow-md: 0 10px 30px rgba(31,107,240,.28);
       }
-
-      .el-submenu.is-active > .el-submenu__title {
-        color: var(--current-color, #409eff) !important;
-      }
-
-      .el-menu-item:not(.is-active),
-      .submenu-title-noDropdown,
-      .el-submenu__title {
-        position: relative;
-
-        &::before {
-          content: '';
-          position: absolute;
-          inset: 0;
-          background-color: transparent;
-          pointer-events: none;
-          z-index: 1;
-          transition: background-color 0.2s;
-        }
-
-        &:hover::before {
-          background-color: var(--current-color-dark-bg, rgba(64, 158, 255, 0.2));
-        }
-      }
-    }
-    
-    // theme-light 浅色主题
-    &.theme-light {
-      border-right: 1px solid #e8eaf0;
-      box-shadow: none;
 
       .el-menu-item,
       .el-submenu__title {
-        color: rgba(0, 0, 0, 0.65);
+        color: var(--ink-soft, #5a606b) !important; // 使用与示例一致的颜色
+        font-size: 18px;
+        font-weight: 600;
+        height: 50px !important;
+        line-height: 50px !important;
+        border-radius: 20px; // 添加圆角
+        margin: 4px 16px; // 添加边距
+        padding: 0 16px !important;
+
+        // 添加波纹效果容器
+        position: relative;
+        overflow: hidden;
+
+        // 悬停时的效果
+        &:hover {
+          color: var(--blue, #2f7bff) !important; // 悬停时变蓝
+          background-color: transparent !important; // 确保不被element-ui默认样式覆盖
+
+          i {
+            color: var(--blue, #2f7bff) !important; // 图标也变蓝
+          }
+        }
+
+        i {
+          font-size: 23px !important; // 图标大小
+          margin-right: 16px !important; // 图标右边距
+          color: var(--ink-soft, #4a4f57) !important; // 默认图标颜色
+          transition: color .2s, transform .2s; // 图标过渡效果
+
+          &:hover {
+            color: var(--blue, #2f7bff) !important; // 悬停时图标颜色
+            transform: scale(1.06); // 悬停时放大图标
+          }
+        }
       }
 
       .el-menu-item.is-active {
-        color: var(--current-color, #409eff) !important;
+        color: var(--blue, #2f7bff) !important; // 活跃项蓝色
+        background: none !important; // 移除默认背景
         position: relative;
 
         &::before {
           content: '';
           position: absolute;
-          inset: 0;
-          background-color: var(--current-color-light, #ecf5ff);
-          border-right: 3px solid var(--current-color, #409eff);
-          pointer-events: none;
-          z-index: 1;
+          top: 3px;
+          right: 50px;
+          bottom: 3px;
+          left: 2px;
+          border-radius: 20px;
+          background: var(--blue-soft, #d1e0fa);
+          z-index: -1;
+        }
+
+        &:hover::before {
+          background: var(--blue-soft, #d1e0fa); // 选中状态下的悬停保持同样背景
+        }
+
+        i {
+          color: var(--blue, #2f7bff) !important; // 活跃时图标也是蓝色
         }
       }
 
       .el-submenu.is-active > .el-submenu__title {
-        color: var(--current-color, #409eff) !important;
+        color: var(--blue, #2f7bff) !important; // 子菜单活跃时也蓝色
+
+        &::before {
+          content: '';
+          position: absolute;
+          top: 3px;
+          right: 50px;
+          bottom: 3px;
+          left: 2px;
+          border-radius: 20px;
+          background: var(--blue-soft, #d1e0fa);
+          z-index: -1;
+        }
+
+        i {
+          color: var(--blue, #2f7bff) !important; // 子菜单图标也是蓝色
+        }
       }
 
-      .el-menu-item:not(.is-active):hover,
-      .submenu-title-noDropdown:hover,
-      .el-submenu__title:hover {
-        background-color: #f5f7fa !important;
-        color: rgba(0, 0, 0, 0.85) !important;
+      // 为菜单项添加背景效果 - 这是关键部分，用于非活动项目的悬停背景
+      .el-menu-item,
+      .el-submenu__title {
+        // 伪元素用于背景效果
+        &::before {
+          content: '';
+          position: absolute;
+          top: 3px;
+          right: 50px;
+          bottom: 3px;
+          left: 2px;
+          border-radius: 20px;
+          background: transparent; // 初始透明
+          transition: background .18s ease;
+          z-index: -1; // 放在内容后面
+        }
+
+        // 悬停时显示背景
+        &:not(.is-active):hover::before {
+          background: var(--gray-soft, rgba(255,255,255,.85)); // 悬停时的背景色
+        }
+
+        // 活动时的背景
+        &.is-active::before {
+          background: var(--blue-soft, #d1e0fa); // 选中时的背景色
+        }
       }
 
-      .nest-menu .el-submenu > .el-submenu__title,
-      .el-submenu .el-menu-item {
-        background-color: #fafafa !important;
+      // 波纹效果
+      .ripple {
+        position: absolute;
+        border-radius: 50%;
+        background: radial-gradient(circle, rgba(47,123,255,0.4) 0%, transparent 70%);
+        transform: scale(0);
+        animation: ripple-animation 0.6s ease-out;
+        pointer-events: none;
+        z-index: 1;
+      }
 
+      @keyframes ripple-animation {
+        to {
+          transform: scale(4);
+          opacity: 0;
+        }
+      }
+    }
+
+    // theme-light 浅色主题
+    &.theme-light {
+      border-right: 1px solid var(--line, #ebedf2);
+      box-shadow: 2px 0 4px rgba(90,96,107, 0.1);
+      background: linear-gradient(180deg, #ececf4, #e7e7f1) !important;
+
+      // 定义CSS变量以匹配示例样式
+      *, *::before, *::after {
+        --side-bg: #ececf4;
+        --side-bg2: #e7e7f1;
+        --main-bg: #fafbfd;
+        --search-bg: #ebedf2;
+        --ink: #2b2f36;
+        --ink-soft: #5a606b;
+        --muted: #9aa1ad;
+        --gray-soft: rgba(255,255,255,.85);
+        --blue: #2f7bff;
+        --blue-deep: #1f6bf0;
+        --blue-soft: #d1e0fa;
+        --gold1: #ffce4d;
+        --gold2: #f5a623;
+        --pink: #f4a3c0;
+        --pink-deep: #e982a8;
+        --chip-blue: #d3e3ff;
+        --line: rgba(20,24,40,.06);
+        --shadow-sm: 0 1px 2px rgba(20,24,40,.06);
+        --shadow-md: 0 10px 30px rgba(31,107,240,.28);
+      }
+
+      .el-menu-item,
+      .el-submenu__title {
+        color: var(--ink-soft, #5a606b) !important; // 使用与示例一致的颜色
+        font-size: 18px;
+        font-weight: 600;
+        height: 50px !important;
+        line-height: 50px !important;
+        border-radius: 20px; // 添加圆角
+        margin: 4px 16px; // 添加边距
+        padding: 0 16px !important;
+
+        // 添加波纹效果容器
+        position: relative;
+        overflow: hidden;
+
+        // 悬停时的效果
         &:hover {
-          background-color: #f0f5ff !important;
+          color: var(--blue, #2f7bff) !important; // 悬停时变蓝
+          background-color: transparent !important; // 确保不被element-ui默认样式覆盖
+
+          i {
+            color: var(--blue, #2f7bff) !important; // 图标也变蓝
+          }
+        }
+
+        i {
+          font-size: 23px !important; // 图标大小
+          margin-right: 16px !important; // 图标右边距
+          color: var(--ink-soft, #4a4f57) !important; // 默认图标颜色
+          transition: color .2s, transform .2s; // 图标过渡效果
+
+          &:hover {
+            color: var(--blue, #2f7bff) !important; // 悬停时图标颜色
+            transform: scale(1.06); // 悬停时放大图标
+          }
+        }
+      }
+
+      .el-menu-item.is-active {
+        color: var(--blue, #2f7bff) !important; // 活跃项蓝色
+        background: none !important; // 移除默认背景
+        position: relative;
+
+        &::before {
+          content: '';
+          position: absolute;
+          inset: 3px 50px 3px 2px; // 使用示例中的间距
+          border-radius: 20px;
+          background: var(--blue-soft, #d1e0fa);
+          z-index: -1;
+        }
+
+        &:hover::before {
+          background: var(--blue-soft, #d1e0fa); // 选中状态下的悬停保持同样背景
+        }
+
+        i {
+          color: var(--blue, #2f7bff) !important; // 活跃时图标也是蓝色
+        }
+      }
+
+      .el-submenu.is-active > .el-submenu__title {
+        color: var(--blue, #2f7bff) !important; // 子菜单活跃时也蓝色
+
+        &::before {
+          content: '';
+          position: absolute;
+          inset: 3px 50px 3px 2px; // 使用示例中的间距
+          border-radius: 20px;
+          background: var(--blue-soft, #d1e0fa);
+          z-index: -1;
+        }
+
+        i {
+          color: var(--blue, #2f7bff) !important; // 子菜单图标也是蓝色
+        }
+      }
+
+      // 为菜单项添加背景效果 - 这是关键部分，用于非活动项目的悬停背景
+      .el-menu-item,
+      .el-submenu__title {
+        // 伪元素用于背景效果
+        &::before {
+          content: '';
+          position: absolute;
+          inset: 3px 50px 3px 2px; // 使用示例中的间距 - 上右下左
+          border-radius: 20px;
+          background: transparent; // 初始透明
+          transition: background .18s ease;
+          z-index: -1; // 放在内容后面
+        }
+
+        // 悬停时显示背景
+        &:not(.is-active):hover::before {
+          background: var(--search-bg, #ebedf2); // 悬停时的背景色
+        }
+
+        // 活动时的背景
+        &.is-active::before {
+          background: var(--blue-soft, #d1e0fa); // 选中时的背景色
+        }
+      }
+
+      // 波纹效果
+      .ripple {
+        position: absolute;
+        border-radius: 50%;
+        background: radial-gradient(circle, rgba(47,123,255,0.4) 0%, transparent 70%);
+        transform: scale(0);
+        animation: ripple-animation 0.6s ease-out;
+        pointer-events: none;
+        z-index: 1;
+      }
+
+      @keyframes ripple-animation {
+        to {
+          transform: scale(4);
+          opacity: 0;
         }
       }
     }
@@ -296,7 +521,7 @@
   .el-menu-item {
     &:hover {
       // you can use $subMenuHover
-      background-color: rgba(0, 0, 0, 0.06) !important;
+      background-color: transparent !important;
     }
   }
 

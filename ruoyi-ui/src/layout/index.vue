@@ -52,7 +52,8 @@ export default {
   },
   methods: {
     handleClickOutside() {
-      this.$store.dispatch('app/closeSideBar', { withoutAnimation: false })
+      // this.$store.dispatch('app/closeSideBar', { withoutAnimation: false })
+      return;
     },
     setLayout() {
       this.$refs.settingRef.openSetting()

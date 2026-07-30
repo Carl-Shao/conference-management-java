@@ -9,19 +9,19 @@ $yellow:#FEC171;
 $panGreen: #30B08F;
 
 // 默认菜单主题风格
-$base-menu-color: #bfcbd9;
+$base-menu-color: #5a606b;
 $base-menu-color-active: #ffffff;
-$base-menu-background: #1a1f2e;
-$base-logo-title-color: #ffffff;
+$base-menu-background: #ececf4;
+$base-logo-title-color: #5a606b;
 
-$base-menu-light-color:rgba(0,0,0,.70);
-$base-menu-light-background:#ffffff;
-$base-logo-light-title-color: #001529;
+$base-menu-light-color: #5a606b;
+$base-menu-light-background: #ececf4;
+$base-logo-light-title-color: #5a606b;
 
-$base-sub-menu-background: #141824;
-$base-sub-menu-hover: rgba(255,255,255,.06);
+$base-sub-menu-background: #ececf4;
+$base-sub-menu-hover: rgba(90,96,107,.15);
 
-$base-sidebar-width: 200px;
+$base-sidebar-width: 300px;
 
 // the :export directive is the magic sauce for webpack
 // https://www.bluematador.com/blog/how-to-share-variables-between-js-and-sass
