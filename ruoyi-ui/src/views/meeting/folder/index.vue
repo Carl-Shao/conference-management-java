@@ -361,7 +361,24 @@ export default {
         row.isFavorite = false; this.$message.success('已从收藏列表移除');
       }
     },
-    startRecording() { this.$router.push('/meeting/record') }
+    startRecording() {
+      let backRoute = '';
+      try {
+        backRoute = JSON.stringify({
+          name: this.$route.name,
+          path: this.$route.path,
+          query: this.$route.query || {}
+        });
+      } catch (e) {
+        console.warn('backRoute 序列化失败', e);
+        backRoute = this.$route.path;
+      }
+
+      this.$router.push({
+        path: '/meeting/record',
+        query: { backRoute }
+      });
+    }
   }
 }
 </script>
