@@ -191,24 +191,14 @@ export default {
 
     methods: {
          _enableRecordingLayout() {
-            document.body.classList.remove('sidebar-restoring');
             document.body.classList.add('recording-fullscreen');
-            this.$store.dispatch('app/closeSideBar', { withoutAnimation: true });
         },
         _disableRecordingLayout() {
             // 1. 先移除全屏class（解除 !important 锁定）
             document.body.classList.remove('recording-fullscreen');
-
-            // 第2步：关键！先关闭再打开，强制 Element UI 重新执行宽度计算
-            // 因为 display:none !important 已经让 aside 的内部状态"死"了
-            // 必须通过一次完整的 close → open 循环来"复活"它
-            this.$store.dispatch('app/closeSideBar', { withoutAnimation: false });
-
-            const sidebar = document.querySelector('.sidebar-container');
-            if (sidebar) {
-                void sidebar.offsetWidth; // 触发重排
-            }
-            window.dispatchEvent(new Event('resize'));
+            this.$store.dispatch('app/openSideBar', {
+                withoutAnimation: true
+            });
         },
         cleanupResources() {
             if (this.timerInterval) clearInterval(this.timerInterval);
@@ -853,5 +843,52 @@ body.recording-fullscreen .app-main {
     width: 100% !important;
     max-width: 100% !important;
     transition: none !important;
+}
+</style>
+
+<style>
+/* 仅当全屏模式解除时生效 */
+body:not(.recording-fullscreen) .app-wrapper {
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: stretch !important;
+}
+
+body:not(.recording-fullscreen) .sidebar-container {
+
+    display:flex!important;
+    flex-direction:column!important;
+
+    width:300px!important;
+    min-width:300px!important;
+
+    position:relative!important;
+
+    top:0;
+    bottom:0;
+    left:0;
+
+    height:100vh!important;
+
+    z-index:1001!important;
+
+    overflow:hidden!important;
+}
+
+body:not(.recording-fullscreen) .main-container {
+    flex: 1 !important;            /* 关键：让主区域自动填满剩余空间 */
+    min-width: 0 !important;       /* 防止flex子项溢出 */
+    margin-left: 0 !important;     /* 清除可能残留的负margin */
+}
+/* 接在之前的 body:not(.recording-fullscreen) 规则之后 */
+
+
+
+/* 3. 确保菜单项容器不被裁切 */
+body:not(.recording-fullscreen) .sidebar-container .el-menu-item,
+body:not(.recording-fullscreen) .sidebar-container .el-submenu__title {
+    overflow: visible !important;
+    display: flex !important;
+    align-items: center !important;
 }
 </style>

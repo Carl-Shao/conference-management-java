@@ -22,7 +22,7 @@ router.beforeEach((to, from, next) => {
     const isLock = store.getters.isLock
     /* has token*/
     if (to.path === '/login') {
-      next({ path: '/' })
+      next({ path: '/meeting/summary/index' })
       NProgress.done()
     } else if (isWhiteList(to.path)) {
       next()
@@ -42,7 +42,7 @@ router.beforeEach((to, from, next) => {
             // 根据roles权限生成可访问的路由表
             router.addRoutes(accessRoutes) // 动态添加可访问路由表
 
-            const home = '/huiyi/meeting'
+            const home = '/meeting/summary'
             next({ path: home, replace: true })
           })
         }).catch(err => {

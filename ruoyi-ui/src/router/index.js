@@ -64,7 +64,16 @@ export const constantRoutes = [
   {
     path: '/',
     component: Layout,
-    redirect: '/huiyi/meeting'
+    redirect: '/meeting/summary', 
+    children: [
+      {
+        path: 'meeting/summary', 
+        component: () => import('@/views/meeting/summary/index'), 
+        name: '', 
+        hidden: true, 
+        meta: { title: '会议纪要', icon: 'dashboard', affix: true } 
+      }
+    ]
   },
   {
     path: '/huiyi/record',
@@ -82,7 +91,7 @@ export const constantRoutes = [
   {
     path: '/huiyi/meeting',
     component: Layout,
-    hidden: false, // 改为false以显示在菜单中
+    hidden: true, // 改为false以显示在菜单中
     children: [
       {
         path: 'index',
