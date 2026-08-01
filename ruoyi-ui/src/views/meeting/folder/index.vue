@@ -181,67 +181,44 @@
         </div>
       </div>
 
-      <!-- ✅ 2. 内容区：标题 + 列表 -->
+      <!-- ✅ 2. 内容区：标题 + 文件夹卡片网格 (仅此处替换) -->
       <div class="content-section">
         <h2 class="section-title">我的文件夹</h2>
 
-        <div class="meeting-list">
-          <div v-for="item in meetingList" :key="item.id" class="meeting-card">
-            <!-- 左侧图标 -->
-            <div class="card-icon">
-              <i v-if="item.isFavorite" class="favorite-badge el-icon-star-on" />
-              <svg v-if="item.fileType === 'record'" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path
-                  d="M24 14C22.3431 14 21 15.3431 21 17V25C21 26.6569 22.3431 28 24 28C25.6569 28 27 26.6569 27 25V17C27 15.3431 25.6569 14 24 14Z"
-                  fill="#4A7DFF" />
-                <path d="M19 25C19 27.7614 21.2386 30 24 30C26.7614 30 29 27.7614 29 25" stroke="#4A7DFF"
-                  stroke-width="2" stroke-linecap="round" />
-                <line x1="24" y1="30" x2="24" y2="34" stroke="#4A7DFF" stroke-width="2" stroke-linecap="round" />
-                <line x1="21" y1="34" x2="27" y2="34" stroke="#4A7DFF" stroke-width="2" stroke-linecap="round" />
-              </svg>
-              <svg v-else viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M24 16V28" stroke="#67C23A" stroke-width="2" stroke-linecap="round" />
-                <path d="M19 21L24 16L29 21" stroke="#67C23A" stroke-width="2" stroke-linecap="round"
-                  stroke-linejoin="round" />
-                <path d="M16 28V32C16 33.1046 16.8954 34 18 34H30C31.1046 34 32 33.1046 32 32V28" stroke="#67C23A"
-                  stroke-width="2" stroke-linecap="round" />
+        <div class="folder-grid">
+          <!-- 新建文件夹卡片 -->
+          <div class="folder-card new-folder-card" @click="createNewFolder">
+            <div class="folder-top-left"></div>
+            <div class="folder-center">
+              <svg class="blue-folder-svg" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M5 7C5 6.44772 5.44772 6 6 6H10L12 8H18C18.5523 8 19 8.44772 19 9V19C19 19.5523 18.5523 20 18 20H6C5.44772 20 5 19.5523 5 19V7Z" fill="#2f7bff"/>
+                <path d="M10 6L8 4H4C3.44772 4 3 4.44772 3 5V18C3 18.5523 3.44772 19 4 19H6" stroke="#1f6bf0" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
               </svg>
             </div>
-
-            <!-- 中间信息 -->
-            <div class="card-info">
-              <h3 class="card-title">{{ item.title }}</h3>
-              <p class="card-meta">
-                <span>{{ item.duration }}</span>
-                <span class="meta-divider">·</span>
-                <span>{{ item.createTime }}</span>
-              </p>
-            </div>
-
-            <!-- 右侧更多操作 -->
-            <el-dropdown trigger="click" @command="(cmd) => handleCommand(cmd, item)">
-              <i class="el-icon-more card-more" />
-              <el-dropdown-menu slot="dropdown" class="custom-action-dropdown">
-                <el-dropdown-item command="download"><i class="el-icon-download icon-clr-green" />
-                  <span>下载</span></el-dropdown-item>
-                <el-dropdown-item :command="item.isFavorite ? 'removeFavorite' : 'addFavorite'">
-                  <i :class="['icon-clr-yellow', item.isFavorite ? 'el-icon-star-on' : 'el-icon-star-off']" />
-                  <span>{{ item.isFavorite ? '从收藏列表移除' : '添加到收藏' }}</span>
-                </el-dropdown-item>
-                <el-dropdown-item command="move"><i class="el-icon-folder-opened icon-clr-blue" />
-                  <span>移动到</span></el-dropdown-item>
-                <el-dropdown-item command="rename"><i class="el-icon-edit icon-clr-purple" />
-                  <span>重命名</span></el-dropdown-item>
-                <el-dropdown-item command="merge"><i class="el-icon-document-copy icon-clr-orange" />
-                  <span>合并</span></el-dropdown-item>
-                <el-dropdown-item command="delete"><i class="el-icon-delete icon-clr-red" />
-                  <span>删除</span></el-dropdown-item>
-              </el-dropdown-menu>
-            </el-dropdown>
+            <div class="folder-bottom-left">新建文件夹</div>
           </div>
 
-          <div v-if="!meetingList.length" class="empty-state">
-            <p>暂无会议纪要</p>
+          <!-- 动态文件夹卡片列表 -->
+          <div 
+            v-for="item in folderList" 
+            :key="item.id" 
+            class="folder-card"
+            :class="{ 'clicked': clickedFolderId === item.id }"
+            @click="handleFolderClick(item)"
+            @animationend="clickedFolderId = null"
+          >
+            <div class="folder-top-left">{{ item.fileCount }}个文件</div>
+            <div class="folder-center">
+              <svg class="blue-folder-svg" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M5 7C5 6.44772 5.44772 6 6 6H10L12 8H18C18.5523 8 19 8.44772 19 9V19C19 19.5523 18.5523 20 18 20H6C5.44772 20 5 19.5523 5 19V7Z" fill="#2f7bff"/>
+                <path d="M10 6L8 4H4C3.44772 4 3 4.44772 3 5V18C3 18.5523 3.44772 19 4 19H6" stroke="#1f6bf0" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </div>
+            <div class="folder-bottom-left">{{ item.title }}</div>
+          </div>
+
+          <div v-if="!folderList.length" class="empty-state">
+            <p>暂无文件夹</p>
           </div>
         </div>
       </div>
@@ -264,6 +241,17 @@ export default {
       isSearchMode: false,
       sortType: 'timeDesc',
       currentFilter: 'all',
+      clickedFolderId: null, // 新增：用于文件夹点击动画
+      // ✅ 新增：文件夹数据源（替代原有的 meetingList 用于普通模式展示）
+      folderList: [
+        { id: 1, title: '会议记录', fileCount: 12 },
+        { id: 2, title: '项目文档', fileCount: 8 },
+        { id: 3, title: '设计素材', fileCount: 5 },
+        { id: 4, title: '音频文件', fileCount: 15 },
+        { id: 5, title: '视频资料', fileCount: 7 },
+        { id: 6, title: '归档文件', fileCount: 23 }
+      ],
+      // ⚠️ 保留原有 meetingList 供搜索模式及其他潜在业务使用
       meetingList: [
         { id: 1, title: '产品规划会议', fileType: 'record', duration: '45:20', createTime: '2026-07-30 14:30', isFavorite: false, downloadUrl: '/api/meeting/download/1' },
         { id: 2, title: '团队周例会', fileType: 'upload', duration: '32:15', createTime: '2026-07-29 10:00', isFavorite: true, downloadUrl: '/api/meeting/download/2' },
@@ -304,6 +292,31 @@ export default {
     exitSearch() {
       this.isSearchMode = false;
       this.searchKeyword = ''; // 清空关键词，回到原始列表
+    },
+
+    // ✅ 新增：文件夹点击处理
+    handleFolderClick(item) {
+      this.clickedFolderId = item.id;
+      console.log('打开文件夹:', item.title);
+      // TODO: 在此处添加进入文件夹详情的路由跳转逻辑
+    },
+
+    // ✅ 新增：新建文件夹
+    createNewFolder() {
+      this.$prompt('请输入文件夹名称', '新建文件夹', {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        inputPattern: /\S+/,
+        inputErrorMessage: '名称不能为空',
+        customClass: 'new-folder-dialog' 
+      }).then(({ value }) => {
+        this.folderList.unshift({
+          id: Date.now(),
+          title: value,
+          fileCount: 0
+        });
+        this.$message.success('创建成功');
+      }).catch(() => {});
     },
 
     handleFileUpload(event) {
@@ -386,9 +399,13 @@ export default {
 <style lang="scss" scoped>
 .meeting-index {
   padding: 24px;
-  min-height: 100vh;
   background: #ffffff;
   position: relative;
+  height: 100vh; 
+  display: flex; 
+  flex-direction: column;
+  overflow: hidden;
+  box-sizing: border-box;
 }
 
 .search-mode-overlay {
@@ -507,7 +524,11 @@ export default {
 }
 
 .normal-mode-view {
-  min-height: 100vh;
+  flex: 1;
+  min-height: 0vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
 }
 
 /* ✅ 置顶搜索栏：页面最顶部 */
@@ -516,6 +537,7 @@ export default {
   align-items: center;
   gap: 16px;
   margin-bottom: 28px;
+  flex-shrink: 0;
   /* 与下方内容区拉开距离 */
 }
 
@@ -671,11 +693,126 @@ export default {
   }
 }
 
-.meeting-list {
+/* ========== ✅ 新增：文件夹卡片网格样式 (严格复刻HTML设计稿) ========== */
+.folder-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  gap: 20px;
+  padding: 0 34px;
+  margin-top: 20px;
+}
+
+.folder-card {
   display: flex;
   flex-direction: column;
-  gap: 0px;
-  padding-bottom: 100px;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px;
+  border-radius: 20px;
+  background: white;
+  box-shadow: 0 10px 30px rgba(0,0,0,.28);
+  transition: all 0.3s ease;
+  cursor: pointer;
+  position: relative;
+  height: 180px;
+  text-align: center;
+
+  &:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 6px 20px rgba(31,107,240,.4);
+  }
+
+  /* 点击反弹动画 */
+  &.clicked {
+    animation: clickEffect 0.3s ease;
+  }
+}
+
+@keyframes clickEffect {
+  0% { transform: scale(1); }
+  50% { transform: scale(0.98); }
+  100% { transform: scale(1); }
+}
+
+.new-folder-card {
+  background: #e0e0e0 !important;
+  border: 2px dashed #2f7bff !important;
+
+  &:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 6px 20px rgba(31,107,240,.4);
+    background: #d0d0d0 !important;
+  }
+}
+
+.folder-top-left {
+  align-self: flex-start;
+  font-size: 12px;
+  color: #9aa1ad;
+  width: 100%;
+}
+
+.folder-center {
+  font-size: 60px;
+  margin: 10px 0;
+  width: 60px;
+  height: 60px;
+}
+
+.blue-folder-svg {
+  width: 100%;
+  height: 100%;
+}
+
+.folder-bottom-left {
+  align-self: flex-start;
+  font-size: 16px;
+  font-weight: 500;
+  color: #2b2f36;
+  width: 100%;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+/* ========== ✅ 文件夹样式结束 ========== */
+
+/* ⚠️ 保留原有 meeting-list / meeting-card 样式，避免搜索模式或其他引用报错 */
+.meeting-list {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+
+  padding-bottom: 120px;
+
+  scrollbar-width: thin;
+  scrollbar-color: #dcdfe6 transparent;
+
+  -webkit-overflow-scrolling: touch;
+}
+
+.meeting-list::-webkit-scrollbar {
+  width: 6px;
+}
+
+.meeting-list::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.meeting-list::-webkit-scrollbar-thumb {
+  background: #dcdfe6;
+  border-radius: 10px;
+}
+
+.meeting-list::-webkit-scrollbar-thumb:hover {
+  background: #c0c4cc;
+}
+
+.content-section {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
 }
 
 .meeting-card {
@@ -767,8 +904,9 @@ export default {
 
 .fab-btn {
   position: absolute;
+  flex-shrink: 0;
   left: 50%;
-  bottom: 90px;
+  bottom: 50px;
   transform: translateX(-50%);
   display: inline-flex;
   align-items: center;
@@ -872,6 +1010,9 @@ export default {
     display: inline-flex;
     align-items: center;
     flex-shrink: 0;
+  }
+  body .new-folder-dialog.el-message-box {
+      border-radius: 20px !important;
   }
 }
 </style>

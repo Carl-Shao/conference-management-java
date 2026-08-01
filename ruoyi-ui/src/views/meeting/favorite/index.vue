@@ -183,7 +183,7 @@
 
       <!-- ✅ 2. 内容区：标题 + 列表 -->
       <div class="content-section">
-        <h2 class="section-title">我的收藏</h2>
+        <h2 class="section-title">我的会议纪要</h2>
 
         <div class="meeting-list">
           <div v-for="item in meetingList" :key="item.id" class="meeting-card">
@@ -267,7 +267,18 @@ export default {
       meetingList: [
         { id: 1, title: '产品规划会议', fileType: 'record', duration: '45:20', createTime: '2026-07-30 14:30', isFavorite: false, downloadUrl: '/api/meeting/download/1' },
         { id: 2, title: '团队周例会', fileType: 'upload', duration: '32:15', createTime: '2026-07-29 10:00', isFavorite: true, downloadUrl: '/api/meeting/download/2' },
-        { id: 3, title: 'Q3 OKR 对齐会', fileType: 'record', duration: '58:40', createTime: '2026-07-28 16:20', isFavorite: false, downloadUrl: '/api/meeting/download/3' }
+        { id: 3, title: 'Q3 OKR 对齐会', fileType: 'record', duration: '58:40', createTime: '2026-07-28 16:20', isFavorite: false, downloadUrl: '/api/meeting/download/3' },
+        { id: 4, title: '技术部晨会', fileType: 'record', duration: '18:40', createTime: '2026-07-27 15:30', isFavorite: false, downloadUrl: '/api/meeting/download/4' },
+        { id: 5, title: '07_25会议', fileType: 'record', duration: '58:40', createTime: '2026-07-28 16:20', isFavorite: false, downloadUrl: '/api/meeting/download/5' },
+        { id: 6, title: '项目会议', fileType: 'record', duration: '58:40', createTime: '2026-07-28 16:20', isFavorite: false, downloadUrl: '/api/meeting/download/6' },
+        { id: 7, title: 'Q2 OKR 对齐会', fileType: 'record', duration: '58:40', createTime: '2026-07-28 16:20', isFavorite: false, downloadUrl: '/api/meeting/download/7' },
+        { id: 8, title: '需求分析会', fileType: 'record', duration: '58:40', createTime: '2026-07-28 16:20', isFavorite: false, downloadUrl: '/api/meeting/download/8' },
+        { id: 9, title: '技术部晨会', fileType: 'record', duration: '58:40', createTime: '2026-07-28 16:20', isFavorite: false, downloadUrl: '/api/meeting/download/9' },
+        { id: 10, title: '07_15会议', fileType: 'record', duration: '58:40', createTime: '2026-07-28 16:20', isFavorite: false, downloadUrl: '/api/meeting/download/10' },
+        { id: 11, title: '产品优化会', fileType: 'record', duration: '58:40', createTime: '2026-07-28 16:20', isFavorite: false, downloadUrl: '/api/meeting/download/11' },
+        { id: 12, title: '产品风险评估', fileType: 'record', duration: '58:40', createTime: '2026-07-28 16:20', isFavorite: false, downloadUrl: '/api/meeting/download/12' },
+        { id: 13, title: '技术部晨会', fileType: 'record', duration: '58:40', createTime: '2026-07-28 16:20', isFavorite: false, downloadUrl: '/api/meeting/download/13' },
+        { id: 14, title: 'Q1 OKR 对齐会', fileType: 'record', duration: '58:40', createTime: '2026-07-28 16:20', isFavorite: false, downloadUrl: '/api/meeting/download/14' }
       ]
     }
   },
@@ -386,9 +397,13 @@ export default {
 <style lang="scss" scoped>
 .meeting-index {
   padding: 24px;
-  min-height: 100vh;
   background: #ffffff;
   position: relative;
+  height: 100vh; 
+  display: flex; 
+  flex-direction: column;
+  overflow: hidden;
+  box-sizing: border-box;
 }
 
 .search-mode-overlay {
@@ -507,7 +522,11 @@ export default {
 }
 
 .normal-mode-view {
-  min-height: 100vh;
+  flex: 1;
+  min-height: 0vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
 }
 
 /* ✅ 置顶搜索栏：页面最顶部 */
@@ -516,6 +535,7 @@ export default {
   align-items: center;
   gap: 16px;
   margin-bottom: 28px;
+  flex-shrink: 0;
   /* 与下方内容区拉开距离 */
 }
 
@@ -672,10 +692,41 @@ export default {
 }
 
 .meeting-list {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+
+  padding-bottom: 120px;
+
+  scrollbar-width: thin;
+  scrollbar-color: #dcdfe6 transparent;
+
+  -webkit-overflow-scrolling: touch;
+}
+
+.meeting-list::-webkit-scrollbar {
+  width: 6px;
+}
+
+.meeting-list::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.meeting-list::-webkit-scrollbar-thumb {
+  background: #dcdfe6;
+  border-radius: 10px;
+}
+
+.meeting-list::-webkit-scrollbar-thumb:hover {
+  background: #c0c4cc;
+}
+
+.content-section {
+  flex: 1;
+  min-height: 0;
   display: flex;
   flex-direction: column;
-  gap: 0px;
-  padding-bottom: 100px;
+  overflow: hidden;
 }
 
 .meeting-card {
@@ -767,8 +818,9 @@ export default {
 
 .fab-btn {
   position: absolute;
+  flex-shrink: 0;
   left: 50%;
-  bottom: 90px;
+  bottom: 50px;
   transform: translateX(-50%);
   display: inline-flex;
   align-items: center;
