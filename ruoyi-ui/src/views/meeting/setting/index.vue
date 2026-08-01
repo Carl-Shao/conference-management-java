@@ -1,14 +1,17 @@
 <template>
   <div class="meeting-index">
-    <!-- 🔍 搜索模式 (全屏/独立视图) - 保持不变 -->
+    <!-- 🔍 搜索模式 (全屏/独立视图) -->
     <div v-if="isSearchMode" class="search-mode-overlay">
       <div class="search-bar-wrapper">
+        <!-- ✅ 左侧叉号按钮：返回原界面 -->
         <button class="search-close-btn" @click="exitSearch" aria-label="关闭搜索">
-          <svg viewBox="0 0 24 24" fill="none"  stroke-width="2.5" stroke-linecap="round">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
             <line x1="18" y1="6" x2="6" y2="18" />
             <line x1="6" y1="6" x2="18" y2="18" />
           </svg>
         </button>
+
+        <!-- ✅ 搜索框：进入后自动获得焦点和光标 -->
         <el-input
           ref="searchInputRef"
           v-model="searchKeyword"
@@ -18,23 +21,49 @@
           clearable
         />
       </div>
+
+      <!-- 搜索结果列表 -->
       <div class="search-results">
         <template v-if="searchKeyword.trim()">
-          <div class="results-hint">找到 {{ filteredMeetingList.length }} 条相关纪要</div>
-          <div class="mac-group search-result-list">
-            <div v-for="item in filteredMeetingList" :key="item.id" class="mac-row search-result-card">
-              <div class="row-icon">
-                <svg v-if="item.fileType === 'record'" viewBox="0 0 48 48" fill="none"><path d="M24 14C22.3431 14 21 15.3431 21 17V25C21 26.6569 22.3431 28 24 28C25.6569 28 27 26.6569 27 25V17C27 15.3431 25.6569 14 24 14Z" fill=none /><path d="M19 25C19 27.7614 21.2386 30 24 30C26.7614 30 29 27.7614 29 25" stroke="#4A7DFF" stroke-width="2" stroke-linecap="round" /><line x1="24" y1="30" x2="24" y2="34" stroke="#4A7DFF" stroke-width="2" stroke-linecap="round" /><line x1="21" y1="34" x2="27" y2="34" stroke="#4A7DFF" stroke-width="2" stroke-linecap="round" /></svg>
-                <svg v-else viewBox="0 0 48 48" fill="none"><path d="M24 16V28" stroke="#67C23A" stroke-width="2" stroke-linecap="round" /><path d="M19 21L24 16L29 21" stroke="#67C23A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" /><path d="M16 28V32C16 33.1046 16.8954 34 18 34H30C31.1046 34 32 33.1046 32 32V28" stroke="#67C23A" stroke-width="2" stroke-linecap="round" /></svg>
+          <div class="results-hint">
+            找到 {{ filteredSettings.length }} 条相关纪要
+          </div>
+
+          <div class="meeting-list search-result-list">
+            <div v-for="item in filteredSettings" :key="item.id" class="meeting-card search-result-card">
+              <!-- ⚠️ 建议抽取为 <MeetingCard :item="item" /> 子组件避免重复 -->
+              <div class="card-icon">
+                <i v-if="item.isFavorite" class="favorite-badge el-icon-star-on" />
+                <svg v-if="item.fileType === 'record'" viewBox="0 0 48 48" fill="none">
+                  <path
+                    d="M24 14C22.3431 14 21 15.3431 21 17V25C21 26.6569 22.3431 28 24 28C25.6569 28 27 26.6569 27 25V17C27 15.3431 25.6569 14 24 14Z"
+                    fill="#4A7DFF" />
+                  <path d="M19 25C19 27.7614 21.2386 30 24 30C26.7614 30 29 27.7614 29 25" stroke="#4A7DFF"
+                    stroke-width="2" stroke-linecap="round" />
+                  <line x1="24" y1="30" x2="24" y2="34" stroke="#4A7DFF" stroke-width="2" stroke-linecap="round" />
+                  <line x1="21" y1="34" x2="27" y2="34" stroke="#4A7DFF" stroke-width="2" stroke-linecap="round" />
+                </svg>
+                <svg v-else viewBox="0 0 48 48" fill="none">
+                  <path d="M24 16V28" stroke="#67C23A" stroke-width="2" stroke-linecap="round" />
+                  <path d="M19 21L24 16L29 21" stroke="#67C23A" stroke-width="2" stroke-linecap="round"
+                    stroke-linejoin="round" />
+                  <path d="M16 28V32C16 33.1046 16.8954 34 18 34H30C31.1046 34 32 33.1046 32 32V28" stroke="#67C23A"
+                    stroke-width="2" stroke-linecap="round" />
+                </svg>
               </div>
-              <div class="row-content">
-                <span class="row-title" v-html="highlightText(item.title, searchKeyword)" />
-                <span class="row-subtitle">
-                  <span v-html="highlightText(item.duration, searchKeyword)" /> · <span v-html="highlightText(item.createTime, searchKeyword)" />
-                </span>
+              <div class="card-info">
+                <h3 class="card-title" v-html="highlightText(item.title, searchKeyword)" />
+                <p class="card-meta">
+                  <span v-html="highlightText(item.duration, searchKeyword)" />
+                  <span class="meta-divider">·</span>
+                  <span v-html="highlightText(item.createTime, searchKeyword)" />
+                </p>
               </div>
             </div>
-            <div v-if="!filteredMeetingList.length" class="empty-state"><p>未找到与 "{{ searchKeyword }}" 相关的纪要</p></div>
+
+            <div v-if="!filteredSettings.length" class="empty-state">
+              <p>未找到与 "{{ searchKeyword }}" 相关的纪要</p>
+            </div>
           </div>
         </template>
       </div>
@@ -46,7 +75,7 @@
       <div class="top-search-bar">
         <el-input
           v-model="searchKeyword"
-          placeholder="搜索会议纪要..."
+          placeholder="搜索"
           prefix-icon="el-icon-search"
           class="meeting-search"
           clearable
@@ -146,7 +175,15 @@ export default {
       isSearchMode: false,
       sortType: 'timeDesc',
       currentFilter: 'all',
-      meetingList: []
+      meetingList: [],
+      settingOptions: [
+        { title: '个人资料', subtitle: '头像、昵称、账号信息', iconClass: 'icon-blue', action: () => this.$router.push('/user/profile') },
+        { title: '布局设置', subtitle: '调整系统界面布局', iconClass: 'icon-layout', action: () => this.setting && this.$emit('setLayout') },
+        { title: '锁定屏幕', subtitle: '保护当前账号安全', iconClass: 'icon-lock', action: () => this.lockScreen() },
+        { title: '通知', subtitle: '会前提醒、纪要生成通知', iconClass: 'icon-blue', action: () => console.log('跳转通知设置') },
+        { title: '关于', subtitle: '版本 v2.4.1', iconClass: 'icon-teal', action: () => console.log('跳转关于页面') },
+        { title: '退出登录', subtitle: '退出当前账号', iconClass: 'icon-exit', action: () => this.logout() }
+      ]
     }
   },
   computed: {
@@ -154,13 +191,12 @@ export default {
     setting() {
       return this.$store.state.settings.showSettings
     },
-    filteredMeetingList() {
+    filteredSettings() {
       if (!this.searchKeyword.trim()) return [];
       const kw = this.searchKeyword.toLowerCase();
-      return this.meetingList.filter(item =>
+      return this.settingOptions.filter(item =>
         item.title.toLowerCase().includes(kw) ||
-        (item.duration && item.duration.includes(kw)) ||
-        (item.createTime && item.createTime.includes(kw))
+        (item.subtitle && item.subtitle.toLowerCase().includes(kw))
       );
     }
   },
@@ -190,6 +226,17 @@ export default {
     escapeHtml(str) {
       const map = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' };
       return String(str).replace(/[&<>"']/g, c => map[c]);
+    },
+    handleSearchItemClick(item) {
+      if (item.action && typeof item.action === 'function') {
+        item.action();
+        // 如果动作不是跳转页面（如锁屏），可能需要手动退出搜索
+        // 如果是 router.push，页面切换后搜索模式自然会被销毁或重置
+        if (!['/user/profile'].some(p => this.$route.path.includes(p))) {
+          // 根据实际情况决定是否退出搜索
+          // this.exitSearch(); 
+        }
+      }
     },
     handleSortChange(command) { this.sortType = command },
     handleFilterChange(command) { this.currentFilter = command },
@@ -252,38 +299,56 @@ export default {
   position: relative;
   padding: 16px 24px 16px 72px;
   flex-shrink: 0;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+  border-bottom: none;
 }
 
 .search-close-btn {
   position: absolute;
-  left: 24px; top: 50%;
-  transform: translateY(-50%);
-  width: 32px; height: 32px;
+  left: 20px;
+  width: 30px; height: 30px;
   border: none;
-  background: #f5f5f7;
-  border-radius: 20px;
+  background: #f5f6f8;
+  border-radius: 50%;
   display: flex; align-items: center; justify-content: center;
   cursor: pointer;
-  color: #1d1d1f;
-  transition: all 0.2s ease;
-  svg { width: 16px; height: 16px; }
-  &:hover { background: #e8e8ed; }
-  &:active { transform: translateY(-50%) scale(0.92); }
+  flex-shrink: 0;
+  transition: all 0.2s;
+  color: #606266;
+
+  svg { width: 18px; height: 18px; }
+
+  &:hover { background: #e8eaed; color: #303133; }
+  &:active { transform: scale(0.92); }
 }
 
 .search-mode-input {
-  width: 100%;
+  flex: 1;
+
   ::v-deep .el-input__inner {
-    height: 36px; line-height: 36px;
-    border-radius: 20px; border: none;
-    background-color: #f5f5f7;
-    font-size: 15px; padding-left: 40px; color: #1d1d1f;
-    &::placeholder { color: #86868b; }
+    height: 30px;
+    line-height: 30px;
+    border-radius: 14px;
+    border: none;
+    background-color: #f5f6f8;
+    font-size: 14px;
+    padding-left: 40px;
+    color: #303133;
+
+    &::placeholder { color: #b0b3b8; }
     &:focus { background-color: #edeef0; box-shadow: none; }
   }
-  ::v-deep .el-input__prefix { left: 12px; font-size: 15px; line-height: 36px; color: #86868b; }
-  ::v-deep .el-input__suffix { line-height: 36px; }
+
+  ::v-deep .el-input__prefix {
+    left: 10px;
+    font-size: 14px;
+    line-height: 0px;
+    top: -3px; 
+  }
+
+  ::v-deep .el-input__suffix {
+    line-height: 40px;
+    top: -3px;
+  }
 }
 
 .search-results {

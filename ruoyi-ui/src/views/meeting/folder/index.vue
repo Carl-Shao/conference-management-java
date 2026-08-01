@@ -531,7 +531,7 @@ export default {
   overflow: hidden;
 }
 
-/* ✅ 置顶搜索栏：页面最顶部 */
+/* 置顶搜索栏：页面最顶部 */
 .top-search-bar {
   display: flex;
   align-items: center;
@@ -541,7 +541,7 @@ export default {
   /* 与下方内容区拉开距离 */
 }
 
-/* ✅ 内容区标题 */
+/* 内容区标题 */
 .section-title {
   margin: 0 0 16px 0;
   margin-left: 20px;
@@ -597,7 +597,7 @@ export default {
   background: transparent; /* 不加背景色，仅阴影 */
 }
 
-/* ✅ 右侧按钮组布局 */
+/* 右侧按钮组布局 */
 .action-buttons-group {
   display: flex;
   align-items: center;
@@ -606,7 +606,7 @@ export default {
   padding-right: 20px;
 }
 
-/* ✅ 上传按钮：蓝色渐变 + 白色图标文字 */
+/* 上传按钮：蓝色渐变 + 白色图标文字 */
 .upload-btn {
   display: inline-flex;
   align-items: center;
@@ -693,7 +693,7 @@ export default {
   }
 }
 
-/* ========== ✅ 新增：文件夹卡片网格样式 (严格复刻HTML设计稿) ========== */
+/* ========== 新增：文件夹卡片网格样式 (严格复刻HTML设计稿) ========== */
 .folder-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
