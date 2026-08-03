@@ -8,5 +8,6 @@ import java.io.Serializable;
 public class AsrTaskMessage implements Serializable {
 
     private String taskId;
+    private Long meetingId;
     private String audioPath;
 }

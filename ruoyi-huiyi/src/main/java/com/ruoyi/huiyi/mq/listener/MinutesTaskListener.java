@@ -5,6 +5,7 @@ import com.ruoyi.huiyi.config.RabbitMqConfig;
 import com.ruoyi.huiyi.domain.Meeting;
 import com.ruoyi.huiyi.mq.message.MinutesTaskMessage;
 import com.ruoyi.huiyi.service.IMeetingLlmService;
+import com.ruoyi.huiyi.service.IMeetingRecordService;
 import org.springframework.amqp.core.Message;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -20,6 +21,9 @@ public class MinutesTaskListener {
 
     @Autowired
     private IMeetingLlmService meetingLlmService;
+
+    @Autowired
+    private IMeetingRecordService meetingRecordService;
 
     @RabbitListener(queues = RabbitMqConfig.MINUTES_QUEUE, concurrency = "1-2", ackMode = "MANUAL")
     public void handle(MinutesTaskMessage message, Message amqpMessage, Channel channel) throws Exception {
@@ -449,13 +453,22 @@ public class MinutesTaskListener {
                     "会议转录文本：" + message.getRecognizedText();
             String minutes = meetingLlmService.generateMinutes(prompt);
 
+            // 生成结果落库：写 huiyi_meeting_minutes，并把会议状态更新为"已完成"
+            meetingRecordService.saveMinutesResult(message.getMeetingId(), minutes);
+
             // TODO: 这里把 minutes 存库，taskId 作为关联外键，
             // 前端轮询或WebSocket推送时用 taskId 查询状态和结果
-            log.info("会议纪要生成完成, taskId={}", message.getTaskId());
+            log.info("会议纪要生成完成, taskId={}, meetingId={}", message.getTaskId());
 
             channel.basicAck(deliveryTag, false);
         } catch (Exception e) {
             log.error("会议纪要生成失败, taskId={}", message.getTaskId(), e);
+            channel.basicNack(deliveryTag, false, false);
+            try {
+                meetingRecordService.markProcessFailed(message.getMeetingId());
+            } catch (Exception inner) {
+                log.error("回写失败状态时又出错, meetingId={}", message.getMeetingId(), inner);
+            }
             channel.basicNack(deliveryTag, false, false);
         }
     }

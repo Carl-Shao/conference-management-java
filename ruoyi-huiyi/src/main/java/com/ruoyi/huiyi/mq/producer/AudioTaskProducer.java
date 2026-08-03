@@ -1,6 +1,7 @@
 package com.ruoyi.huiyi.mq.producer;
 
 import com.ruoyi.huiyi.config.RabbitMqConfig;
+import com.ruoyi.huiyi.mq.dto.AudioUploadTask;
 import com.ruoyi.huiyi.mq.message.AsrTaskMessage;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,12 +21,13 @@ public class AudioTaskProducer {
      * @param audioPaths upload service 返回的本地文件路径列表
      * @return 每个文件对应生成的 taskId，用于后续追踪/查询结果
      */
-    public List<String> sendBatch(List<String> audioPaths) {
-        return audioPaths.stream().map(path -> {
+    public List<String> sendBatch(List<AudioUploadTask> tasks) {
+        return tasks.stream().map(task -> {
             String taskId = UUID.randomUUID().toString();
             AsrTaskMessage asrTaskMessage = new AsrTaskMessage();
             asrTaskMessage.setTaskId(taskId);
-            asrTaskMessage.setAudioPath(path);
+            asrTaskMessage.setMeetingId(task.getMeetingId());
+            asrTaskMessage.setAudioPath(task.getFilePath());
 
             rabbitTemplate.convertAndSend(
                     RabbitMqConfig.ASR_EXCHANGE,

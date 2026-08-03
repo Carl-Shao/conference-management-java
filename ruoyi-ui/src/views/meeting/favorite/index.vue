@@ -186,7 +186,8 @@
         <h2 class="section-title">我的收藏</h2>
 
         <div class="meeting-list">
-          <div v-for="item in meetingList" :key="item.id" class="meeting-card">
+          <div v-for="item in meetingList" :key="item.id" class="meeting-card" :class="{ 'is-clicking': clickingId === item.id }"
+  @click="handleCardClick($event, item)">>
             <!-- 左侧图标 -->
             <div class="card-icon">
               <i v-if="item.isFavorite" class="favorite-badge el-icon-star-on" />
@@ -264,6 +265,7 @@ export default {
       isSearchMode: false,
       sortType: 'timeDesc',
       currentFilter: 'all',
+      clickingId: null,
       meetingList: [
         { id: 1, title: '产品规划会议', fileType: 'record', duration: '45:20', createTime: '2026-07-30 14:30', isFavorite: false, downloadUrl: '/api/meeting/download/1' },
         { id: 2, title: '团队周例会', fileType: 'upload', duration: '32:15', createTime: '2026-07-29 10:00', isFavorite: true, downloadUrl: '/api/meeting/download/2' },
@@ -371,6 +373,28 @@ export default {
       } else if (command === 'removeFavorite') {
         row.isFavorite = false; this.$message.success('已从收藏列表移除');
       }
+    },
+    handleCardClick(event, item) {
+      // 🔑 核心逻辑：检查点击目标是否在下拉菜单内部
+      const target = event.target;
+      const isDropdownClick = target.closest('.el-dropdown') || 
+                              target.closest('.el-dropdown-menu') ||
+                              target.classList.contains('card-more');
+      
+      if (isDropdownClick) {
+        // 如果点的是下拉菜单或更多按钮，直接返回，不触发卡片特效
+        return;
+      }
+      this.clickingId = item.id;
+      
+      // 300ms 后重置动画状态，允许重复点击
+      setTimeout(() => {
+        this.clickingId = null;
+      }, 300);
+
+      // 在这里执行你的业务逻辑（如跳转详情页）
+      console.log('打开会议纪要:', item.title);
+      // this.$router.push(`/meeting/detail/${item.id}`);
     },
     startRecording() {
       let backRoute = '';
@@ -742,6 +766,25 @@ export default {
 
   &:hover {
     background: #e6f0ff;
+  }
+
+  &.is-clicking {
+    background: #d6e8ff !important; // 比 hover 更深的蓝色反馈
+    transform: scale(0.97);        // 轻微缩放模拟按压感
+    transition: all 0.1s ease-out;  // 快速响应
+  }
+
+  .el-dropdown {
+    position: relative;
+    z-index: 2; // 保证下拉菜单层级高于卡片点击层
+  }
+}
+
+.search-result-card {
+  &.is-clicking {
+    opacity: 0.4 !important;
+    background: #f0f7ff !important;
+    transition: all 0.1s ease-out;
   }
 }
 

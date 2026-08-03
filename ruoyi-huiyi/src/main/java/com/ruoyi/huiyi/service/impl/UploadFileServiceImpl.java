@@ -50,7 +50,7 @@ public class UploadFileServiceImpl implements IUploadFileService {
         String suffix = filename.substring(index + 1);
 
         if (!allowedType.contains(suffix)) {
-            throw new RuntimeException("请上传war格式音频");
+            throw new RuntimeException("请上传wav格式音频");
         }
 
         File dir = new File(audioPath);

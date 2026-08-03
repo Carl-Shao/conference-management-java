@@ -8,5 +8,6 @@ import java.io.Serializable;
 public class MinutesTaskMessage implements Serializable {
 
     private String taskId;
+    private Long meetingId;
     private String recognizedText;
 }

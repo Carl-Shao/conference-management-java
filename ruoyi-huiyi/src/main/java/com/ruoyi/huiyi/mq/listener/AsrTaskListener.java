@@ -5,6 +5,7 @@ import com.ruoyi.huiyi.config.RabbitMqConfig;
 import com.ruoyi.huiyi.mq.message.AsrTaskMessage;
 import com.ruoyi.huiyi.mq.message.MinutesTaskMessage;
 import com.ruoyi.huiyi.service.IMeetingAsrService;
+import com.ruoyi.huiyi.service.IMeetingRecordService;
 import org.springframework.amqp.core.Message;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -26,6 +27,9 @@ public class AsrTaskListener {
     @Autowired
     private IMeetingAsrService meetingAsrService;
 
+    @Autowired
+    private IMeetingRecordService meetingRecordService;
+
     // concurrency = "2-4" 表示最少2个、最多4个并发消费者线程
     @RabbitListener(queues = RabbitMqConfig.ASR_QUEUE, concurrency = "2-4", ackMode = "MANUAL")
     public void handle(AsrTaskMessage message, Message amqpMessage, Channel channel) throws IOException {
@@ -35,8 +39,11 @@ public class AsrTaskListener {
 
             String text = meetingAsrService.asrTranslateService(message.getAudioPath());
 
+            meetingRecordService.saveTranscriptResult(message.getMeetingId(), text);
+
             MinutesTaskMessage minutesTaskMessage = new MinutesTaskMessage();
             minutesTaskMessage.setTaskId(message.getTaskId());
+            minutesTaskMessage.setMeetingId(message.getMeetingId());
             minutesTaskMessage.setRecognizedText(text);
 
             rabbitTemplate.convertAndSend(
@@ -46,9 +53,15 @@ public class AsrTaskListener {
             );
 
             channel.basicAck(deliveryTag, false);
-            log.info("ASR任务处理完成, taskId={}", message.getTaskId());
+            log.info("ASR任务处理完成, taskId={}, meetingId={}", message.getTaskId(), message.getMeetingId());
         }catch (Exception e) {
-            log.error("ASR任务处理失败, taskId={}", message.getTaskId(), e);
+            log.error("ASR任务处理失败, taskId={}, meetingId={}", message.getTaskId(), message.getMeetingId(), e);
+            // 处理失败也要回写状态，不然前端会一直显示"转写中"，用户不知道出问题了
+            try {
+                meetingRecordService.markProcessFailed(message.getMeetingId());
+            } catch (Exception inner) {
+                log.error("回写失败状态时又出错, meetingId={}", message.getMeetingId(), inner);
+            }
             // false, false = 不重新入队，避免死循环；建议后续接死信队列做重试/告警
             channel.basicNack(deliveryTag, false, false);
         }
