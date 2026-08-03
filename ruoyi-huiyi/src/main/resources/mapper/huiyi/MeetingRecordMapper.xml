@@ -1,0 +1,142 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.huiyi.mapper.MeetingRecordMapper">
+
+    <resultMap type="com.ruoyi.huiyi.domain.MeetingRecord" id="MeetingRecordResult">
+        <id     property="meetingId"     column="meeting_id"     />
+        <result property="title"         column="title"          />
+        <result property="sourceType"    column="source_type"    />
+        <result property="audioPath"     column="audio_path"     />
+        <result property="duration"      column="duration"       />
+        <result property="status"        column="status"         />
+        <result property="isFavorite"    column="is_favorite"    />
+        <result property="folderId"      column="folder_id"      />
+        <result property="mergeFromIds"  column="merge_from_ids" />
+        <result property="isMerged"      column="is_merged"      />
+        <result property="createBy"      column="create_by"      />
+        <result property="createTime"    column="create_time"    />
+        <result property="updateBy"      column="update_by"      />
+        <result property="updateTime"    column="update_time"    />
+    </resultMap>
+
+    <sql id="selectMeetingRecordVo">
+        select meeting_id, title, source_type, audio_path, duration, status, is_favorite,
+        folder_id, merge_from_ids, is_merged, create_by, create_time, update_by, update_time
+        from huiyi_meeting
+    </sql>
+
+    <select id="selectMeetingRecordById" parameterType="Long" resultMap="MeetingRecordResult">
+        <include refid="selectMeetingRecordVo"/>
+        where meeting_id = #{meetingId} and del_flag = '0'
+    </select>
+
+    <select id="selectMeetingRecordList" parameterType="com.ruoyi.huiyi.domain.MeetingRecord" resultMap="MeetingRecordResult">
+        <include refid="selectMeetingRecordVo"/>
+        <where>
+            del_flag = '0'
+            and is_merged = '0'
+            <if test="title != null and title != ''">
+                and title like concat('%', #{title}, '%')
+            </if>
+            <if test="sourceType != null and sourceType != ''">
+                and source_type = #{sourceType}
+            </if>
+            <if test="isFavorite != null and isFavorite != ''">
+                and is_favorite = #{isFavorite}
+            </if>
+            <!-- folderId 用于文件夹详情页；不传该参数时表示"全部会议纪要"，不限制文件夹 -->
+            <if test="folderId != null">
+                and folder_id = #{folderId}
+            </if>
+            <if test="status != null and status != ''">
+                and status = #{status}
+            </if>
+        </where>
+        <choose>
+            <!-- 由 controller 通过 params.orderByColumn / params.isAsc 传入，这里给一个默认兜底排序 -->
+            <when test="params != null and params.orderByColumn != null and params.orderByColumn != ''">
+                order by ${params.orderByColumn} ${params.isAsc}
+            </when>
+            <otherwise>
+                order by create_time desc
+            </otherwise>
+        </choose>
+    </select>
+
+    <insert id="insertMeetingRecord" parameterType="com.ruoyi.huiyi.domain.MeetingRecord" useGeneratedKeys="true" keyProperty="meetingId">
+        insert into huiyi_meeting (
+        title, source_type, audio_path, duration, status, is_favorite,
+        folder_id, merge_from_ids, is_merged, create_by, create_time
+        ) values (
+        #{title}, #{sourceType}, #{audioPath}, #{duration},
+        <choose><when test="status != null">#{status}</when><otherwise>'0'</otherwise></choose>,
+        <choose><when test="isFavorite != null">#{isFavorite}</when><otherwise>'0'</otherwise></choose>,
+        #{folderId}, #{mergeFromIds},
+        <choose><when test="isMerged != null">#{isMerged}</when><otherwise>'0'</otherwise></choose>,
+        #{createBy}, sysdate()
+        )
+    </insert>
+
+    <update id="updateMeetingRecord" parameterType="com.ruoyi.huiyi.domain.MeetingRecord">
+        update huiyi_meeting
+        <set>
+            <if test="title != null">title = #{title},</if>
+            <if test="sourceType != null">source_type = #{sourceType},</if>
+            <if test="audioPath != null">audio_path = #{audioPath},</if>
+            <if test="duration != null">duration = #{duration},</if>
+            <if test="status != null">status = #{status},</if>
+            <if test="isFavorite != null">is_favorite = #{isFavorite},</if>
+            <if test="folderId != null">folder_id = #{folderId},</if>
+            <if test="updateBy != null">update_by = #{updateBy},</if>
+            update_time = sysdate()
+        </set>
+        where meeting_id = #{meetingId}
+    </update>
+
+    <update id="deleteMeetingRecordById" parameterType="Long">
+        update huiyi_meeting set del_flag = '2' where meeting_id = #{meetingId}
+    </update>
+
+    <update id="deleteMeetingRecordByIds" parameterType="Long">
+        update huiyi_meeting set del_flag = '2' where meeting_id in
+        <foreach collection="array" item="meetingId" open="(" separator="," close=")">
+            #{meetingId}
+        </foreach>
+    </update>
+
+    <update id="updateTitle">
+        update huiyi_meeting set title = #{title}, update_time = sysdate() where meeting_id = #{meetingId}
+    </update>
+
+    <update id="updateFavorite">
+        update huiyi_meeting set is_favorite = #{isFavorite}, update_time = sysdate() where meeting_id = #{meetingId}
+    </update>
+
+    <update id="batchMoveFolder">
+        update huiyi_meeting set folder_id = #{folderId}, update_time = sysdate()
+        where meeting_id in
+        <foreach collection="meetingIds" item="meetingId" open="(" separator="," close=")">
+            #{meetingId}
+        </foreach>
+    </update>
+
+    <update id="markAsMerged">
+        update huiyi_meeting set is_merged = '1', update_time = sysdate()
+        where meeting_id in
+        <foreach collection="meetingIds" item="meetingId" open="(" separator="," close=")">
+            #{meetingId}
+        </foreach>
+    </update>
+
+    <select id="countByFolderId" resultType="int">
+        select count(1) from huiyi_meeting
+        where del_flag = '0' and is_merged = '0' and folder_id = #{folderId}
+    </select>
+
+    <update id="clearFolderId">
+        update huiyi_meeting set folder_id = null, update_time = sysdate() where folder_id = #{folderId}
+    </update>
+
+</mapper>

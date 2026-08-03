@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.huiyi.mapper.MeetingTranscriptMapper">
+
+    <resultMap type="com.ruoyi.huiyi.domain.MeetingTranscript" id="TranscriptResult">
+        <id     property="id"          column="id"          />
+        <result property="meetingId"   column="meeting_id"  />
+        <result property="content"     column="content"     />
+        <result property="createTime"  column="create_time" />
+        <result property="updateTime"  column="update_time" />
+    </resultMap>
+
+    <select id="selectByMeetingId" parameterType="Long" resultMap="TranscriptResult">
+        select id, meeting_id, content, create_time, update_time
+        from huiyi_meeting_transcript where meeting_id = #{meetingId}
+    </select>
+
+    <!-- 依赖 meeting_id 上的唯一索引做 upsert，ASR 服务每次转写完成/续写都调用这个接口 -->
+    <insert id="insertOrUpdate" parameterType="com.ruoyi.huiyi.domain.MeetingTranscript">
+        insert into huiyi_meeting_transcript (meeting_id, content, create_time, update_time)
+        values (#{meetingId}, #{content}, sysdate(), sysdate())
+        on duplicate key update content = #{content}, update_time = sysdate()
+    </insert>
+
+    <delete id="deleteByMeetingId" parameterType="Long">
+        delete from huiyi_meeting_transcript where meeting_id = #{meetingId}
+    </delete>
+
+</mapper>

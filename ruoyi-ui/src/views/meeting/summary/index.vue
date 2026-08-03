@@ -1,9 +1,9 @@
 <template>
   <div class="meeting-index">
-    <!-- 🔍 搜索模式 (全屏/独立视图) -->
+    <!-- 搜索模式 (全屏/独立视图) -->
     <div v-if="isSearchMode" class="search-mode-overlay">
       <div class="search-bar-wrapper">
-        <!-- ✅ 左侧叉号按钮：返回原界面 -->
+        <!-- 左侧叉号按钮：返回原界面 -->
         <button class="search-close-btn" @click="exitSearch" aria-label="关闭搜索">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
             <line x1="18" y1="6" x2="6" y2="18" />
@@ -11,7 +11,7 @@
           </svg>
         </button>
 
-        <!-- ✅ 搜索框：进入后自动获得焦点和光标 -->
+        <!-- 搜索框：进入后自动获得焦点和光标 -->
         <el-input
           ref="searchInputRef"
           v-model="searchKeyword"
@@ -70,9 +70,9 @@
     </div>
 
     <!-- ======================= -->
-    <!-- 📋 普通模式 (默认视图)   -->
+    <!-- 普通模式 (默认视图)   -->
     <div v-else class="normal-mode-view">
-      <!-- ✅ 1. 搜索栏置顶：作为页面最顶部的操作区 -->
+      <!-- 1. 搜索栏置顶：作为页面最顶部的操作区 -->
       <div class="top-search-bar">
         <el-input
           v-model="searchKeyword"
@@ -105,7 +105,7 @@
               </svg>
             </button>
 
-            <!-- ✅ 修改点：为每个 dropdown-item 添加语义化图标 -->
+            <!-- 修改点：为每个 dropdown-item 添加语义化图标 -->
             <el-dropdown-menu slot="dropdown" class="custom-action-dropdown">
               <el-dropdown-item command="timeDesc">
                 <i class="el-icon-time icon-clr-blue" />
@@ -181,7 +181,7 @@
         </div>
       </div>
 
-      <!-- ✅ 2. 内容区：标题 + 列表 -->
+      <!-- 2. 内容区：标题 + 列表 -->
       <div class="content-section">
         <h2 class="section-title">我的会议纪要</h2>
 
@@ -529,7 +529,7 @@ export default {
   overflow: hidden;
 }
 
-/* ✅ 置顶搜索栏：页面最顶部 */
+/* 置顶搜索栏：页面最顶部 */
 .top-search-bar {
   display: flex;
   align-items: center;
@@ -539,7 +539,7 @@ export default {
   /* 与下方内容区拉开距离 */
 }
 
-/* ✅ 内容区标题 */
+/* 内容区标题 */
 .section-title {
   margin: 0 0 16px 0;
   margin-left: 20px;
@@ -595,7 +595,7 @@ export default {
   background: transparent; /* 不加背景色，仅阴影 */
 }
 
-/* ✅ 右侧按钮组布局 */
+/* 右侧按钮组布局 */
 .action-buttons-group {
   display: flex;
   align-items: center;
@@ -604,7 +604,7 @@ export default {
   padding-right: 20px;
 }
 
-/* ✅ 上传按钮：蓝色渐变 + 白色图标文字 */
+/* 上传按钮：蓝色渐变 + 白色图标文字 */
 .upload-btn {
   display: inline-flex;
   align-items: center;
@@ -639,7 +639,7 @@ export default {
   }
 }
 
-/* ✅ 排序 & 筛选按钮：圆形透明底 + hover旋转 */
+/* 排序 & 筛选按钮：圆形透明底 + hover旋转 */
 .icon-action-btn {
   width: 42px;
   height: 42px;
