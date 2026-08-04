@@ -418,40 +418,45 @@ export default {
     handleFileUpload(event) {
       const file = event.target.files[0]
       if (!file) return
-
-      // 校验文件类型
-      const allowedTypes = ['.mp3', '.wav', '.m4a', '.mp4', '.mov']
+      const allowedTypes = [
+        '.mp3',
+        '.wav',
+        '.m4a',
+        '.mp4',
+        '.mov'
+      ]
       const ext = '.' + file.name.split('.').pop().toLowerCase()
       if (!allowedTypes.includes(ext)) {
-        this.$message.error(`不支持的文件格式: ${ext}，请上传 ${allowedTypes.join(', ')} 格式`)
+        this.$message.error(
+          `不支持的文件格式: ${ext}`
+        )
         this.$refs.fileInput.value = ''
         return
       }
 
-      // 构建 FormData
-      const formData = new FormData()
-      formData.append('file', file)
-
-      // 显示加载状态
       const loadingInstance = this.$loading({
         lock: true,
         text: `正在上传 "${file.name}"...`,
-        spinner: 'el-icon-loading',
-        background: 'rgba(255, 255, 255, 0.8)'
+        spinner: 'el-icon-loading'
       })
 
-      uploadAudio(formData).then(response => {
-        this.$message.success(`文件 "${file.name}" 上传成功`)
-        // 上传成功后刷新会议列表（后端处理完成后会自动生成会议记录）
-        this.getList()
-      }).catch(error => {
-        console.error('上传失败:', error)
-        this.$message.error(error.msg || `文件 "${file.name}" 上传失败`)
-      }).finally(() => {
-        loadingInstance.close()
-        // ⚠️ 重置 input 以允许重复上传同一文件
-        this.$refs.fileInput.value = ''
-      })
+      uploadAudio([file])
+        .then(response => {
+          this.$message.success(
+            `文件 "${file.name}" 上传成功`
+          )
+          this.getList()
+        })
+        .catch(error => {
+          console.error(error)
+          this.$message.error(
+            error.msg || '上传失败'
+          )
+        })
+        .finally(() => {
+          loadingInstance.close()
+          this.$refs.fileInput.value = ''
+        })
     },
 
     /** ========== 高亮 & XSS 防护 ========== */

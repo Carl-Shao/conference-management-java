@@ -102,6 +102,14 @@
 </template>
 
 <script>
+import { 
+    startRecord, 
+    pauseRecord, 
+    resumeRecord, 
+    stopRecord, 
+    getRecordStatus 
+} from '@/api/huiyi/record';
+
 export default {
     name: 'MeetingRecorder',
     props: {
@@ -114,7 +122,8 @@ export default {
     data() {
         return {
             meeting: {
-                title: 'AI听记'
+                title: 'AI听记',
+                id: null
             },
             recordStatus: 'ongoing', // ongoing | paused | ended
             elapsedSeconds: 0,
@@ -140,7 +149,8 @@ export default {
 
             // 笔记保存定时器
             saveTimeout: null,
-            _simulateInterval: null
+            _simulateInterval: null,
+            isApiLoading: false
         };
     },
 
@@ -154,7 +164,16 @@ export default {
     },
 
     created() {
+        // 获取会议 ID (优先从路由参数获取，其次从 props 或 query)
+        this.meeting.id = this.$route.params.id || this.$route.query.meetingId || this.from?.id;
+        if (!this.meeting.id) {
+            this.$message.error('缺少会议ID，无法开始录制');
+            // 可以选择跳转回列表页  this.$router.push('/index'); 
+            return;
+        }
+
         this._enableRecordingLayout();
+        this.initRecording(); // 改为异步初始化
         this.startTimer();
         this.$nextTick(() => this.startMicrophone());
     },
@@ -190,6 +209,35 @@ export default {
     },
 
     methods: {
+        async initRecording() {
+            try {
+                // 先尝试获取当前状态，防止刷新页面导致状态不一致
+                const statusRes = await getRecordStatus(this.meeting.id);
+                if (statusRes && statusRes.data) {
+                    // 假设后端返回格式为 { status: 'ongoing' | 'paused' | 'ended', elapsedSeconds: 120 }
+                    // 请根据实际后端返回结构调整字段名
+                    const backendStatus = statusRes.data.status || statusRes.data.recordStatus;
+                    if (backendStatus) {
+                        this.recordStatus = backendStatus;
+                    }
+                    if (statusRes.data.elapsedSeconds !== undefined) {
+                        this.elapsedSeconds = statusRes.data.elapsedSeconds;
+                    }
+                } else {
+                    // 如果没有状态或接口报错，默认尝试开始录制
+                    await startRecord(this.meeting.id);
+                }
+            } catch (error) {
+                console.error('初始化录制状态失败:', error);
+                // 兜底：如果获取状态失败，尝试直接开始
+                try {
+                    await startRecord(this.meeting.id);
+                } catch (e) {
+                    this.$message.error('启动录制服务失败，请检查网络');
+                }
+            }
+        },
+
          _enableRecordingLayout() {
             document.body.classList.add('recording-fullscreen');
         },
@@ -338,26 +386,31 @@ export default {
         },
 
         // 暂停/继续会议
-        handleToggleRecord() {
-            if (this.recordStatus === 'ended') {
-                // 如果已经结束，则不执行任何操作
-                return;
-            }
+        async handleToggleRecord() {
+            if (this.recordStatus === 'ended' || this.isApiLoading) return;
 
-            if (this.recordStatus === 'ongoing') {
-                this.recordStatus = 'paused';
-                this.$message.success('会议已暂停');
-                // 暂停时重置波浪为平直线
-                for (let i = 0; i < 30; i++) {
-                    this.$set(this.waveHeights, i, 2);
+            this.isApiLoading = true;
+            const prevStatus = this.recordStatus;
+
+            try {
+                if (this.recordStatus === 'ongoing') {
+                    await pauseRecord(this.meeting.id);
+                    this.recordStatus = 'paused';
+                    this.$message.success('会议已暂停');
+                    for (let i = 0; i < 30; i++) this.$set(this.waveHeights, i, 2);
+                } else {
+                    await resumeRecord(this.meeting.id);
+                    this.recordStatus = 'ongoing';
+                    this.$message.success('会议已继续');
+                    if (this.analyser) this.visualizeAudio();
                 }
-            } else {
-                this.recordStatus = 'ongoing';
-                this.$message.success('会议已继续');
-                // 重新开始音频可视化
-                if (this.analyser) {
-                    this.visualizeAudio();
-                }
+            } catch (error) {
+                console.error('切换录制状态失败:', error);
+                this.$message.error('操作失败，请重试');
+                // 操作失败时回滚 UI 状态
+                this.recordStatus = prevStatus;
+            } finally {
+                this.isApiLoading = false;
             }
         },
 
@@ -371,34 +424,31 @@ export default {
         },
 
         // 结束会议
-        handleEnd() {
+        async handleEnd() {
+            if (this.isApiLoading) return;
+            
             if (confirm('确认结束当前会议吗？')) {
-                this.$message.success('会议已结束');
+                this.isApiLoading = true;
+                try {
+                    await stopRecord(this.meeting.id);
+                    
+                    this.$message.success('会议已结束');
+                    if (this.timerInterval) clearInterval(this.timerInterval);
+                    if (this.animationFrame) cancelAnimationFrame(this.animationFrame);
+                    if (this.microphone) this.microphone.disconnect();
+                    if (this.audioContext) this.audioContext.close();
 
-                // 停止所有活动
-                if (this.timerInterval) {
-                    clearInterval(this.timerInterval);
-                }
-                if (this.animationFrame) {
-                    cancelAnimationFrame(this.animationFrame);
-                }
-
-                // 停止麦克风
-                if (this.microphone) {
-                    this.microphone.disconnect();
-                }
-                if (this.audioContext) {
-                    this.audioContext.close();
-                }
-
-                // 设置为已结束状态
-                this.recordStatus = 'ended';
-                // 结束后也显示平直线
-                for (let i = 0; i < 30; i++) {
-                    this.$set(this.waveHeights, i, 2);
+                    this.recordStatus = 'ended';
+                    for (let i = 0; i < 30; i++) this.$set(this.waveHeights, i, 2);
+                } catch (error) {
+                    console.error('结束会议失败:', error);
+                    this.$message.error('结束会议失败，请重试');
+                } finally {
+                    this.isApiLoading = false;
                 }
             }
         },
+
 
         handleBack() {
             const backRouteStr = this.$route.query.backRoute;

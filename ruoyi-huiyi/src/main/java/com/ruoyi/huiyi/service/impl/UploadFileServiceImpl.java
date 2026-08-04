@@ -7,7 +7,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.ruoyi.huiyi.config.MeetingRecordProperties;
+import com.ruoyi.huiyi.domain.dto.UploadedAudioResult;
 import com.ruoyi.huiyi.service.IUploadFileService;
+import com.ruoyi.huiyi.util.WavUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -28,20 +30,18 @@ public class UploadFileServiceImpl implements IUploadFileService {
     private static final String UPLOAD_SUB_DIR = "uploads";
 
     @Override
-    public List<String> save(MultipartFile[] files){
+    public List<UploadedAudioResult> save(MultipartFile[] files){
 
-        List<String> paths = new ArrayList<>();
+        List<UploadedAudioResult> results = new ArrayList<>();
 
         for (MultipartFile file : files) {
-            String path = saveOneFile(file);
-
-            paths.add(path);
+            results.add(saveOneFile(file));
         }
-        return paths;
+        return results;
     }
 
     @Override
-    public String saveOneFile(MultipartFile file) {
+    public UploadedAudioResult saveOneFile(MultipartFile file) {
         if(file == null || file.isEmpty()) {
             throw new RuntimeException("文件不能为空");
         }
@@ -75,8 +75,12 @@ public class UploadFileServiceImpl implements IUploadFileService {
         }catch (IOException e){
             throw new RuntimeException("文件保存失败", e);
         }
+
+        long durationMs = WavUtils.readDurationMs(targetFile);
+        Long durationSeconds =  durationMs / 1000;
         // 返回相对路径（子目录/文件名），而不是只有文件名，
         // 这样和 MeetingSessionManager 里存的完整录音路径风格一致，方便以后统一按 audioBasePath 拼接读取
-        return UPLOAD_SUB_DIR + "/" + filenameOnDisk;
+        String relativePath = UPLOAD_SUB_DIR + "/" + filenameOnDisk;
+        return new UploadedAudioResult(relativePath, durationSeconds);
     }
 }

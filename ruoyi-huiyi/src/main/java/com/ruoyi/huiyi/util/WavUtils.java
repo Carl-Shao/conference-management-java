@@ -1,17 +1,39 @@
 package com.ruoyi.huiyi.util;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import javax.sound.sampled.AudioFileFormat;
+import javax.sound.sampled.AudioSystem;
+import javax.sound.sampled.UnsupportedAudioFileException;
 import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
-import java.util.Random;
 
 public final class WavUtils {
+
+    private static final Logger log = LoggerFactory.getLogger(WavUtils.class);
 
     private static final int WAVE_HEADER_SIZE = 44;
 
     private WavUtils() {}
+
+    public static long readDurationMs(File wavFile) {
+        try {
+            AudioFileFormat format = AudioSystem.getAudioFileFormat(wavFile);
+            long frameLength = format.getFrameLength();
+            float frameRate = format.getFormat().getFrameRate();
+            if (frameLength <= 0 || frameRate <= 0) {
+                return 0L;
+            }
+            return Math.round(frameLength * 1000.0 / frameRate);
+        } catch (UnsupportedAudioFileException | IOException e) {
+            log.warn("解析WAV文件时长失败: {}", wavFile.getAbsolutePath(), e);
+            return 0L;
+        }
+    }
 
     public static void pcmBytesToWavFile(byte[] pcmData, File outputFile,
                                          int sampleRate, int channels, int bitDepth) throws IOException {
