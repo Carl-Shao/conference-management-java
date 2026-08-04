@@ -1,14 +1,17 @@
 package com.ruoyi.huiyi.service.impl;
 
 import com.ruoyi.common.exception.ServiceException;
-import com.ruoyi.huiyi.domain.Meeting;
+import com.ruoyi.huiyi.domain.MeetingMinutes;
+import com.ruoyi.huiyi.domain.MeetingRecord;
 import com.ruoyi.huiyi.domain.MeetingRecordEvent;
 import com.ruoyi.huiyi.domain.enums.MeetingRecordEventType;
 import com.ruoyi.huiyi.domain.enums.MeetingRecordStatus;
+import com.ruoyi.huiyi.domain.enums.MeetingStatus;
 import com.ruoyi.huiyi.domain.vo.MeetingRecordStatusVO;
 import com.ruoyi.huiyi.domain.vo.MeetingRecordVO;
-import com.ruoyi.huiyi.mapper.MeetingMapper;
+import com.ruoyi.huiyi.mapper.MeetingMinutesMapper;
 import com.ruoyi.huiyi.mapper.MeetingRecordEventMapper;
+import com.ruoyi.huiyi.mapper.MeetingRecordMapper;
 import com.ruoyi.huiyi.service.IMeetingRecordingService;
 import com.ruoyi.huiyi.websocket.MeetingSessionManager;
 import org.slf4j.Logger;
@@ -29,10 +32,13 @@ public class MeetingRecordingServiceImpl implements IMeetingRecordingService {
     private static final String WS_PATH_TEMPLATE = "/ws/huiyi/record/%d";
 
     @Autowired
-    private MeetingMapper meetingMapper;
+    private MeetingRecordMapper meetingRecordMapper;
 
     @Autowired
     private MeetingRecordEventMapper recordEventMapper;
+
+    @Autowired
+    private MeetingMinutesMapper meetingMinutesMapper;
 
     @Autowired
     private MeetingSessionManager sessionManager;
@@ -40,11 +46,11 @@ public class MeetingRecordingServiceImpl implements IMeetingRecordingService {
     @Override
     @Transactional(rollbackFor = Exception.class)
     public MeetingRecordVO startRecord(Long meetingId, String operator) {
-        Meeting meeting = meetingMapper.selectMeetingForUpdate(meetingId);
-        if (meeting == null) {
+        MeetingRecord meetingRecord = meetingRecordMapper.selectMeetingRecordForUpdate(meetingId);
+        if (meetingRecord == null) {
             throw new ServiceException("会议不存在" + meetingId);
         }
-        MeetingRecordStatus current = MeetingRecordStatus.of(meeting.getRecordStatus());
+        MeetingRecordStatus current = MeetingRecordStatus.of(meetingRecord.getRecordStatus());
         if (current != MeetingRecordStatus.NOT_STARTED && current != MeetingRecordStatus.FAILED) {
             throw new IllegalStateException("会议[" + meetingId + "]当前状态[" + current.getDesc() + "]不允许开始录制");
         }
@@ -57,11 +63,11 @@ public class MeetingRecordingServiceImpl implements IMeetingRecordingService {
         }
 
         Date now = new Date();
-        Meeting update = new Meeting();
-        update.setId(meetingId);
-        update.setRecordStatus(MeetingRecordStatus.RECORDING.getCode());
-        update.setRecordStartTime(now);
-        meetingMapper.updateRecordStatus(update);
+        MeetingRecord update = new MeetingRecord();
+        update.setMeetingId(meetingId);
+        update.setStatus(MeetingRecordStatus.RECORDING.getCode());
+        update.setCreateTime(now);
+        meetingRecordMapper.updateMeetingRecord(update);
 
         insertEvent(meetingId, MeetingRecordEventType.START, operator, null);
 
@@ -72,15 +78,15 @@ public class MeetingRecordingServiceImpl implements IMeetingRecordingService {
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void pauseRecord(Long meetingId, String operator) {
-        Meeting meeting = meetingMapper.selectMeetingForUpdate(meetingId);
-        requireStatus(meeting, meetingId, MeetingRecordStatus.RECORDING);
+        MeetingRecord meetingRecord = meetingRecordMapper.selectMeetingRecordForUpdate(meetingId);
+        requireStatus(meetingRecord, meetingId, MeetingRecordStatus.RECORDING);
 
         sessionManager.pauseSession(meetingId);
 
-        Meeting update = new Meeting();
-        update.setId(meetingId);
-        update.setRecordStatus(MeetingRecordStatus.PAUSED.getCode());
-        meetingMapper.updateMeeting(meeting);
+        MeetingRecord update = new MeetingRecord();
+        update.setMeetingId(meetingId);
+        update.setStatus(MeetingRecordStatus.PAUSED.getCode());
+        meetingRecordMapper.updateRecordStatus(update);
 
         insertEvent(meetingId, MeetingRecordEventType.PAUSE, operator, null);
     }
@@ -88,15 +94,15 @@ public class MeetingRecordingServiceImpl implements IMeetingRecordingService {
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void resumeRecord(Long meetingId, String operator) {
-        Meeting meeting = meetingMapper.selectMeetingForUpdate(meetingId);
-        requireStatus(meeting, meetingId, MeetingRecordStatus.PAUSED);
+        MeetingRecord meetingRecord = meetingRecordMapper.selectMeetingRecordForUpdate(meetingId);
+        requireStatus(meetingRecord, meetingId, MeetingRecordStatus.PAUSED);
 
         sessionManager.resumeSession(meetingId);
 
-        Meeting update = new Meeting();
-        update.setId(meetingId);
-        update.setRecordStatus(MeetingRecordStatus.RECORDING.getCode());
-        meetingMapper.updateRecordStatus(update);
+        MeetingRecord update = new MeetingRecord();
+        update.setMeetingId(meetingId);
+        update.setStatus(MeetingRecordStatus.RECORDING.getCode());
+        meetingRecordMapper.updateRecordStatus(update);
 
         insertEvent(meetingId, MeetingRecordEventType.RESUME, operator, null);
     }
@@ -104,8 +110,8 @@ public class MeetingRecordingServiceImpl implements IMeetingRecordingService {
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void stopRecord(Long meetingId, String operator) {
-        Meeting meeting = meetingMapper.selectMeetingForUpdate(meetingId);
-        MeetingRecordStatus current = MeetingRecordStatus.of(meeting.getRecordStatus());
+        MeetingRecord meetingRecord = meetingRecordMapper.selectMeetingRecordForUpdate(meetingId);
+        MeetingRecordStatus current = MeetingRecordStatus.of(meetingRecord.getStatus());
         if (current != MeetingRecordStatus.RECORDING && current != MeetingRecordStatus.PAUSED) {
             throw new IllegalStateException("会议[" + meetingId + "]当前状态[" + current.getDesc() + "]不允许结束录制");
         }
@@ -115,40 +121,44 @@ public class MeetingRecordingServiceImpl implements IMeetingRecordingService {
         File audioFile = sessionManager.stopSession(meetingId);
 
         Date now = new Date();
-        Meeting update = new Meeting();
-        update.setId(meetingId);
+        MeetingRecord update = new MeetingRecord();
+        update.setMeetingId(meetingId);
         update.setRecordStatus(MeetingRecordStatus.STOP_PENDING.getCode());
         update.setRecordEndTime(now);
-        update.setAudioFilePath(audioFile.getAbsolutePath());
-        meetingMapper.updateRecordStatus(update);
+        update.setAudioPath(audioFile.getAbsolutePath());
+        update.setStatus(MeetingStatus.TRANSCRIBING.getCode());
+        meetingRecordMapper.updateRecordStatus(update);
 
         insertEvent(meetingId, MeetingRecordEventType.STOP, operator, null);
     }
 
     @Override
     public MeetingRecordStatusVO getRecordStatus(Long meetingId) {
-        Meeting meeting = queryMeeting(meetingId);
-        MeetingRecordStatus status = MeetingRecordStatus.of(meeting.getRecordStatus());
+        MeetingRecord meetingRecord = meetingRecordMapper.selectMeetingRecordById(meetingId);
+        if(meetingRecord == null) {
+            throw new IllegalArgumentException("会议不存在: " + meetingId);
+        }
+        MeetingRecordStatus status = MeetingRecordStatus.of(meetingRecord.getRecordStatus());
 
         MeetingRecordStatusVO vo = new MeetingRecordStatusVO();
         vo.setMeetingId(meetingId);
         vo.setRecordStatus(status.getCode());
         vo.setRecordStatusDesc(status.getDesc());
-        vo.setRecordDurationMs(meeting.getRecordDurationMs());
-        vo.setAudioFilePath(meeting.getAudioFilePath());
-        vo.setSummaryText(meeting.getSummeryText());
+        vo.setRecordDurationMs(meetingRecord.getDuration());
+        vo.setAudioFilePath(meetingRecord.getAudioPath());
+
+        // 纪要不再单独存在 Meeting 上的 summeryText 字段里，统一从 huiyi_meeting_minutes 读，
+        // 避免同一份内容存两处、以后改了一处忘了改另一处
+        MeetingMinutes minutes = meetingMinutesMapper.selectByMeetingId(meetingId);
+        vo.setSummaryText(minutes != null ? minutes.getContent() : null);
         return vo;
     }
 
-    private Meeting queryMeeting(Long meetingId) {
-        return meetingMapper.selectMeetingById(meetingId);
-    }
-
-    private void requireStatus(Meeting meeting, Long meetingId, MeetingRecordStatus expected) {
-        if (meeting == null) {
+    private void requireStatus(MeetingRecord meetingRecord, Long meetingId, MeetingRecordStatus expected) {
+        if (meetingRecord == null) {
             throw new IllegalArgumentException("会议不存在: " + meetingId);
         }
-        MeetingRecordStatus current = MeetingRecordStatus.of(meeting.getRecordStatus());
+        MeetingRecordStatus current = MeetingRecordStatus.of(meetingRecord.getRecordStatus());
         if (current != expected) {
             throw new IllegalStateException("会议[" + meetingId + "]当前状态[" + current.getDesc()
                     + "]，期望状态[" + expected.getDesc() + "]，操作被拒绝");

@@ -241,8 +241,46 @@
             </el-dropdown>
           </div>
 
-          <div v-if="!meetingList.length" class="empty-state">
-            <p>暂无会议纪要</p>
+          <div v-if="!meetingList.length && !loading" class="empty-state-wrapper">
+            <div class="empty-illustration">
+              <div class="folder-wrap" aria-hidden="true">
+                <svg viewBox="0 0 200 160">
+                  <defs>
+                    <linearGradient id="empty-back" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0" stop-color="#dfe4ea" />
+                      <stop offset="1" stop-color="#c2c8d2" />
+                    </linearGradient>
+                    <linearGradient id="empty-front" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0" stop-color="#eef1f5" />
+                      <stop offset="1" stop-color="#cfd6df" />
+                    </linearGradient>
+                    <linearGradient id="empty-qg" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0" stop-color="#8194a9" />
+                      <stop offset="1" stop-color="#56697f" />
+                    </linearGradient>
+                    <filter id="empty-ds" x="-30%" y="-30%" width="160%" height="160%">
+                      <feDropShadow dx="0" dy="8" stdDeviation="7" flood-color="#3a4658" flood-opacity=".18" />
+                    </filter>
+                  </defs>
+                  <!-- 后片 -->
+                  <path d="M30 42 q0-9 9-9 h32 l11 13 h72 q9 0 9 9 v62 q0 9-9 9 H39 q-9 0-9-9 z"
+                    fill="url(#empty-back)" />
+                  <!-- 问号 -->
+                  <g class="qmark" filter="url(#empty-ds)">
+                    <text x="148" y="66" font-size="62" font-weight="800" fill="#3f4f63" font-family="Arial"
+                      opacity=".35" transform="translate(2,3)">?</text>
+                    <text x="148" y="66" font-size="62" font-weight="800" fill="url(#empty-qg)"
+                      font-family="Arial">?</text>
+                  </g>
+                  <!-- 前片 -->
+                  <path d="M22 72 q0-7 7-7 h58 l9 11 h76 q7 0 7 7 v40 q0 9-9 9 H31 q-9 0-9-9 z" fill="url(#empty-front)"
+                    filter="url(#empty-ds)" />
+                  <path d="M24 73 q0-6 6-6 h56 l8 10" fill="none" stroke="#ffffff" stroke-width="2.5"
+                    stroke-linecap="round" opacity=".7" />
+                </svg>
+              </div>
+              <p class="empty-text">暂无会议纪要</p>
+            </div>
           </div>
         </div>
       </div>
@@ -257,6 +295,18 @@
 </template>
 
 <script>
+import {
+  listMeeting,
+  getMeetingDetail,
+  delMeeting,
+  renameMeeting,
+  toggleFavorite,
+  moveMeetingToFolder,
+  mergeMeetings
+} from '@/api/huiyi/minutes'
+
+import { uploadAudio } from '@/api/huiyi/audio'
+
 export default {
   name: 'MeetingIndex',
   data() {
@@ -266,153 +316,274 @@ export default {
       sortType: 'timeDesc',
       currentFilter: 'all',
       clickingId: null,
-      meetingList: [
-        { id: 1, title: '产品规划会议', fileType: 'record', duration: '45:20', createTime: '2026-07-30 14:30', isFavorite: false, downloadUrl: '/api/meeting/download/1' },
-        { id: 2, title: '团队周例会', fileType: 'upload', duration: '32:15', createTime: '2026-07-29 10:00', isFavorite: true, downloadUrl: '/api/meeting/download/2' },
-        { id: 3, title: 'Q3 OKR 对齐会', fileType: 'record', duration: '58:40', createTime: '2026-07-28 16:20', isFavorite: false, downloadUrl: '/api/meeting/download/3' },
-        { id: 4, title: '技术部晨会', fileType: 'record', duration: '18:40', createTime: '2026-07-27 15:30', isFavorite: false, downloadUrl: '/api/meeting/download/4' },
-        { id: 5, title: '07_25会议', fileType: 'record', duration: '58:40', createTime: '2026-07-28 16:20', isFavorite: false, downloadUrl: '/api/meeting/download/5' },
-        { id: 6, title: '项目会议', fileType: 'record', duration: '58:40', createTime: '2026-07-28 16:20', isFavorite: false, downloadUrl: '/api/meeting/download/6' },
-        { id: 7, title: 'Q2 OKR 对齐会', fileType: 'record', duration: '58:40', createTime: '2026-07-28 16:20', isFavorite: false, downloadUrl: '/api/meeting/download/7' },
-        { id: 8, title: '需求分析会', fileType: 'record', duration: '58:40', createTime: '2026-07-28 16:20', isFavorite: false, downloadUrl: '/api/meeting/download/8' },
-        { id: 9, title: '技术部晨会', fileType: 'record', duration: '58:40', createTime: '2026-07-28 16:20', isFavorite: false, downloadUrl: '/api/meeting/download/9' },
-        { id: 10, title: '07_15会议', fileType: 'record', duration: '58:40', createTime: '2026-07-28 16:20', isFavorite: false, downloadUrl: '/api/meeting/download/10' },
-        { id: 11, title: '产品优化会', fileType: 'record', duration: '58:40', createTime: '2026-07-28 16:20', isFavorite: false, downloadUrl: '/api/meeting/download/11' },
-        { id: 12, title: '产品风险评估', fileType: 'record', duration: '58:40', createTime: '2026-07-28 16:20', isFavorite: false, downloadUrl: '/api/meeting/download/12' },
-        { id: 13, title: '技术部晨会', fileType: 'record', duration: '58:40', createTime: '2026-07-28 16:20', isFavorite: false, downloadUrl: '/api/meeting/download/13' },
-        { id: 14, title: 'Q1 OKR 对齐会', fileType: 'record', duration: '58:40', createTime: '2026-07-28 16:20', isFavorite: false, downloadUrl: '/api/meeting/download/14' }
-      ]
+      meetingList: [],
+      loading: false,
+      // 查询参数（对应后端 MeetingRecord 实体 + RuoYi 分页参数）
+      queryParams: {
+        pageNum: 1,
+        pageSize: 999, // 当前页面无分页组件，一次性拉取；如需分页可改小并加 loadMore
+        title: undefined,
+        fileType: undefined,
+        isFavorite: undefined,
+        orderByColumn: 'createTime',
+        isAsc: 'desc'
+      }
     }
   },
   computed: {
+    /**
+     * 搜索模式下的过滤列表
+     * 注意：此处仍为前端过滤，因为搜索关键词可能匹配 duration/createTime 等非后端查询字段
+     * 如果后端支持全文检索，可将此改为调用 listMeeting({ title: keyword })
+     */
     filteredMeetingList() {
-      if (!this.searchKeyword.trim()) return [];
-      const kw = this.searchKeyword.toLowerCase();
+      if (!this.searchKeyword.trim()) return []
+      const kw = this.searchKeyword.toLowerCase()
       return this.meetingList.filter(item =>
-        item.title.toLowerCase().includes(kw) ||
+        (item.title && item.title.toLowerCase().includes(kw)) ||
         (item.duration && item.duration.includes(kw)) ||
         (item.createTime && item.createTime.includes(kw))
-      );
+      )
     },
     currentSortLabel() {
       const map = { timeDesc: '最近生成', timeAsc: '最早生成', titleAsc: '按标题排序' }
       return map[this.sortType] || '最近生成'
     }
   },
+  created() {
+    this.getList()
+  },
   methods: {
+    /** ========== 核心：从后端获取列表 ========== */
+    getList() {
+      this.loading = true
+      // 根据当前排序/筛选状态构建查询参数
+      const params = { ...this.queryParams }
+
+      // 排序映射
+      switch (this.sortType) {
+        case 'timeDesc':
+          params.orderByColumn = 'createTime'
+          params.isAsc = 'desc'
+          break
+        case 'timeAsc':
+          params.orderByColumn = 'createTime'
+          params.isAsc = 'asc'
+          break
+        case 'titleAsc':
+          params.orderByColumn = 'title'
+          params.isAsc = 'asc'
+          break
+        case 'titleDesc':
+          params.orderByColumn = 'title'
+          params.isAsc = 'desc'
+          break
+      }
+
+      // 筛选映射
+      if (this.currentFilter === 'record') {
+        params.fileType = 'record'
+      } else if (this.currentFilter === 'upload') {
+        params.fileType = 'upload'
+      } else {
+        params.fileType = undefined
+      }
+
+      listMeeting(params).then(response => {
+        this.meetingList = response.rows || []
+      }).finally(() => {
+        this.loading = false
+      })
+    },
+
+    /** ========== 搜索模式 ========== */
     enterSearchMode() {
-      this.isSearchMode = true;
-      // 等待DOM渲染后自动聚焦，光标立即出现在新搜索框中
+      this.isSearchMode = true
       this.$nextTick(() => {
-        const input = this.$refs.searchInputRef;
+        const input = this.$refs.searchInputRef
         if (input) {
-          input.focus();
-          // 如果已有文字，全选方便替换
+          input.focus()
           if (this.searchKeyword) {
-            input.select();
+            input.select()
           }
         }
-      });
+      })
     },
     exitSearch() {
-      this.isSearchMode = false;
-      this.searchKeyword = ''; // 清空关键词，回到原始列表
+      this.isSearchMode = false
+      this.searchKeyword = ''
     },
 
+    /** ========== 上传音频文件 ========== */
     handleFileUpload(event) {
-      const file = event.target.files[0];
-      if (!file) return;
-      const newItem = {
-        id: Date.now(),
-        title: file.name.replace(/\.[^/.]+$/, ""),
-        fileType: 'upload',
-        duration: '--:--', // 上传文件可能需要后端解析时长
-        createTime: new Date().toLocaleString('zh-CN', { hour12: false }).replace(/\//g, '-'),
-        isFavorite: false,
-        downloadUrl: URL.createObjectURL(file) // 本地预览链接
-      };
-      this.meetingList.unshift(newItem);
-      this.$message.success(`文件 "${file.name}" 上传成功`);
+      const file = event.target.files[0]
+      if (!file) return
 
-      // ⚠️ 重要：重置input以允许重复上传同一文件
-      this.$refs.fileInput.value = '';
+      // 校验文件类型
+      const allowedTypes = ['.mp3', '.wav', '.m4a', '.mp4', '.mov']
+      const ext = '.' + file.name.split('.').pop().toLowerCase()
+      if (!allowedTypes.includes(ext)) {
+        this.$message.error(`不支持的文件格式: ${ext}，请上传 ${allowedTypes.join(', ')} 格式`)
+        this.$refs.fileInput.value = ''
+        return
+      }
+
+      // 构建 FormData
+      const formData = new FormData()
+      formData.append('file', file)
+
+      // 显示加载状态
+      const loadingInstance = this.$loading({
+        lock: true,
+        text: `正在上传 "${file.name}"...`,
+        spinner: 'el-icon-loading',
+        background: 'rgba(255, 255, 255, 0.8)'
+      })
+
+      uploadAudio(formData).then(response => {
+        this.$message.success(`文件 "${file.name}" 上传成功`)
+        // 上传成功后刷新会议列表（后端处理完成后会自动生成会议记录）
+        this.getList()
+      }).catch(error => {
+        console.error('上传失败:', error)
+        this.$message.error(error.msg || `文件 "${file.name}" 上传失败`)
+      }).finally(() => {
+        loadingInstance.close()
+        // ⚠️ 重置 input 以允许重复上传同一文件
+        this.$refs.fileInput.value = ''
+      })
     },
+
+    /** ========== 高亮 & XSS 防护 ========== */
     highlightText(text, keyword) {
-      if (!keyword || !keyword.trim()) return this.escapeHtml(text);
-      const escaped = keyword.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); // 转义正则特殊字符
-      const regex = new RegExp(`(${escaped})`, 'gi');
-      // 对原始文本做 HTML 转义防止 XSS，再替换关键字
+      if (!keyword || !keyword.trim()) return this.escapeHtml(text)
+      const escaped = keyword.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
       return this.escapeHtml(text).replace(
         new RegExp(`(${this.escapeHtml(escaped)})`, 'gi'),
         '<span class="search-highlight">$1</span>'
-      );
+      )
     },
     escapeHtml(str) {
-      const map = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' };
-      return String(str).replace(/[&<>"']/g, c => map[c]);
+      const map = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' }
+      return String(str).replace(/[&<>"']/g, c => map[c])
     },
-    handleSortChange(command) { this.sortType = command },
-    handleFilterChange(command) {
-      this.currentFilter = command;
-      // TODO: 根据 command 过滤显示列表
-    },
-    handleCommand(command, row) {
-      if (command === 'delete') {
-        this.$confirm('确定删除该会议纪要吗？删除后不可恢复。', '提示', { type: 'warning' })
-          .then(() => {
-            this.meetingList = this.meetingList.filter(item => item.id !== row.id);
-            this.$message.success('已删除');
-          }).catch(() => { });
-      } else if (command === 'download') {
-        const link = this.$refs.downloadLink;
-        link.href = row.downloadUrl;
-        link.download = `${row.title}.mp3`;
-        link.click();
-      } else if (command === 'addFavorite') {
-        row.isFavorite = true; this.$message.success('已添加到收藏');
-      } else if (command === 'removeFavorite') {
-        row.isFavorite = false; this.$message.success('已从收藏列表移除');
-      }
-    },
-    handleCardClick(event, item) {
-      // 🔑 核心逻辑：检查点击目标是否在下拉菜单内部
-      const target = event.target;
-      const isDropdownClick = target.closest('.el-dropdown') || 
-                              target.closest('.el-dropdown-menu') ||
-                              target.classList.contains('card-more');
-      
-      if (isDropdownClick) {
-        // 如果点的是下拉菜单或更多按钮，直接返回，不触发卡片特效
-        return;
-      }
-      this.clickingId = item.id;
-      
-      // 300ms 后重置动画状态，允许重复点击
-      setTimeout(() => {
-        this.clickingId = null;
-      }, 300);
 
-      // 在这里执行你的业务逻辑（如跳转详情页）
-      console.log('打开会议纪要:', item.title);
-      // this.$router.push(`/meeting/detail/${item.id}`);
+    /** ========== 排序 & 筛选 ========== */
+    handleSortChange(command) {
+      this.sortType = command
+      this.getList() // 排序变更 → 重新请求后端
     },
+    handleFilterChange(command) {
+      this.currentFilter = command
+      this.getList() // 筛选变更 → 重新请求后端
+    },
+
+    /** ========== 卡片更多操作 ========== */
+    handleCommand(command, row) {
+      switch (command) {
+        case 'delete':
+          this.$confirm('确定删除该会议纪要吗？删除后不可恢复。', '提示', { type: 'warning' })
+            .then(() => {
+              return delMeeting([row.id])
+            })
+            .then(() => {
+              this.$message.success('已删除')
+              this.getList()
+            })
+            .catch(() => {})
+          break
+
+        case 'download':
+          // TODO: 替换为实际下载接口 URL
+          // 当前 Controller 未提供下载端点，保留原有本地链接逻辑
+          {
+            const link = this.$refs.downloadLink
+            link.href = row.downloadUrl || `/huiyi/meeting/download/${row.id}`
+            link.download = `${row.title}.mp3`
+            link.click()
+          }
+          break
+
+        case 'addFavorite':
+          toggleFavorite(row.id, true).then(() => {
+            row.isFavorite = true
+            this.$message.success('已添加到收藏')
+          })
+          break
+
+        case 'removeFavorite':
+          toggleFavorite(row.id, false).then(() => {
+            row.isFavorite = false
+            this.$message.success('已从收藏列表移除')
+          })
+          break
+
+        case 'rename':
+          this.$prompt('请输入新名称', '重命名', {
+            confirmButtonText: '确定',
+            cancelButtonText: '取消',
+            inputValue: row.title
+          }).then(({ value }) => {
+            if (!value || !value.trim()) return
+            renameMeeting(row.id, value.trim()).then(() => {
+              this.$message.success('重命名成功')
+              this.getList()
+            })
+          }).catch(() => {})
+          break
+
+        case 'move':
+          // TODO: 弹出文件夹选择对话框，获取 folderId 后调用
+          // moveMeetingToFolder({ meetingIds: [row.id], folderId: selectedFolderId })
+          this.$message.info('移动功能待对接文件夹选择器')
+          break
+
+        case 'merge':
+          // TODO: 弹出多选会议对话框，获取目标会议列表后调用
+          // mergeMeetings({ meetingIds: [row.id, ...otherIds], title: '合并后的标题' })
+          this.$message.info('合并功能待对接会议选择器')
+          break
+      }
+    },
+
+    /** ========== 卡片点击 → 详情页 ========== */
+    handleCardClick(event, item) {
+      const target = event.target
+      const isDropdownClick = target.closest('.el-dropdown') ||
+                              target.closest('.el-dropdown-menu') ||
+                              target.classList.contains('card-more')
+
+      if (isDropdownClick) return
+
+      this.clickingId = item.id
+      setTimeout(() => { this.clickingId = null }, 300)
+
+      // 调用详情接口验证权限/数据可用性后跳转
+      getMeetingDetail(item.id).then(() => {
+        this.$router.push(`/huiyi/meeting/detail/${item.id}`)
+      }).catch(() => {
+        this.$message.error('无法打开该会议纪要')
+      })
+    },
+
+    /** ========== 开始听记 ========== */
     startRecording() {
-      let backRoute = '';
+      let backRoute = ''
       try {
         backRoute = JSON.stringify({
           name: this.$route.name,
           path: this.$route.path,
           query: this.$route.query || {}
-        });
+        })
       } catch (e) {
-        console.warn('backRoute 序列化失败', e);
-        backRoute = this.$route.path;
+        console.warn('backRoute 序列化失败', e)
+        backRoute = this.$route.path
       }
 
       this.$router.push({
         path: '/meeting/record',
         query: { backRoute }
-      });
+      })
     }
   }
 }
@@ -560,6 +731,7 @@ export default {
   gap: 16px;
   margin-bottom: 28px;
   flex-shrink: 0;
+  z-index: 99;
   /* 与下方内容区拉开距离 */
 }
 
@@ -665,6 +837,7 @@ export default {
 
 /* 排序 & 筛选按钮：圆形透明底 + hover旋转 */
 .icon-action-btn {
+  z-index: 100;
   width: 42px;
   height: 42px;
   border: none;
@@ -852,11 +1025,68 @@ export default {
   }
 }
 
-.empty-state {
-  text-align: center;
-  padding: 80px 0;
-  color: #c0c4cc;
-  font-size: 14px;
+.empty-state-wrapper {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 24px;
+}
+
+.empty-illustration {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 18px;
+  animation: emptyFadeIn 0.5s ease-out;
+}
+
+.folder-wrap {
+  width: 170px;
+  height: 140px;
+  animation: emptyFloat 5s ease-in-out infinite;
+
+  svg {
+    width: 100%;
+    height: 100%;
+    overflow: visible;
+  }
+}
+
+.qmark {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: emptyWiggle 4s ease-in-out infinite;
+}
+
+.empty-text {
+  font-size: 22px;
+  font-weight: 500;
+  color: #9aa1ad;
+  letter-spacing: 0.3px;
+}
+
+@keyframes emptyFadeIn {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes emptyFloat {
+  0%, 100% { transform: translateY(0); }
+  50%      { transform: translateY(-12px); }
+}
+
+@keyframes emptyWiggle {
+  0%, 100% { transform: rotate(0); }
+  25%      { transform: rotate(8deg); }
+  75%      { transform: rotate(-8deg); }
 }
 
 .fab-btn {

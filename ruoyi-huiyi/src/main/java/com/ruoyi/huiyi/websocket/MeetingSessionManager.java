@@ -3,10 +3,15 @@ package com.ruoyi.huiyi.websocket;
 import com.ruoyi.common.utils.uuid.UUID;
 import com.ruoyi.huiyi.config.MeetingRecordProperties;
 import com.ruoyi.huiyi.config.RabbitMqConfig;
+import com.ruoyi.huiyi.domain.MeetingRecord;
 import com.ruoyi.huiyi.domain.MeetingTranscriptSegment;
 import com.ruoyi.huiyi.domain.dto.TranscriptPushDTO;
+import com.ruoyi.huiyi.domain.enums.MeetingRecordStatus;
+import com.ruoyi.huiyi.domain.vo.MeetingRecordStatusVO;
+import com.ruoyi.huiyi.mapper.MeetingRecordMapper;
 import com.ruoyi.huiyi.mapper.MeetingTranscriptSegmentMapper;
 import com.ruoyi.huiyi.mq.message.MinutesTaskMessage;
+import com.ruoyi.huiyi.service.IMeetingRecordService;
 import com.ruoyi.huiyi.service.impl.MeetingAsrServiceImpl;
 import com.ruoyi.huiyi.util.WavUtils;
 import jakarta.annotation.PostConstruct;
@@ -51,6 +56,12 @@ public class MeetingSessionManager {
 
     @Autowired
     private RabbitTemplate rabbitTemplate;
+
+    @Autowired
+    private IMeetingRecordService meetingRecordService;
+
+    @Autowired
+    private MeetingRecordMapper meetingRecordMapper;
 
     /** 切片定时调度线程池(每个会议室共用即可，任务很轻量) */
     private ThreadPoolTaskScheduler flushScheduler;
@@ -201,8 +212,20 @@ public class MeetingSessionManager {
                     .filter(t -> t != null && !t.isEmpty())
                     .collect(Collectors.joining("\n"));
 
+            // 全文落库：写 huiyi_meeting_transcript，并把处理状态更新为"转写完成"，
+            // 跟"上传音频"那条链路（AsrTaskListener）用的是同一个方法，保持两条链路语义一致
+            meetingRecordService.saveTranscriptResult(meetingId, fullTranscript);
+
+            MeetingRecord recordUpdate = new MeetingRecord();
+            recordUpdate.setMeetingId(meetingId);
+            recordUpdate.setRecordStatus(MeetingRecordStatus.COMPLETED.getDesc());
+            recordUpdate.setDuration((int) session.getAccumulatedOffsetMs() / 1000);
+            meetingRecordMapper.updateRecordStatus(recordUpdate);
+
+
             MinutesTaskMessage message = new MinutesTaskMessage();
             message.setTaskId(String.valueOf(meetingId));
+            message.setMeetingId(meetingId);
             message.setRecognizedText(fullTranscript);
 
             rabbitTemplate.convertAndSend(

@@ -15,6 +15,10 @@
         <result property="folderId"      column="folder_id"      />
         <result property="mergeFromIds"  column="merge_from_ids" />
         <result property="isMerged"      column="is_merged"      />
+        <result property="recordStatus"      column="record_status"       />
+        <result property="recordStartTime"   column="record_start_time"   />
+        <result property="recordEndTime"     column="record_end_time"     />
+        <result property="recordDurationMs"  column="record_duration_ms"  />
         <result property="createBy"      column="create_by"      />
         <result property="createTime"    column="create_time"    />
         <result property="updateBy"      column="update_by"      />
@@ -23,7 +27,9 @@
 
     <sql id="selectMeetingRecordVo">
         select meeting_id, title, source_type, audio_path, duration, status, is_favorite,
-        folder_id, merge_from_ids, is_merged, create_by, create_time, update_by, update_time
+        folder_id, merge_from_ids, is_merged,
+        record_status, record_start_time, record_end_time, record_duration_ms,
+        create_by, create_time, update_by, update_time
         from huiyi_meeting
     </sql>
 
@@ -50,7 +56,7 @@
             <if test="folderId != null">
                 and folder_id = #{folderId}
             </if>
-            <if test="status != null and status != ''">
+            <if test="status != null">
                 and status = #{status}
             </if>
         </where>
@@ -68,13 +74,14 @@
     <insert id="insertMeetingRecord" parameterType="com.ruoyi.huiyi.domain.MeetingRecord" useGeneratedKeys="true" keyProperty="meetingId">
         insert into huiyi_meeting (
         title, source_type, audio_path, duration, status, is_favorite,
-        folder_id, merge_from_ids, is_merged, create_by, create_time
+        folder_id, merge_from_ids, is_merged, record_status, create_by, create_time
         ) values (
         #{title}, #{sourceType}, #{audioPath}, #{duration},
-        <choose><when test="status != null">#{status}</when><otherwise>'0'</otherwise></choose>,
+        <choose><when test="status != null">#{status}</when><otherwise>0</otherwise></choose>,
         <choose><when test="isFavorite != null">#{isFavorite}</when><otherwise>'0'</otherwise></choose>,
         #{folderId}, #{mergeFromIds},
         <choose><when test="isMerged != null">#{isMerged}</when><otherwise>'0'</otherwise></choose>,
+        <choose><when test="recordStatus != null">#{recordStatus}</when><otherwise>null</otherwise></choose>,
         #{createBy}, sysdate()
         )
     </insert>
@@ -137,6 +144,26 @@
 
     <update id="clearFolderId">
         update huiyi_meeting set folder_id = null, update_time = sysdate() where folder_id = #{folderId}
+    </update>
+
+    <select id="selectMeetingRecordForUpdate" resultMap="MeetingRecordResult">
+        <include refid="selectMeetingRecordVo"/>
+        where meeting_id = #{meetingId} and del_flag = '0'
+        for update
+    </select>
+
+    <update id="updateRecordStatus" parameterType="com.ruoyi.huiyi.domain.MeetingRecord">
+        update huiyi_meeting
+        <set>
+            <if test="recordStatus != null">record_status = #{recordStatus},</if>
+            <if test="recordStartTime != null">record_start_time = #{recordStartTime},</if>
+            <if test="recordEndTime != null">record_end_time = #{recordEndTime},</if>
+            <if test="recordDurationMs != null">record_duration_ms = #{recordDurationMs},</if>
+            <if test="audioPath != null">audio_path = #{audioPath},</if>
+            <if test="duration != null">duration = #{duration},</if>
+            update_time = sysdate()
+        </set>
+        where meeting_id = #{meetingId}
     </update>
 
 </mapper>

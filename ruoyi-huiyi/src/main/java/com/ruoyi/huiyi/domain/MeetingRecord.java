@@ -3,6 +3,8 @@ package com.ruoyi.huiyi.domain;
 import com.ruoyi.common.annotation.Excel;
 import com.ruoyi.common.core.domain.BaseEntity;
 
+import java.util.Date;
+
 /**
  * 会议纪要主表 huiyi_meeting
  *
@@ -29,10 +31,10 @@ public class MeetingRecord extends BaseEntity {
 
     /** 会议时长（秒） */
     @Excel(name = "会议时长(秒)")
-    private Integer duration;
+    private Long duration;
 
     /** 处理状态（0待转写 1转写中 2转写完成 3生成中 4已完成 5失败） */
-    private String status;
+    private int status;
 
     /** 是否收藏（0否 1是） */
     private String isFavorite;
@@ -46,6 +48,15 @@ public class MeetingRecord extends BaseEntity {
     /** 是否已被合并（0否 1是） */
     private String isMerged;
 
+    /** 录制状态（仅sourceType=0录制场景使用，取值对应你的 MeetingRecordStatus 枚举） */
+    private Integer recordStatus;
+
+    /** 录制开始时间 */
+    private Date recordStartTime;
+
+    /** 录制结束时间 */
+    private Date recordEndTime;
+
     public Long getMeetingId() { return meetingId; }
     public void setMeetingId(Long meetingId) { this.meetingId = meetingId; }
 
@@ -58,11 +69,11 @@ public class MeetingRecord extends BaseEntity {
     public String getAudioPath() { return audioPath; }
     public void setAudioPath(String audioPath) { this.audioPath = audioPath; }
 
-    public Integer getDuration() { return duration; }
-    public void setDuration(Integer duration) { this.duration = duration; }
+    public Long getDuration() { return duration; }
+    public void setDuration(Long duration) { this.duration = duration; }
 
-    public String getStatus() { return status; }
-    public void setStatus(String status) { this.status = status; }
+    public int getStatus() { return status; }
+    public void setStatus(int status) { this.status = status; }
 
     public String getIsFavorite() { return isFavorite; }
     public void setIsFavorite(String isFavorite) { this.isFavorite = isFavorite; }
@@ -75,4 +86,13 @@ public class MeetingRecord extends BaseEntity {
 
     public String getIsMerged() { return isMerged; }
     public void setIsMerged(String isMerged) { this.isMerged = isMerged; }
+
+    public Integer getRecordStatus() { return recordStatus; }
+    public void setRecordStatus(Integer recordStatus) {this.recordStatus = recordStatus; }
+
+    public Date getRecordStartTime() { return recordStartTime; }
+    public void setRecordStartTime(Date recordStartTime) { this.recordStartTime = recordStartTime; }
+
+    public Date getRecordEndTime() { return recordEndTime; }
+    public void setRecordEndTime(Date recordEndTime) { this.recordEndTime = recordEndTime; }
 }

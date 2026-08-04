@@ -187,7 +187,7 @@
 
         <div class="meeting-list">
           <div v-for="item in meetingList" :key="item.id" class="meeting-card" :class="{ 'is-clicking': clickingId === item.id }"
-  @click="handleCardClick($event, item)">>
+  @click="handleCardClick($event, item)">
             <!-- 左侧图标 -->
             <div class="card-icon">
               <i v-if="item.isFavorite" class="favorite-badge el-icon-star-on" />

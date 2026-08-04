@@ -44,4 +44,10 @@ public interface MeetingRecordMapper {
 
     /** 删除文件夹时，把该文件夹下所有会议的 folderId 清空（移出文件夹，不删数据） */
     int clearFolderId(@Param("folderId") Long folderId);
+
+    /** 悲观锁查询（select ... for update），录制开始/暂停/恢复/结束时用，防止并发操作互相踩 */
+    MeetingRecord selectMeetingRecordForUpdate(@Param("meetingId") Long meetingId);
+
+    /** 只更新录制生命周期相关字段，不影响标题/文件夹/收藏等其他字段 */
+    int updateRecordStatus(MeetingRecord meetingRecord);
 }

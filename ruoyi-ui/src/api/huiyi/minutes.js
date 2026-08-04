@@ -1,0 +1,136 @@
+import request from '@/utils/request'
+
+/**
+ * ========================
+ * 会议记录 API
+ * ========================
+ */
+
+// ---------------- 基础 CRUD ----------------
+
+/**
+ * 查询会议记录列表（全部 / 收藏 / 文件夹内，三合一）
+ * @param {Object} query 查询参数（MeetingRecord 字段 + pageNum + pageSize）
+ */
+export function listMeeting(query) {
+  return request({
+    url: '/huiyi/meeting/list',
+    method: 'get',
+    params: query
+  })
+}
+
+/**
+ * 获取会议详情（转写 + 纪要 + 笔记一次性返回）
+ * @param {Number|String} meetingId 会议ID
+ */
+export function getMeetingDetail(meetingId) {
+  return request({
+    url: '/huiyi/meeting/' + meetingId,
+    method: 'get'
+  })
+}
+
+/**
+ * 新增会议记录
+ * @param {Object} data MeetingRecord 对象
+ */
+export function addMeeting(data) {
+  return request({
+    url: '/huiyi/meeting',
+    method: 'post',
+    data: data
+  })
+}
+
+/**
+ * 修改会议记录
+ * @param {Object} data MeetingRecord 对象
+ */
+export function updateMeeting(data) {
+  return request({
+    url: '/huiyi/meeting',
+    method: 'put',
+    data: data
+  })
+}
+
+/**
+ * 删除会议记录（支持批量）
+ * @param {Array|String} meetingIds 会议ID数组，如 [1,2,3] 或 "1,2,3"
+ */
+export function delMeeting(meetingIds) {
+  return request({
+    url: '/huiyi/meeting/' + meetingIds,
+    method: 'delete'
+  })
+}
+
+// ---------------- 扩展操作 ----------------
+
+/**
+ * 重命名会议
+ * @param {Number|String} meetingId 会议ID
+ * @param {String} title 新标题
+ */
+export function renameMeeting(meetingId, title) {
+  return request({
+    url: '/huiyi/meeting/' + meetingId + '/rename',
+    method: 'put',
+    params: { title }
+  })
+}
+
+/**
+ * 收藏 / 取消收藏
+ * @param {Number|String} meetingId 会议ID
+ * @param {Boolean} favorite true=收藏, false=取消收藏
+ */
+export function toggleFavorite(meetingId, favorite) {
+  return request({
+    url: '/huiyi/meeting/' + meetingId + '/favorite',
+    method: 'put',
+    params: { favorite }
+  })
+}
+
+/**
+ * 批量移动会议到文件夹
+ * @param {Object} data MeetingMoveFolderDTO { meetingIds: [], folderId: '' }
+ *   - folderId 传空表示移出文件夹
+ */
+export function moveMeetingToFolder(data) {
+  return request({
+    url: '/huiyi/meeting/moveFolder',
+    method: 'put',
+    data: data
+  })
+}
+
+/**
+ * 合并多条会议记录
+ * @param {Object} data MeetingMergeDTO { meetingIds: [], title: '' }
+ * @returns {Promise} 返回新合并后的 meetingId
+ */
+export function mergeMeetings(data) {
+  return request({
+    url: '/huiyi/meeting/merge',
+    method: 'post',
+    data: data
+  })
+}
+
+/**
+ * 保存 / 更新用户笔记
+ * @param {Number|String} meetingId 会议ID
+ * @param {String} content 笔记内容（纯文本/富文本HTML）
+ */
+export function saveNote(meetingId, content) {
+  return request({
+    url: '/huiyi/meeting/' + meetingId + '/note',
+    method: 'put',
+    // 后端 @RequestBody String 接收的是纯文本，需指定 Content-Type
+    headers: { 'Content-Type': 'text/plain' },
+    data: content
+  })
+}

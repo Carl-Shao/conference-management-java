@@ -7,6 +7,7 @@ import com.ruoyi.huiyi.domain.MeetingRecord;
 import com.ruoyi.huiyi.domain.MeetingTranscript;
 import com.ruoyi.huiyi.domain.dto.MeetingMergeDTO;
 import com.ruoyi.huiyi.domain.dto.MeetingMoveFolderDTO;
+import com.ruoyi.huiyi.domain.enums.MeetingStatus;
 import com.ruoyi.huiyi.domain.vo.MeetingDetailVO;
 import com.ruoyi.huiyi.mapper.MeetingMinutesMapper;
 import com.ruoyi.huiyi.mapper.MeetingNoteMapper;
@@ -129,7 +130,7 @@ public class MeetingRecordServiceImpl implements IMeetingRecordService {
         merged.setTitle(dto.getTitle());
         merged.setSourceType("1"); // 合并结果视为"派生"记录，来源标记按需调整
         merged.setDuration(totalDuration);
-        merged.setStatus("2"); // 转写内容已就绪，等待/或已生成纪要
+        merged.setStatus(MeetingStatus.TRANSCRIBED.getCode()); // 转写内容已就绪，等待/或已生成纪要
         merged.setIsFavorite("0");
         merged.setMergeFromIds(ids.stream().map(String::valueOf).collect(Collectors.joining(",")));
         merged.setIsMerged("0");
@@ -168,7 +169,7 @@ public class MeetingRecordServiceImpl implements IMeetingRecordService {
 
         MeetingRecord update = new MeetingRecord();
         update.setMeetingId(meetingId);
-        update.setStatus("2"); // 转写完成
+        update.setStatus(MeetingStatus.TRANSCRIBED.getCode()); // 转写完成
         meetingRecordMapper.updateMeetingRecord(update);
     }
 
@@ -183,7 +184,7 @@ public class MeetingRecordServiceImpl implements IMeetingRecordService {
 
         MeetingRecord update = new MeetingRecord();
         update.setMeetingId(meetingId);
-        update.setStatus("4"); // 已完成
+        update.setStatus(MeetingStatus.DONE.getCode()); // 已完成
         meetingRecordMapper.updateMeetingRecord(update);
     }
 
@@ -192,7 +193,7 @@ public class MeetingRecordServiceImpl implements IMeetingRecordService {
     {
         MeetingRecord update = new MeetingRecord();
         update.setMeetingId(meetingId);
-        update.setStatus("5"); // 失败
+        update.setStatus(MeetingStatus.FAILED.getCode()); // 失败
         meetingRecordMapper.updateMeetingRecord(update);
     }
 }

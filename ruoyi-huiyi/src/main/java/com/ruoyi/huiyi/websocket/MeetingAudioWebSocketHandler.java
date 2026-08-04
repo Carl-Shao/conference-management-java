@@ -56,7 +56,7 @@ public class MeetingAudioWebSocketHandler extends AbstractWebSocketHandler {
     public void afterConnectionClosed(WebSocketSession wsSession, CloseStatus status) {
         Long meetingId = resolveMeetingId(wsSession);
         RecordingSession recordingSession = sessionManager.getSession(meetingId);
-        if (recordingSession == null && recordingSession.getWsSession() == wsSession) {
+        if (recordingSession != null && recordingSession.getWsSession() == wsSession) {
             recordingSession.setWsSession(null);
         }
         log.info("会议[{}]音频WebSocket连接已关闭: {}, 原因: {}", meetingId, wsSession.getId(), status);
