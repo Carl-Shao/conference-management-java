@@ -5,7 +5,7 @@ import lombok.Data;
 import java.io.Serializable;
 
 @Data
-public class MinutesTaskMessage implements Serializable {
+public class MinutesTaskMessage {
 
     private String taskId;
     private Long meetingId;

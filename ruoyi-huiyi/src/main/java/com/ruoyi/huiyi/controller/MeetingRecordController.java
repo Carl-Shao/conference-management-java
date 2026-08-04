@@ -20,19 +20,19 @@ import java.util.List;
  * 会议纪要
  *
  * "全部会议纪要" 与 "只看收藏" 两个前端页面共用这一个 controller：
- *  - 全部会议纪要页面：GET /huiyi/meeting/list                （不传 isFavorite）
- *  - 只看收藏页面：    GET /huiyi/meeting/list?isFavorite=1
+ *  - 全部会议纪要页面：GET /huiyi/record/list                （不传 isFavorite）
+ *  - 只看收藏页面：    GET /huiyi/record/list?isFavorite=1
  *  两者都支持 sourceType 筛选、title/createTime 排序（前端用 params.orderByColumn 传）
  */
 @RestController
-@RequestMapping("/huiyi/meeting")
+@RequestMapping("/huiyi/record")
 public class MeetingRecordController extends BaseController {
 
     @Autowired
     private IMeetingRecordService meetingRecordService;
 
     /** 会议记录列表（全部 / 收藏 / 文件夹内，三合一） */
-    @PreAuthorize("@ss.hasPermi('huiyi:meeting:list')")
+    @PreAuthorize("@ss.hasPermi('huiyi:record:list')")
     @GetMapping("/list")
     public TableDataInfo list(MeetingRecord meetingRecord)
     {
@@ -42,7 +42,7 @@ public class MeetingRecordController extends BaseController {
     }
 
     /** 点击某条记录后跳转到详情页，一次性拿转写+纪要+笔记 */
-    @PreAuthorize("@ss.hasPermi('huiyi:meeting:query')")
+    @PreAuthorize("@ss.hasPermi('huiyi:record:query')")
     @GetMapping(value = "/{meetingId}")
     public AjaxResult getDetail(@PathVariable("meetingId") Long meetingId)
     {
@@ -50,7 +50,7 @@ public class MeetingRecordController extends BaseController {
         return success(vo);
     }
 
-    @PreAuthorize("@ss.hasPermi('huiyi:meeting:add')")
+    @PreAuthorize("@ss.hasPermi('huiyi:record:add')")
     @Log(title = "会议纪要", businessType = BusinessType.INSERT)
     @PostMapping
     public AjaxResult add(@RequestBody MeetingRecord meetingRecord)
@@ -58,7 +58,7 @@ public class MeetingRecordController extends BaseController {
         return toAjax(meetingRecordService.insertMeetingRecord(meetingRecord));
     }
 
-    @PreAuthorize("@ss.hasPermi('huiyi:meeting:edit')")
+    @PreAuthorize("@ss.hasPermi('huiyi:record:edit')")
     @Log(title = "会议纪要", businessType = BusinessType.UPDATE)
     @PutMapping
     public AjaxResult edit(@RequestBody MeetingRecord meetingRecord)
@@ -66,7 +66,7 @@ public class MeetingRecordController extends BaseController {
         return toAjax(meetingRecordService.updateMeetingRecord(meetingRecord));
     }
 
-    @PreAuthorize("@ss.hasPermi('huiyi:meeting:remove')")
+    @PreAuthorize("@ss.hasPermi('huiyi:record:remove')")
     @Log(title = "会议纪要", businessType = BusinessType.DELETE)
     @DeleteMapping("/{meetingIds}")
     public AjaxResult remove(@PathVariable Long[] meetingIds)
@@ -75,7 +75,7 @@ public class MeetingRecordController extends BaseController {
     }
 
     /** 重命名 */
-    @PreAuthorize("@ss.hasPermi('huiyi:meeting:edit')")
+    @PreAuthorize("@ss.hasPermi('huiyi:record:edit')")
     @Log(title = "会议纪要重命名", businessType = BusinessType.UPDATE)
     @PutMapping("/{meetingId}/rename")
     public AjaxResult rename(@PathVariable Long meetingId, @RequestParam String title)
@@ -84,7 +84,7 @@ public class MeetingRecordController extends BaseController {
     }
 
     /** 收藏 / 取消收藏 */
-    @PreAuthorize("@ss.hasPermi('huiyi:meeting:edit')")
+    @PreAuthorize("@ss.hasPermi('huiyi:record:edit')")
     @PutMapping("/{meetingId}/favorite")
     public AjaxResult favorite(@PathVariable Long meetingId, @RequestParam boolean favorite)
     {
@@ -92,7 +92,7 @@ public class MeetingRecordController extends BaseController {
     }
 
     /** 批量移动到文件夹（folderId 传空表示移出文件夹） */
-    @PreAuthorize("@ss.hasPermi('huiyi:meeting:edit')")
+    @PreAuthorize("@ss.hasPermi('huiyi:record:edit')")
     @Log(title = "会议纪要移动文件夹", businessType = BusinessType.UPDATE)
     @PutMapping("/moveFolder")
     public AjaxResult moveFolder(@RequestBody MeetingMoveFolderDTO dto)
@@ -101,7 +101,7 @@ public class MeetingRecordController extends BaseController {
     }
 
     /** 合并多条会议记录 */
-    @PreAuthorize("@ss.hasPermi('huiyi:meeting:edit')")
+    @PreAuthorize("@ss.hasPermi('huiyi:record:edit')")
     @Log(title = "会议纪要合并", businessType = BusinessType.UPDATE)
     @PostMapping("/merge")
     public AjaxResult merge(@RequestBody MeetingMergeDTO dto)
@@ -111,7 +111,7 @@ public class MeetingRecordController extends BaseController {
     }
 
     /** 保存/更新用户笔记 */
-    @PreAuthorize("@ss.hasPermi('huiyi:meeting:edit')")
+    @PreAuthorize("@ss.hasPermi('huiyi:record:edit')")
     @PutMapping("/{meetingId}/note")
     public AjaxResult saveNote(@PathVariable Long meetingId, @RequestBody String content)
     {

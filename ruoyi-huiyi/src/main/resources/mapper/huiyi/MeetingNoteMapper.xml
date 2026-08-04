@@ -1,31 +1,31 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <!DOCTYPE mapper
-PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
-"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
-<mapper namespace="com.ruoyi.huiyi.mapper.MeetingMinutesMapper">
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.huiyi.mapper.MeetingNoteMapper">
 
-    <resultMap type="com.ruoyi.huiyi.domain.MeetingMinutes" id="MinutesResult">
+    <resultMap type="com.ruoyi.huiyi.domain.MeetingNote" id="NoteResult">
         <id     property="id"          column="id"          />
         <result property="meetingId"   column="meeting_id"  />
         <result property="content"     column="content"     />
-        <result property="version"     column="version"     />
+        <result property="createBy"    column="create_by"   />
         <result property="createTime"  column="create_time" />
         <result property="updateTime"  column="update_time" />
     </resultMap>
 
-    <select id="selectByMeetingId" parameterType="Long" resultMap="MinutesResult">
-        select id, meeting_id, content, version, create_time, update_time
-        from huiyi_meeting_minutes where meeting_id = #{meetingId}
+    <select id="selectByMeetingId" parameterType="Long" resultMap="NoteResult">
+        select id, meeting_id, content, create_by, create_time, update_time
+        from huiyi_meeting_note where meeting_id = #{meetingId}
     </select>
 
-    <insert id="insertOrUpdate" parameterType="com.ruoyi.huiyi.domain.MeetingMinutes">
-        insert into huiyi_meeting_minutes (meeting_id, content, version, create_time, update_time)
-        values (#{meetingId}, #{content}, 1, sysdate(), sysdate())
-        on duplicate key update content = #{content}, version = version + 1, update_time = sysdate()
+    <insert id="insertOrUpdate" parameterType="com.ruoyi.huiyi.domain.MeetingNote">
+        insert into huiyi_meeting_note (meeting_id, content, create_by, create_time, update_time)
+        values (#{meetingId}, #{content}, #{createBy}, sysdate(), sysdate())
+        on duplicate key update content = #{content}, update_time = sysdate()
     </insert>
 
     <delete id="deleteByMeetingId" parameterType="Long">
-        delete from huiyi_meeting_minutes where meeting_id = #{meetingId}
+        delete from huiyi_meeting_note where meeting_id = #{meetingId}
     </delete>
 
 </mapper>

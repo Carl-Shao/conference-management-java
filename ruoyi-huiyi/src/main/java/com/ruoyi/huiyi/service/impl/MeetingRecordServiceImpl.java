@@ -110,7 +110,7 @@ public class MeetingRecordServiceImpl implements IMeetingRecordService {
 
         // 1. 按顺序取出各会议的转写内容，拼接（每段前加标题分隔，便于阅读来源）
         StringBuilder mergedTranscript = new StringBuilder();
-        int totalDuration = 0;
+        Long totalDuration = 0L;
         for (Long id : ids)
         {
             MeetingRecord record = meetingRecordMapper.selectMeetingRecordById(id);

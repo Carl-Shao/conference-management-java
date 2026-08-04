@@ -14,7 +14,7 @@ import request from '@/utils/request'
  */
 export function listMeeting(query) {
   return request({
-    url: '/huiyi/meeting/list',
+    url: '/huiyi/record/list',
     method: 'get',
     params: query
   })
@@ -24,9 +24,9 @@ export function listMeeting(query) {
  * 获取会议详情（转写 + 纪要 + 笔记一次性返回）
  * @param {Number|String} meetingId 会议ID
  */
-export function getMeetingDetail(meetingId) {
+export function getMeeting(meetingId) {
   return request({
-    url: '/huiyi/meeting/' + meetingId,
+    url: '/huiyi/record/' + meetingId,
     method: 'get'
   })
 }
@@ -37,7 +37,7 @@ export function getMeetingDetail(meetingId) {
  */
 export function addMeeting(data) {
   return request({
-    url: '/huiyi/meeting',
+    url: '/huiyi/record',
     method: 'post',
     data: data
   })
@@ -49,7 +49,7 @@ export function addMeeting(data) {
  */
 export function updateMeeting(data) {
   return request({
-    url: '/huiyi/meeting',
+    url: '/huiyi/record',
     method: 'put',
     data: data
   })
@@ -61,7 +61,7 @@ export function updateMeeting(data) {
  */
 export function delMeeting(meetingIds) {
   return request({
-    url: '/huiyi/meeting/' + meetingIds,
+    url: '/huiyi/record/' + meetingIds,
     method: 'delete'
   })
 }
@@ -75,7 +75,7 @@ export function delMeeting(meetingIds) {
  */
 export function renameMeeting(meetingId, title) {
   return request({
-    url: '/huiyi/meeting/' + meetingId + '/rename',
+    url: '/huiyi/record/' + meetingId + '/rename',
     method: 'put',
     params: { title }
   })
@@ -86,9 +86,9 @@ export function renameMeeting(meetingId, title) {
  * @param {Number|String} meetingId 会议ID
  * @param {Boolean} favorite true=收藏, false=取消收藏
  */
-export function toggleFavorite(meetingId, favorite) {
+export function favoriteMeeting(meetingId, favorite) {
   return request({
-    url: '/huiyi/meeting/' + meetingId + '/favorite',
+    url: '/huiyi/record/' + meetingId + '/favorite',
     method: 'put',
     params: { favorite }
   })
@@ -99,9 +99,9 @@ export function toggleFavorite(meetingId, favorite) {
  * @param {Object} data MeetingMoveFolderDTO { meetingIds: [], folderId: '' }
  *   - folderId 传空表示移出文件夹
  */
-export function moveMeetingToFolder(data) {
+export function moveMeetingFolder(data) {
   return request({
-    url: '/huiyi/meeting/moveFolder',
+    url: '/huiyi/record/moveFolder',
     method: 'put',
     data: data
   })
@@ -112,9 +112,9 @@ export function moveMeetingToFolder(data) {
  * @param {Object} data MeetingMergeDTO { meetingIds: [], title: '' }
  * @returns {Promise} 返回新合并后的 meetingId
  */
-export function mergeMeetings(data) {
+export function mergeMeeting(data) {
   return request({
-    url: '/huiyi/meeting/merge',
+    url: '/huiyi/record/merge',
     method: 'post',
     data: data
   })
@@ -125,9 +125,9 @@ export function mergeMeetings(data) {
  * @param {Number|String} meetingId 会议ID
  * @param {String} content 笔记内容（纯文本/富文本HTML）
  */
-export function saveNote(meetingId, content) {
+export function saveMeetingNote(meetingId, content) {
   return request({
-    url: '/huiyi/meeting/' + meetingId + '/note',
+    url: '/huiyi/record/' + meetingId + '/note',
     method: 'put',
     // 后端 @RequestBody String 接收的是纯文本，需指定 Content-Type
     headers: { 'Content-Type': 'text/plain' },

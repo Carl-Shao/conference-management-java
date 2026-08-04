@@ -218,8 +218,8 @@ public class MeetingSessionManager {
 
             MeetingRecord recordUpdate = new MeetingRecord();
             recordUpdate.setMeetingId(meetingId);
-            recordUpdate.setRecordStatus(MeetingRecordStatus.COMPLETED.getDesc());
-            recordUpdate.setDuration((int) session.getAccumulatedOffsetMs() / 1000);
+            recordUpdate.setRecordStatus(MeetingRecordStatus.COMPLETED.getCode());
+            recordUpdate.setDuration(session.getAccumulatedOffsetMs() / 1000);
             meetingRecordMapper.updateRecordStatus(recordUpdate);
 
 

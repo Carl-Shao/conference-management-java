@@ -5,7 +5,7 @@ import lombok.Data;
 import java.io.Serializable;
 
 @Data
-public class AsrTaskMessage implements Serializable {
+public class AsrTaskMessage {
 
     private String taskId;
     private Long meetingId;

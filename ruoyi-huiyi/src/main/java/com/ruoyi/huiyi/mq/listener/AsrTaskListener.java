@@ -31,7 +31,7 @@ public class AsrTaskListener {
     private IMeetingRecordService meetingRecordService;
 
     // concurrency = "2-4" 表示最少2个、最多4个并发消费者线程
-    @RabbitListener(queues = RabbitMqConfig.ASR_QUEUE, concurrency = "2-4", ackMode = "MANUAL")
+    @RabbitListener(queues = RabbitMqConfig.ASR_QUEUE, concurrency = "2-4", ackMode = "MANUAL", containerFactory = "rabbitListenerContainerFactory")
     public void handle(AsrTaskMessage message, Message amqpMessage, Channel channel) throws IOException {
         long deliveryTag = amqpMessage.getMessageProperties().getDeliveryTag();
         try{

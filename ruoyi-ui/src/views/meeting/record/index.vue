@@ -14,7 +14,7 @@
                                 :class="{ 'rec-paused': recordStatus === 'paused', 'rec-ended': recordStatus === 'ended' }">
                                 <span class="rec-dot"
                                     :class="{ 'rec-paused': recordStatus === 'paused', 'rec-ended': recordStatus === 'ended' }"></span>
-                                {{ recordStatus === 'paused' ? '已暂停' : recordStatus === 'ended' ? '已结束' : '录制中' }}
+                                {{ recordStatus === 'idle' ? '待开始' : recordStatus === 'paused' ? '已暂停' : recordStatus === 'ended' ? '已结束' : '录制中' }}
                             </span>
                         </div>
                     </div>
@@ -52,22 +52,31 @@
                     <div class="controls-overlay">
                         <!-- 底部控制按钮 -->
                         <div class="control-buttons">
-                            <!-- 标记按钮 -->
-                            <div class="control-btn" @click="handleMark">
-                                <i class="el-icon-collection-tag" style="font-size: 32px;"></i>
-                            </div>
+                            <!-- 还没开始录制：只显示"开始听记"按钮 -->
+                            <template v-if="recordStatus === 'idle'">
+                                <el-button type="primary" round :loading="isApiLoading" @click="startListening">
+                                    <i class="el-icon-video-camera" style="margin-right: 6px;"></i>开始听记
+                                </el-button>
+                            </template>
+                            <!-- 已经开始录制：显示 标记/暂停继续/结束 三个按钮 -->
+                            <template v-else>
+                                <!-- 标记按钮 -->
+                                <div class="control-btn" @click="handleMark">
+                                    <i class="el-icon-collection-tag" style="font-size: 32px;"></i>
+                                </div>
 
-                            <!-- 暂停/继续按钮 -->
-                            <div class="control-btn" @click="handleToggleRecord"
-                                :style="{ opacity: recordStatus === 'ended' ? 0.5 : 1, cursor: recordStatus === 'ended' ? 'not-allowed' : 'pointer' }">
-                                <i :class="recordStatus === 'paused' ? 'el-icon-video-play' : 'el-icon-video-pause'"
-                                    style="font-size: 32px;" :disabled="recordStatus === 'ended'"></i>
-                            </div>
+                                <!-- 暂停/继续按钮 -->
+                                <div class="control-btn" @click="handleToggleRecord"
+                                    :style="{ opacity: recordStatus === 'ended' ? 0.5 : 1, cursor: recordStatus === 'ended' ? 'not-allowed' : 'pointer' }">
+                                    <i :class="recordStatus === 'paused' ? 'el-icon-video-play' : 'el-icon-video-pause'"
+                                        style="font-size: 32px;" :disabled="recordStatus === 'ended'"></i>
+                                </div>
 
-                            <!-- 结束会议按钮 -->
-                            <div class="control-btn" @click="handleEnd">
-                                <i class="el-icon-switch-button" style="font-size: 32px;"></i>
-                            </div>
+                                <!-- 结束会议按钮 -->
+                                <div class="control-btn" @click="handleEnd">
+                                    <i class="el-icon-switch-button" style="font-size: 32px;"></i>
+                                </div>
+                            </template>
                         </div>
 
                         <!-- 音频可视化区域 和 计时器 -->
@@ -102,12 +111,12 @@
 </template>
 
 <script>
+import { addMeeting } from '@/api/huiyi/minutes'
 import { 
     startRecord, 
     pauseRecord, 
     resumeRecord, 
-    stopRecord, 
-    getRecordStatus 
+    stopRecord
 } from '@/api/huiyi/record';
 
 export default {
@@ -125,7 +134,7 @@ export default {
                 title: 'AI听记',
                 id: null
             },
-            recordStatus: 'ongoing', // ongoing | paused | ended
+            recordStatus: 'idle', // idle | ongoing | paused | ended
             elapsedSeconds: 0,
             timerInterval: null,
 
@@ -147,6 +156,10 @@ export default {
             microphone: null,
             animationFrame: null,
 
+            recording: false,
+            ws: null,
+            recorderNode: null,
+
             // 笔记保存定时器
             saveTimeout: null,
             _simulateInterval: null,
@@ -161,21 +174,6 @@ export default {
             const s = String(this.elapsedSeconds % 60).padStart(2, '0');
             return `${h}:${m}:${s}`;
         }
-    },
-
-    created() {
-        // 获取会议 ID (优先从路由参数获取，其次从 props 或 query)
-        this.meeting.id = this.$route.params.id || this.$route.query.meetingId || this.from?.id;
-        if (!this.meeting.id) {
-            this.$message.error('缺少会议ID，无法开始录制');
-            // 可以选择跳转回列表页  this.$router.push('/index'); 
-            return;
-        }
-
-        this._enableRecordingLayout();
-        this.initRecording(); // 改为异步初始化
-        this.startTimer();
-        this.$nextTick(() => this.startMicrophone());
     },
 
     activated() {
@@ -208,36 +206,18 @@ export default {
         }
     },
 
-    methods: {
-        async initRecording() {
-            try {
-                // 先尝试获取当前状态，防止刷新页面导致状态不一致
-                const statusRes = await getRecordStatus(this.meeting.id);
-                if (statusRes && statusRes.data) {
-                    // 假设后端返回格式为 { status: 'ongoing' | 'paused' | 'ended', elapsedSeconds: 120 }
-                    // 请根据实际后端返回结构调整字段名
-                    const backendStatus = statusRes.data.status || statusRes.data.recordStatus;
-                    if (backendStatus) {
-                        this.recordStatus = backendStatus;
-                    }
-                    if (statusRes.data.elapsedSeconds !== undefined) {
-                        this.elapsedSeconds = statusRes.data.elapsedSeconds;
-                    }
-                } else {
-                    // 如果没有状态或接口报错，默认尝试开始录制
-                    await startRecord(this.meeting.id);
-                }
-            } catch (error) {
-                console.error('初始化录制状态失败:', error);
-                // 兜底：如果获取状态失败，尝试直接开始
-                try {
-                    await startRecord(this.meeting.id);
-                } catch (e) {
-                    this.$message.error('启动录制服务失败，请检查网络');
-                }
-            }
-        },
+    created() {
+        // 如果是带着已有 meetingId 进来的（比如从"全部会议纪要"列表点进一条还没结束的录制），
+        // 只用来展示标题，不自动开始录制——录制只能由用户点"开始听记"触发
+        this.meeting.id = this.$route.params.id || this.$route.query.meetingId || this.from?.id;
+        this._enableRecordingLayout();
+        this.startTimer();
+        this.$nextTick(() => this.startMicrophone());
+        // 注意：这里不再自动调用 startRecord。录制状态默认是 'idle'，
+        // 用户点击"开始听记"按钮时才会创建会议记录并真正开始录制。
+    },
 
+    methods: {
          _enableRecordingLayout() {
             document.body.classList.add('recording-fullscreen');
         },
@@ -249,6 +229,9 @@ export default {
             });
         },
         cleanupResources() {
+            // 先关掉WebSocket和AudioWorklet节点（比如用户没点"结束会议"、直接刷新/离开页面的情况）
+            this.cleanupRecording();
+
             if (this.timerInterval) clearInterval(this.timerInterval);
             if (this.animationFrame) cancelAnimationFrame(this.animationFrame);
             if (this._simulateInterval) clearInterval(this._simulateInterval);
@@ -387,7 +370,7 @@ export default {
 
         // 暂停/继续会议
         async handleToggleRecord() {
-            if (this.recordStatus === 'ended' || this.isApiLoading) return;
+            if (this.recordStatus === 'idle' || this.recordStatus === 'ended' || this.isApiLoading) return;
 
             this.isApiLoading = true;
             const prevStatus = this.recordStatus;
@@ -426,17 +409,22 @@ export default {
         // 结束会议
         async handleEnd() {
             if (this.isApiLoading) return;
-            
+            if (this.recordStatus === 'idle') {
+                // 还没开始录制，没什么可结束的，直接当返回处理
+                this.handleBack();
+                return;
+            }
+
             if (confirm('确认结束当前会议吗？')) {
                 this.isApiLoading = true;
                 try {
-                    await stopRecord(this.meeting.id);
-                    
-                    this.$message.success('会议已结束');
+                    // stopListening 内部会关掉 WebSocket / AudioWorklet，并调用后端 /stop 接口
+                    await this.stopListening();
+
                     if (this.timerInterval) clearInterval(this.timerInterval);
                     if (this.animationFrame) cancelAnimationFrame(this.animationFrame);
                     if (this.microphone) this.microphone.disconnect();
-                    if (this.audioContext) this.audioContext.close();
+                    if (this.audioContext && this.audioContext.state !== 'closed') this.audioContext.close();
 
                     this.recordStatus = 'ended';
                     for (let i = 0; i < 30; i++) this.$set(this.waveHeights, i, 2);
@@ -493,6 +481,110 @@ export default {
                     this.saveStatus = '';
                 }, 2000);
             }, 1000);
+        },
+
+        async startListening() {
+            if (this.recording || this.isApiLoading) {
+                return; // 防止重复点击
+            }
+            // 先乐观地切UI状态，让点击有立刻的反馈，不等下面这一串网络请求跑完
+            this.recording = true;
+            this.recordStatus = 'ongoing';
+            if (this.analyser) this.visualizeAudio();
+
+            this.isApiLoading = true;
+            try {
+                // 1. 建会议记录
+                const addRes = await addMeeting({
+                    title: this.meeting.title || ('会议记录 ' + new Date().toLocaleString()),
+                    sourceType: '0'
+                });
+                this.meeting.id = addRes.data;
+ 
+                // 2. 开始录制，拿 wsPath（具体字段名以你 MeetingRecordVO 实际结构为准，
+                //    如果不是 data.wsPath 而是别的字段名，这里改一下就行）
+                const startRes = await startRecord(this.meeting.id);
+                const wsPath = startRes.data.wsPath;
+ 
+                // 3. 建 WebSocket 连接
+                const wsUrl = (location.protocol === 'https:' ? 'wss://' : 'ws://') + location.host + wsPath;
+                this.ws = new WebSocket(wsUrl);
+                this.ws.binaryType = 'arraybuffer';
+ 
+                await new Promise((resolve, reject) => {
+                    this.ws.onopen = () => resolve();
+                    this.ws.onerror = (e) => reject(e);
+                    // 后端转写结果会通过这个连接推回来（MeetingSessionManager.pushToClient）
+                    this.ws.onmessage = (event) => {
+                        try {
+                            const dto = JSON.parse(event.data);
+                            this.onTranscriptPush(dto); // 你自己实现：把分段转写文本追加到页面上
+                        } catch (e) {
+                            // 心跳等非JSON文本消息，忽略即可
+                        }
+                    };
+                    this.ws.onclose = () => {
+                        if (this.recording) {
+                            console.warn('[MeetingRecorder] WebSocket意外断开');
+                        }
+                    };
+                });
+ 
+                // 4. 加载AudioWorklet，把麦克风流接上去，开始推PCM数据
+                //    如果 startMicrophone() 里的 audioContext 采样率跟后端配置的 sampleRate 不一致，
+                //    要在这里重建一个指定采样率的 AudioContext，不能直接用可视化那个，
+                //    否则后端按固定采样率算出来的时长/WAV头会跟实际数据不匹配
+                if (!this.audioContext || !this.microphone) {
+                    throw new Error('麦克风未就绪，请检查 startMicrophone 是否已成功执行');
+                }
+                await this.audioContext.audioWorklet.addModule('/worklets/pcm-recorder-processor.js');
+                this.recorderNode = new AudioWorkletNode(this.audioContext, 'pcm-recorder-processor');
+                this.microphone.connect(this.recorderNode);
+ 
+                this.recorderNode.port.onmessage = (event) => {
+                    if (this.ws && this.ws.readyState === WebSocket.OPEN) {
+                        this.ws.send(event.data);
+                    }
+                };
+ 
+                this.$message.success('已开始录制');
+            } catch (err) {
+                console.error('[MeetingRecorder] 开始录制失败', err);
+                this.$message.error('开始录制失败: ' + (err.message || err));
+                // 网络请求失败了，把刚才乐观切过去的UI状态回滚回idle
+                this.recording = false;
+                this.recordStatus = 'idle';
+                this.cleanupRecording();
+            } finally {
+                this.isApiLoading = false;
+            }
+        },
+        async stopListening() {
+            if (!this.recording) {
+                return;
+            }
+            this.cleanupRecording();
+            try {
+                await stopRecord(this.meeting.id);
+                this.$message.success('录制已结束，正在生成纪要');
+            } catch (err) {
+                console.error('[MeetingRecorder] 结束录制失败', err);
+                this.$message.error('结束录制失败: ' + (err.message || err));
+            }
+        },
+        cleanupRecording() {
+            this.recording = false;
+            if (this.recorderNode) {
+                this.recorderNode.disconnect();
+                this.recorderNode.port.onmessage = null;
+                this.recorderNode = null;
+            }
+            if (this.ws) {
+                this.ws.onmessage = null;
+                this.ws.onclose = null;
+                this.ws.close();
+                this.ws = null;
+            }
         }
     }
 };

@@ -18,7 +18,6 @@
         <result property="recordStatus"      column="record_status"       />
         <result property="recordStartTime"   column="record_start_time"   />
         <result property="recordEndTime"     column="record_end_time"     />
-        <result property="recordDurationMs"  column="record_duration_ms"  />
         <result property="createBy"      column="create_by"      />
         <result property="createTime"    column="create_time"    />
         <result property="updateBy"      column="update_by"      />
@@ -28,7 +27,7 @@
     <sql id="selectMeetingRecordVo">
         select meeting_id, title, source_type, audio_path, duration, status, is_favorite,
         folder_id, merge_from_ids, is_merged,
-        record_status, record_start_time, record_end_time, record_duration_ms,
+        record_status, record_start_time, record_end_time,
         create_by, create_time, update_by, update_time
         from huiyi_meeting
     </sql>
@@ -158,7 +157,6 @@
             <if test="recordStatus != null">record_status = #{recordStatus},</if>
             <if test="recordStartTime != null">record_start_time = #{recordStartTime},</if>
             <if test="recordEndTime != null">record_end_time = #{recordEndTime},</if>
-            <if test="recordDurationMs != null">record_duration_ms = #{recordDurationMs},</if>
             <if test="audioPath != null">audio_path = #{audioPath},</if>
             <if test="duration != null">duration = #{duration},</if>
             update_time = sysdate()
