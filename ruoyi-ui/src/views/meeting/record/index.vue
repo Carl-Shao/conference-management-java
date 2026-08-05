@@ -200,7 +200,7 @@ export default {
                 next(false);
             }
         } else {
-            // ✅ 只移除class，不主动openSideBar
+            // 只移除class，不主动openSideBar
             this._disableRecordingLayout(); 
             next();
         }
