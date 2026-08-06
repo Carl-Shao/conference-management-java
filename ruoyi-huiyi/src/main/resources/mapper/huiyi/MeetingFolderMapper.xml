@@ -33,6 +33,9 @@
             <if test="folderName != null and folderName != ''">
                 and f.folder_name like concat('%', #{folderName}, '%')
             </if>
+            <if test="createBy != null and createBy != ''">
+                and f.create_by = #{createBy}
+            </if>
         </where>
         order by f.create_time desc
     </select>

@@ -134,3 +134,18 @@ export function saveMeetingNote(meetingId, content) {
     data: content
   })
 }
+
+/**
+ * 纪要保存
+ * @param {*} meetingId 
+ * @param {*} content 
+ * @returns 
+ */
+export function saveMeetingMinutes(meetingId, content) {
+  return request({
+    url: '/huiyi/meeting/' + meetingId + '/minutes',
+    method: 'put',
+    headers: { 'Content-Type': 'application/json' },
+    data: JSON.stringify(content)
+  })
+}

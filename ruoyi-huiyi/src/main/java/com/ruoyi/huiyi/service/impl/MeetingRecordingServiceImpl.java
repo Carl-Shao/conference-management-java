@@ -1,6 +1,7 @@
 package com.ruoyi.huiyi.service.impl;
 
 import com.ruoyi.common.exception.ServiceException;
+import com.ruoyi.common.utils.SecurityUtils;
 import com.ruoyi.huiyi.domain.MeetingMinutes;
 import com.ruoyi.huiyi.domain.MeetingRecord;
 import com.ruoyi.huiyi.domain.MeetingRecordEvent;
@@ -51,6 +52,12 @@ public class MeetingRecordingServiceImpl implements IMeetingRecordingService {
     @Autowired
     private MeetingSessionManager sessionManager;
 
+    private void checkOwnership(MeetingRecord meetingRecord, Long meetingId) {
+        if(!meetingRecord.getCreateBy().equals(SecurityUtils.getUsername())) {
+            throw new ServiceException("无权操作该会议记录: " + meetingId);
+        }
+    }
+
     @Override
     @Transactional(rollbackFor = Exception.class)
     public MeetingRecordVO startRecord(Long meetingId, String operator) {
@@ -58,6 +65,7 @@ public class MeetingRecordingServiceImpl implements IMeetingRecordingService {
         if (meetingRecord == null) {
             throw new ServiceException("会议不存在" + meetingId);
         }
+        checkOwnership(meetingRecord, meetingId);
 
         // MeetingRecordStatus.of() 本身就处理了null（返回NOT_STARTED），不需要额外判断，
         // 而且要读 getRecordStatus()，不是 getStatus()
@@ -91,6 +99,7 @@ public class MeetingRecordingServiceImpl implements IMeetingRecordingService {
     public void pauseRecord(Long meetingId, String operator) {
         MeetingRecord meetingRecord = meetingRecordMapper.selectMeetingRecordForUpdate(meetingId);
         requireStatus(meetingRecord, meetingId, MeetingRecordStatus.RECORDING);
+        checkOwnership(meetingRecord, meetingId);
 
         sessionManager.pauseSession(meetingId);
 
@@ -107,6 +116,7 @@ public class MeetingRecordingServiceImpl implements IMeetingRecordingService {
     public void resumeRecord(Long meetingId, String operator) {
         MeetingRecord meetingRecord = meetingRecordMapper.selectMeetingRecordForUpdate(meetingId);
         requireStatus(meetingRecord, meetingId, MeetingRecordStatus.PAUSED);
+        checkOwnership(meetingRecord, meetingId);
 
         sessionManager.resumeSession(meetingId);
 
@@ -122,6 +132,10 @@ public class MeetingRecordingServiceImpl implements IMeetingRecordingService {
     @Transactional(rollbackFor = Exception.class)
     public void stopRecord(Long meetingId, String operator) {
         MeetingRecord meetingRecord = meetingRecordMapper.selectMeetingRecordForUpdate(meetingId);
+        if(meetingRecord == null) {
+            throw new ServiceException("会议不存在: " + meetingId);
+        }
+        checkOwnership(meetingRecord, meetingId);
         // 之前这里读的是 getStatus()（处理状态），应该读 getRecordStatus()（录制状态）
         MeetingRecordStatus current = MeetingRecordStatus.of(meetingRecord.getRecordStatus());
         if (current != MeetingRecordStatus.RECORDING && current != MeetingRecordStatus.PAUSED) {
@@ -150,6 +164,7 @@ public class MeetingRecordingServiceImpl implements IMeetingRecordingService {
         if (meetingRecord == null) {
             throw new IllegalArgumentException("会议不存在: " + meetingId);
         }
+        checkOwnership(meetingRecord, meetingId);
         MeetingRecordStatus status = MeetingRecordStatus.of(meetingRecord.getRecordStatus());
 
         MeetingRecordStatusVO vo = new MeetingRecordStatusVO();

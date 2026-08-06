@@ -45,6 +45,8 @@ public interface IMeetingRecordService {
     /** 保存/更新用户笔记 */
     int saveNote(Long meetingId, String content);
 
+    void saveMinutesEdit(Long meetingId, String content);
+
     void saveTranscriptResult(Long meetingId, String content);
 
     void saveMinutesResult(Long meetingId, String content);

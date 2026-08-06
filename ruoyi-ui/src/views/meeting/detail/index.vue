@@ -91,11 +91,16 @@
 
       <!-- 内容卡片 (保持原有逻辑不变) -->
       <div class="tab-content">
-        <div v-show="currentTab === 'summary'" class="content-card fade-in">
-          <div v-if="detail.minutesContent" class="markdown-body" v-html="detail.minutesContent"></div>
+        <!-- ==================== 纪要 Tab ==================== -->
+        <div v-show="currentTab === 'summary'" class="content-card fade-in"
+          @click="!summaryEditing && startEdit('summary')">
+          <textarea v-if="summaryEditing" ref="summaryEditor" v-model="editContent" class="in-card-editor"
+            placeholder="点击即可编辑纪要..." @blur="handleBlur('summary')"
+            @keydown="handleKeydown($event, 'summary')"></textarea>
+          <div v-else-if="detail.minutesContent" class="markdown-body" v-html="detail.minutesContent"></div>
           <div v-else class="empty-placeholder">
             <i class="el-icon-document"></i>
-            <p>{{ loading ? 'AI 正在生成纪要...' : '暂无纪要内容' }}</p>
+            <p>{{ loading ? 'AI 正在生成纪要...' : '点击此处编写纪要' }}</p>
           </div>
         </div>
 
@@ -105,12 +110,23 @@
               <span class="time-badge">{{ formatTime(seg.startOffsetMs) }}</span>
               <p class="transcript-text">{{ seg.text }}</p>
             </div>
-            <div v-if="!segments.length && !loading" class="empty-placeholder small"><p>暂无转写内容</p></div>
+            <div v-if="!segments.length && !loading" class="empty-placeholder small">
+              <p>暂无转写内容</p>
+            </div>
           </div>
         </div>
 
-        <div v-show="currentTab === 'notes'" class="content-card fade-in">
-           <div class="empty-placeholder"><i class="el-icon-edit-outline"></i><p>暂无个人笔记</p></div>
+        <div v-show="currentTab === 'notes'" class="content-card fade-in" @click="!notesEditing && startEdit('notes')">
+          <textarea v-if="notesEditing" ref="notesEditor" v-model="editContent" class="in-card-editor"
+            placeholder="点击即可编辑笔记..." @blur="handleBlur('notes')" @keydown="handleKeydown($event, 'notes')"></textarea>
+          <div v-else-if="detail.noteContent" class="notes-display"
+            style="white-space: pre-wrap; line-height: 1.8; font-size: 15px; color: var(--ink);">
+            {{ detail.noteContent }}
+          </div>
+          <div v-else class="empty-placeholder">
+            <i class="el-icon-edit-outline"></i>
+            <p>{{ loading ? '加载中...' : '点击此处写笔记' }}</p>
+          </div>
         </div>
       </div>
     </div>
@@ -137,7 +153,7 @@
 </template>
 
 <script>
-import { getMeeting, delMeeting, favoriteMeeting, renameMeeting } from '@/api/huiyi/minutes'
+import { getMeeting, delMeeting, favoriteMeeting, renameMeeting, saveMeetingNote, saveMeetingMinutes } from '@/api/huiyi/minutes'
 
 export default {
   name: 'MeetingDetail',
@@ -148,6 +164,12 @@ export default {
       loading: false,
       isFavorite: false,
       currentTab: 'summary',
+
+      summaryEditing: false,   // 纪要是否处于编辑模式
+      notesEditing: false,     // 笔记是否处于编辑模式
+      editContent: '',         // 编辑器临时内容
+      saveTimer: false,           // 保存中状态
+
       // ★ 更新：为每个 Tab 增加图标路径配置，其余保持不变
       tabs: [
         { 
@@ -201,9 +223,25 @@ export default {
       this.loading = true
       getMeeting(meetingId).then(res => {
         const data = res.data || res
-        this.detail = data.meeting || data
+        // 1. 会议基本信息
+        this.detail = data.meeting || {}
+        // 2. 纪要内容
+        this.$set(this.detail, 'minutesContent', data.minutes?.content || '')
+        // 3. 笔记内容
+        this.$set(this.detail, 'noteContent', data.note?.content || '')
+        // 4. 转写段落：content 是 JSON 字符串，需解析
+        let segments = []
+        try {
+          const raw = data.transcript?.content
+          if (raw) {
+            segments = typeof raw === 'string' ? JSON.parse(raw) : raw
+          }
+        } catch (e) {
+          console.error('转写内容 JSON 解析失败:', e)
+        }
+        this.segments = segments.sort((a, b) => (a.startTime || 0) - (b.startTime || 0))
+        // 5. 收藏状态
         this.isFavorite = String(this.detail.isFavorite) === '1'
-        this.segments = (data.segments || []).sort((a, b) => a.seqNo - b.seqNo)
       }).catch(err => {
         console.error('详情接口报错:', err)
         this.$message.error(err.msg || '加载会议详情失败')
@@ -269,6 +307,57 @@ export default {
           width: `${rect.width}px`,
           transform: `translateX(${offsetLeft}px)`,
         }
+      }
+    },
+    startEdit(type) {
+      if (this.loading) return
+      this.editContent = type === 'summary' 
+        ? (this.detail.minutesContent || '') 
+        : (this.detail.noteContent || '')
+      type === 'summary' ? this.summaryEditing = true : this.notesEditing = true
+      // 等待DOM渲染后自动聚焦
+      this.$nextTick(() => {
+        const editor = this.$refs[type + 'Editor']
+        if (editor) editor.focus()
+      })
+    },
+    handleBlur(type) {
+      clearTimeout(this.saveTimer)
+      this.saveTimer = setTimeout(() => this.autoSave(type), 300)
+    },
+    async autoSave(type) {
+      const original = type === 'summary' 
+        ? (this.detail.minutesContent || '') 
+        : (this.detail.noteContent || '')
+      // 内容没变就不请求
+      if (this.editContent === original) {
+        type === 'summary' ? this.summaryEditing = false : this.notesEditing = false
+        return
+      }
+      try {
+        if (type === 'summary') {
+          await saveMeetingMinutes(this.detail.meetingId, this.editContent)
+          this.$set(this.detail, 'minutesContent', this.editContent)
+        } else {
+          await saveMeetingNote(this.detail.meetingId, this.editContent)
+          this.$set(this.detail, 'noteContent', this.editContent)
+        }
+        this.$message.success('已自动保存')
+      } catch (err) {
+        this.$message.error('保存失败，内容未丢失')
+      } finally {
+        type === 'summary' ? this.summaryEditing = false : this.notesEditing = false
+      }
+    },
+    handleKeydown(e, type) {
+      if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+        e.preventDefault()
+        clearTimeout(this.saveTimer)
+        this.autoSave(type)
+      }
+      if (e.key === 'Escape') {
+        clearTimeout(this.saveTimer)
+        type === 'summary' ? this.summaryEditing = false : this.notesEditing = false
       }
     },
     handleCommand(cmd) {
@@ -602,4 +691,33 @@ export default {
 ::v-deep .record-title {
   color: #2b2f36 !important;
 }
+
+/* 点击即编辑 - 交互样式 */
+.content-card {
+  cursor: text; /* 整个卡片显示文本光标，暗示可编辑 */
+  transition: border-color 0.2s, box-shadow 0.2s;
+  
+  &:hover:not(:has(.in-card-editor)) {
+    border-color: rgba(47, 123, 255, 0.2);
+  }
+}
+
+.in-card-editor {
+  width: 100%;
+  min-height: 260px;
+  padding: 0;
+  margin: 0;
+  border: none;
+  outline: none;
+  resize: none;
+  font-size: 15px;
+  line-height: 1.8;
+  color: var(--ink);
+  font-family: var(--font);
+  background: transparent;
+  box-sizing: border-box;
+  
+  &::placeholder { color: var(--muted); opacity: 0.6; }
+}
+
 </style>

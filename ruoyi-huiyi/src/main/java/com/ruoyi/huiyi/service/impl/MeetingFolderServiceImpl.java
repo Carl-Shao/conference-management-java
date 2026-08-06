@@ -1,5 +1,6 @@
 package com.ruoyi.huiyi.service.impl;
 
+import com.ruoyi.common.exception.ServiceException;
 import com.ruoyi.common.utils.SecurityUtils;
 import com.ruoyi.huiyi.domain.MeetingFolder;
 import com.ruoyi.huiyi.mapper.MeetingFolderMapper;
@@ -20,9 +21,20 @@ public class MeetingFolderServiceImpl implements IMeetingFolderService {
     @Autowired
     private MeetingRecordMapper meetingRecordMapper;
 
+    private MeetingFolder requireOwnership(Long folderId) {
+        MeetingFolder folder = meetingFolderMapper.selectMeetingFolderById(folderId);
+        if(folder == null) {
+            throw new ServiceException("文件夹不存在: " + folderId);
+        }
+        if(!folder.getCreateBy().equals(SecurityUtils.getUsername())) {
+            throw new ServiceException("无权操作该文件夹");
+        }
+        return folder;
+    }
+
     @Override
-    public MeetingFolder selectMeetingFolderById(Long meetingId) {
-        return meetingFolderMapper.selectMeetingFolderById(meetingId);
+    public MeetingFolder selectMeetingFolderById(Long folderId) {
+        return requireOwnership(folderId);
     }
 
     @Override
@@ -41,6 +53,7 @@ public class MeetingFolderServiceImpl implements IMeetingFolderService {
     @Override
     public int updateMeetingFolder(MeetingFolder meetingFolder)
     {
+        requireOwnership(meetingFolder.getFolderId());
         meetingFolder.setUpdateBy(SecurityUtils.getUsername());
         return meetingFolderMapper.updateMeetingFolder(meetingFolder);
     }
@@ -49,6 +62,9 @@ public class MeetingFolderServiceImpl implements IMeetingFolderService {
     @Transactional
     public int deleteMeetingFolderByIds(Long[] folderIds)
     {
+        for (Long folderId : folderIds) {
+            requireOwnership(folderId);
+        }
         for (Long folderId : folderIds)
         {
             meetingRecordMapper.clearFolderId(folderId);

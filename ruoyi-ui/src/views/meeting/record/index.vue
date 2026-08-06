@@ -111,7 +111,7 @@
 </template>
 
 <script>
-import { addMeeting } from '@/api/huiyi/minutes'
+import { addMeeting, saveMeetingNote } from '@/api/huiyi/minutes'
 import { 
     startRecord, 
     pauseRecord, 
@@ -163,7 +163,8 @@ export default {
             // 笔记保存定时器
             saveTimeout: null,
             _simulateInterval: null,
-            isApiLoading: false
+            isApiLoading: false,
+            isSavingNote: false
         };
     },
 
@@ -426,6 +427,14 @@ export default {
             if (confirm('确认结束当前会议吗？')) {
                 this.isApiLoading = true;
                 try {
+                    if (this.meeting.id && this.notesContent) {
+                        if (this.saveTimeout) clearTimeout(this.saveTimeout); // 取消待执行的防抖
+                        try {
+                            await saveMeetingNote(this.meeting.id, this.notesContent);
+                        } catch (e) {
+                            console.warn('结束时保存笔记失败', e);
+                        }
+                    }
                     const durationMs = this.elapsedSeconds * 1000;
                     // stopListening 内部会关掉 WebSocket / AudioWorklet，并调用后端 /stop 接口
                     await this.stopListening();
@@ -478,17 +487,40 @@ export default {
 
         // 防抖保存笔记
         debouncedSaveNotes() {
+            // 1. 如果会议还没创建（没有ID），不触发保存，仅提示
+            if (!this.meeting.id) {
+                this.saveStatus = '请先开始听记';
+                return;
+            }
+            // 2. UI 反馈：编辑中
             this.saveStatus = '编辑中...';
-
+            // 3. 清除上一次的防抖定时器
             if (this.saveTimeout) {
                 clearTimeout(this.saveTimeout);
             }
-
-            this.saveTimeout = setTimeout(() => {
-                this.saveStatus = '已保存';
-                setTimeout(() => {
-                    this.saveStatus = '';
-                }, 2000);
+            // 4. 设置新的防抖定时器（1秒无操作后触发保存）
+            this.saveTimeout = setTimeout(async () => {
+                // 防止重复请求
+                if (this.isSavingNote) return;
+                
+                this.isSavingNote = true;
+                this.saveStatus = '保存中...';
+                try {
+                    await saveMeetingNote(this.meeting.id, this.notesContent);
+                    this.saveStatus = '已保存';
+                    // 2秒后清除"已保存"提示
+                    setTimeout(() => {
+                        if (this.saveStatus === '已保存') {
+                            this.saveStatus = '';
+                        }
+                    }, 2000);
+                } catch (error) {
+                    console.error('保存笔记失败:', error);
+                    this.saveStatus = '保存失败';
+                    this.$message.error('笔记自动保存失败，请检查网络');
+                } finally {
+                    this.isSavingNote = false;
+                }
             }, 1000);
         },
 

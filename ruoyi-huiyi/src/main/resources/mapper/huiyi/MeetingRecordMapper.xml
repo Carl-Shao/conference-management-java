@@ -51,6 +51,10 @@
             <if test="isFavorite != null and isFavorite != ''">
                 and is_favorite = #{isFavorite}
             </if>
+            <!-- 按创建人过滤，实现"每个用户只看自己的会议纪要" -->
+            <if test="createBy != null and createBy != ''">
+                and create_by = #{createBy}
+            </if>
             <!-- folderId 用于文件夹详情页；不传该参数时表示"全部会议纪要"，不限制文件夹 -->
             <if test="folderId != null">
                 and folder_id = #{folderId}

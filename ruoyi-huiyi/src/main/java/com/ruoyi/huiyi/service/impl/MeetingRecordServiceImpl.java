@@ -1,12 +1,15 @@
 package com.ruoyi.huiyi.service.impl;
 
 
+import com.ruoyi.common.exception.ServiceException;
+import com.ruoyi.common.utils.SecurityUtils;
 import com.ruoyi.huiyi.domain.MeetingMinutes;
 import com.ruoyi.huiyi.domain.MeetingNote;
 import com.ruoyi.huiyi.domain.MeetingRecord;
 import com.ruoyi.huiyi.domain.MeetingTranscript;
 import com.ruoyi.huiyi.domain.dto.MeetingMergeDTO;
 import com.ruoyi.huiyi.domain.dto.MeetingMoveFolderDTO;
+import com.ruoyi.huiyi.domain.enums.MeetingRecordStatus;
 import com.ruoyi.huiyi.domain.enums.MeetingStatus;
 import com.ruoyi.huiyi.domain.vo.MeetingDetailVO;
 import com.ruoyi.huiyi.mapper.MeetingMinutesMapper;
@@ -38,6 +41,17 @@ public class MeetingRecordServiceImpl implements IMeetingRecordService {
     @Autowired
     private MeetingNoteMapper meetingNoteMapper;
 
+    private MeetingRecord requireOwnership(Long meetingId) {
+        MeetingRecord record = meetingRecordMapper.selectMeetingRecordById(meetingId);
+        if(record == null) {
+            throw new ServiceException("会议不存在: " + meetingId);
+        }
+        if(!record.getCreateBy().equals(SecurityUtils.getUsername())) {
+            throw new ServiceException("无权操作该会议记录");
+        }
+        return record;
+    }
+
     @Override
     public MeetingRecord selectMeetingRecordById(Long meetingId) {
         return meetingRecordMapper.selectMeetingRecordById(meetingId);
@@ -45,8 +59,9 @@ public class MeetingRecordServiceImpl implements IMeetingRecordService {
 
     @Override
     public MeetingDetailVO selectMeetingDetail(Long meetingId) {
+        MeetingRecord meeting = requireOwnership(meetingId);
         MeetingDetailVO vo = new MeetingDetailVO();
-        vo.setMeeting(meetingRecordMapper.selectMeetingRecordById(meetingId));
+        vo.setMeeting(meeting);
         vo.setTranscript(meetingTranscriptMapper.selectByMeetingId(meetingId));
         vo.setMinutes(meetingMinutesMapper.selectByMeetingId(meetingId));
         vo.setNote(meetingNoteMapper.selectByMeetingId(meetingId));
@@ -63,12 +78,16 @@ public class MeetingRecordServiceImpl implements IMeetingRecordService {
     public int insertMeetingRecord(MeetingRecord meetingRecord)
     {
         meetingRecord.setCreateBy(getUsername());
+        if("0".equals(meetingRecord.getSourceType()) && meetingRecord.getSourceType() == null) {
+            meetingRecord.setRecordStatus(MeetingRecordStatus.NOT_STARTED.getCode());
+        }
         return meetingRecordMapper.insertMeetingRecord(meetingRecord);
     }
 
     @Override
     public int updateMeetingRecord(MeetingRecord meetingRecord)
     {
+        requireOwnership(meetingRecord.getMeetingId());
         meetingRecord.setUpdateBy(getUsername());
         return meetingRecordMapper.updateMeetingRecord(meetingRecord);
     }
@@ -77,24 +96,32 @@ public class MeetingRecordServiceImpl implements IMeetingRecordService {
     @Transactional
     public int deleteMeetingRecordByIds(Long[] meetingIds)
     {
+        for(Long id : meetingIds) {
+            requireOwnership(id);
+        }
         return meetingRecordMapper.deleteMeetingRecordByIds(meetingIds);
     }
 
     @Override
     public int renameMeeting(Long meetingId, String title)
     {
+        requireOwnership(meetingId);
         return meetingRecordMapper.updateTitle(meetingId, title);
     }
 
     @Override
     public int toggleFavorite(Long meetingId, boolean favorite)
     {
+        requireOwnership(meetingId);
         return meetingRecordMapper.updateFavorite(meetingId, favorite ? "1" : "0");
     }
 
     @Override
     public int moveToFolder(MeetingMoveFolderDTO dto)
     {
+        for(Long id : dto.getMeetingIds()) {
+            requireOwnership(id);
+        }
         return meetingRecordMapper.batchMoveFolder(dto.getMeetingIds(), dto.getFolderId());
     }
 
@@ -106,6 +133,10 @@ public class MeetingRecordServiceImpl implements IMeetingRecordService {
         if (ids == null || ids.size() < 2)
         {
             throw new IllegalArgumentException("合并至少需要选择两条会议记录");
+        }
+
+        for (Long id: ids) {
+            requireOwnership(id);
         }
 
         // 1. 按顺序取出各会议的转写内容，拼接（每段前加标题分隔，便于阅读来源）
@@ -151,11 +182,21 @@ public class MeetingRecordServiceImpl implements IMeetingRecordService {
     @Override
     public int saveNote(Long meetingId, String content)
     {
+        requireOwnership(meetingId);
         MeetingNote note = new MeetingNote();
         note.setMeetingId(meetingId);
         note.setContent(content);
         note.setCreateBy(getUsername());
         return meetingNoteMapper.insertOrUpdate(note);
+    }
+
+    @Override
+    public void saveMinutesEdit(Long meetingId, String content) {
+        requireOwnership(meetingId);
+        MeetingMinutes minutes = new MeetingMinutes();
+        minutes.setMeetingId(meetingId);
+        minutes.setContent(content);
+        meetingMinutesMapper.insertOrUpdate(minutes);
     }
 
     @Override

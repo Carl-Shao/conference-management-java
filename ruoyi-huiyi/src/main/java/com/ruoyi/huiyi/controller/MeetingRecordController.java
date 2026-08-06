@@ -5,6 +5,7 @@ import com.ruoyi.common.core.controller.BaseController;
 import com.ruoyi.common.core.domain.AjaxResult;
 import com.ruoyi.common.core.page.TableDataInfo;
 import com.ruoyi.common.enums.BusinessType;
+import com.ruoyi.common.utils.SecurityUtils;
 import com.ruoyi.huiyi.domain.MeetingRecord;
 import com.ruoyi.huiyi.domain.dto.MeetingMergeDTO;
 import com.ruoyi.huiyi.domain.dto.MeetingMoveFolderDTO;
@@ -35,6 +36,7 @@ public class MeetingRecordController extends BaseController {
     @PreAuthorize("@ss.hasPermi('huiyi:record:list')")
     @GetMapping("/list")
     public TableDataInfo list(MeetingRecord meetingRecord) {
+        meetingRecord.setCreateBy(SecurityUtils.getUsername());
         startPage();
         List<MeetingRecord> list = meetingRecordService.selectMeetingRecordList(meetingRecord);
         return getDataTable(list);
@@ -51,7 +53,6 @@ public class MeetingRecordController extends BaseController {
     @Log(title = "会议纪要", businessType = BusinessType.INSERT)
     @PostMapping
     public AjaxResult add(@RequestBody MeetingRecord meetingRecord) {
-        System.out.println("================ have added ==================");
         meetingRecordService.insertMeetingRecord(meetingRecord);
         return success(meetingRecord.getMeetingId());
     }
