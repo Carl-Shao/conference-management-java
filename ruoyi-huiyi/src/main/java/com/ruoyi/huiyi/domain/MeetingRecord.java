@@ -34,7 +34,7 @@ public class MeetingRecord extends BaseEntity {
     private Long duration;
 
     /** 处理状态（0待转写 1转写中 2转写完成 3生成中 4已完成 5失败） */
-    private int status;
+    private Integer status;
 
     /** 是否收藏（0否 1是） */
     private String isFavorite;
@@ -72,8 +72,8 @@ public class MeetingRecord extends BaseEntity {
     public Long getDuration() { return duration; }
     public void setDuration(Long duration) { this.duration = duration; }
 
-    public int getStatus() { return status; }
-    public void setStatus(int status) { this.status = status; }
+    public Integer getStatus() { return status; }
+    public void setStatus(Integer status) { this.status = status; }
 
     public String getIsFavorite() { return isFavorite; }
     public void setIsFavorite(String isFavorite) { this.isFavorite = isFavorite; }

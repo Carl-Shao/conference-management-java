@@ -250,7 +250,7 @@ export default {
       sortType: 'timeDesc',
       currentFilter: 'all',
       clickedFolderId: null, // 新增：用于文件夹点击动画
-      // ✅ 新增：文件夹数据源（替代原有的 meetingList 用于普通模式展示）
+      // 新增：文件夹数据源（替代原有的 meetingList 用于普通模式展示）
       folderList: [
         { id: 1, title: '会议记录', fileCount: 12 },
         { id: 2, title: '项目文档', fileCount: 8 },

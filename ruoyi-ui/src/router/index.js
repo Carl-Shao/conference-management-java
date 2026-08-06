@@ -89,35 +89,28 @@ export const constantRoutes = [
     ]
   },
   {
-    path: '/huiyi/meeting',
+    path: '/meeting',
     component: Layout,
-    hidden: true, // 改为false以显示在菜单中
+    hidden: true,
     children: [
       {
-        path: 'index',
-        component: () => import('@/views/huiyi/huiyi/index'),
-        name: 'MeetingIndex',
-        meta: { title: '会议管理', icon: 'meeting' }
-      },
-      {
-        path: 'room/:meetingId',
-        component: () => import('@/views/huiyi/huiyi/room'),
-        name: 'MeetingRoom',
-        meta: { title: '会议房间', icon: 'meeting', noCache: true },
-        hidden: true
+        path: 'summary',
+        component: () => import('@/views/meeting/summary/index'),
+        name: 'MeetingSummary',
+        meta: { title: '会议纪要', icon: 'dashboard', affix: true }
       },
       {
         path: 'detail/:meetingId',
-        component: () => import('@/views/huiyi/huiyi/detail'),
+        component: () => import('@/views/meeting/detail/index'),
         name: 'MeetingDetail',
-        meta: { title: '会议详情', icon: 'meeting', noCache: true },
+        meta: { title: '会议详情', noCache: true, activeMenu: '/meeting/summary' },
         hidden: true
       },
       {
-        path: 'recording/:meetingId',
-        component: () => import('@/views/huiyi/huiyi/recording'),
-        name: 'RecordingPage',
-        meta: { title: '录音界面', icon: 'microphone', noCache: true },
+        path: 'folder',
+        component: () => import('@/views/meeting/folder/index'),
+        name: 'MeetingFolder',
+        meta: { title: '会议文件夹', noCache: true },
         hidden: true
       }
     ]

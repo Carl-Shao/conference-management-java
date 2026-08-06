@@ -1,0 +1,605 @@
+<template>
+  <div class="meeting-detail-page">
+    <!-- ==================== 顶部导航栏 (保持原样) ==================== -->
+    <header class="topbar">
+      <button class="back-btn" @click="$router.back()" aria-label="返回">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+          <polyline points="15,18 9,12 15,6"/>
+        </svg>
+      </button>
+
+      <div class="record-info">
+        <div class="record-icon-svg">
+          <svg v-if="detail.sourceType === '0'" viewBox="0 0 48 48" fill="none">
+            <path d="M24 14C22.3431 14 21 15.3431 21 17V25C21 26.6569 22.3431 28 24 28C25.6569 28 27 26.6569 27 25V17C27 15.3431 25.6569 14 24 14Z" fill="#4A7DFF" />
+            <path d="M19 25C19 27.7614 21.2386 30 24 30C26.7614 30 29 27.7614 29 25" stroke="#4A7DFF" stroke-width="2" stroke-linecap="round" />
+            <line x1="24" y1="30" x2="24" y2="34" stroke="#4A7DFF" stroke-width="2" stroke-linecap="round" />
+            <line x1="21" y1="34" x2="27" y2="34" stroke="#4A7DFF" stroke-width="2" stroke-linecap="round" />
+          </svg>
+          <svg v-else viewBox="0 0 48 48" fill="none">
+            <path d="M24 16V28" stroke="#67C23A" stroke-width="2" stroke-linecap="round" />
+            <path d="M19 21L24 16L29 21" stroke="#67C23A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+            <path d="M16 28V32C16 33.1046 16.8954 34 18 34H30C31.1046 34 32 33.1046 32 32V28" stroke="#67C23A" stroke-width="2" stroke-linecap="round" />
+          </svg>
+        </div>
+        <div class="record-title">{{ detail.title || '加载中...' }}</div>
+      </div>
+
+      <div class="top-actions">
+        <button 
+          class="icon-btn favorite-btn" 
+          :class="{ 'is-favorite': isFavorite }"
+          @click="toggleFavorite" 
+          :title="isFavorite ? '取消收藏' : '添加到收藏'"
+        >
+          <i :class="isFavorite ? 'el-icon-star-on' : 'el-icon-star-off'"></i>
+        </button>
+
+        <button class="icon-btn download-btn" title="下载音频/纪要" @click="handleDownload" :disabled="loading">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+            <polyline points="7 10 12 15 17 10" />
+            <line x1="12" y1="15" x2="12" y2="3" />
+          </svg>
+        </button>
+        
+        <el-dropdown trigger="click" @command="handleCommand" placement="bottom-end">
+          <button class="icon-btn" title="更多选项">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+              <circle cx="12" cy="12" r="1"/><circle cx="12" cy="5" r="1"/><circle cx="12" cy="19" r="1"/>
+            </svg>
+          </button>
+          <el-dropdown-menu slot="dropdown" class="custom-action-dropdown">
+            <el-dropdown-item command="copy">
+              <i class="el-icon-document-copy icon-clr-blue"></i>复制全文
+            </el-dropdown-item>
+            <el-dropdown-item command="rename">
+              <i class="el-icon-edit-outline icon-clr-blue"></i>重命名
+            </el-dropdown-item>
+            <el-dropdown-item divided command="delete">
+              <i class="el-icon-delete icon-clr-red"></i>删除纪要
+            </el-dropdown-item>
+          </el-dropdown-menu>
+        </el-dropdown>
+      </div>
+    </header>
+
+    <!-- ==================== 主内容区 ==================== -->
+    <div class="content-area">
+      <!-- ★ 严格复刻 HTML 原型的胶囊 Tab (含图标) -->
+      <div class="tab-group">
+        <div class="tab-buttons" ref="tabContainer">
+          <div class="tab-indicator" :style="indicatorStyle"></div>
+          <button 
+            v-for="tab in tabs" 
+            :key="tab.key"
+            class="tab-btn" 
+            :class="{ active: currentTab === tab.key }"
+            @click="switchTab(tab.key, $event)"
+          >
+            <!-- 新增：每个 Tab 对应的 SVG 图标 -->
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path :d="tab.icon" />
+              <template v-if="tab.extraPaths">
+                <path v-for="(p, idx) in tab.extraPaths" :key="idx" :d="p" />
+              </template>
+            </svg>
+            {{ tab.label }}
+          </button>
+        </div>
+      </div>
+
+      <!-- 内容卡片 (保持原有逻辑不变) -->
+      <div class="tab-content">
+        <div v-show="currentTab === 'summary'" class="content-card fade-in">
+          <div v-if="detail.minutesContent" class="markdown-body" v-html="detail.minutesContent"></div>
+          <div v-else class="empty-placeholder">
+            <i class="el-icon-document"></i>
+            <p>{{ loading ? 'AI 正在生成纪要...' : '暂无纪要内容' }}</p>
+          </div>
+        </div>
+
+        <div v-show="currentTab === 'transcript'" class="content-card fade-in transcript-card">
+          <div class="transcript-list">
+            <div v-for="seg in segments" :key="seg.seqNo" class="transcript-item">
+              <span class="time-badge">{{ formatTime(seg.startOffsetMs) }}</span>
+              <p class="transcript-text">{{ seg.text }}</p>
+            </div>
+            <div v-if="!segments.length && !loading" class="empty-placeholder small"><p>暂无转写内容</p></div>
+          </div>
+        </div>
+
+        <div v-show="currentTab === 'notes'" class="content-card fade-in">
+           <div class="empty-placeholder"><i class="el-icon-edit-outline"></i><p>暂无个人笔记</p></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ==================== 底部播放器 (保持原样) ==================== -->
+    <div class="audio-player">
+      <div class="progress-container">
+        <span class="time">{{ formatTime(currentTime * 1000) }}</span>
+        <div class="progress-bar" @click="seekAudio">
+          <div class="progress" :style="{ width: progressPercent + '%' }"><div class="progress-handle"></div></div>
+        </div>
+        <span class="time">{{ formatDuration(detail.duration) }}</span>
+      </div>
+      <div class="controls">
+        <div class="more-controls"><button class="more-control-btn"><i class="el-icon-video-play"></i></button></div>
+        <button class="control-btn play-pause" @click="togglePlay">
+          <svg v-if="!isPlaying" viewBox="0 0 24 24" fill="currentColor" stroke="none"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+          <svg v-else viewBox="0 0 24 24" fill="currentColor" stroke="none"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>
+        </button>
+        <div class="more-controls"><button class="more-control-btn"><i class="el-icon-s-operation"></i></button></div>
+      </div>
+    </div>
+  </div>
+</template>
+
+<script>
+import { getMeeting, delMeeting, favoriteMeeting, renameMeeting } from '@/api/huiyi/minutes'
+
+export default {
+  name: 'MeetingDetail',
+  data() {
+    return {
+      detail: {},
+      segments: [],
+      loading: false,
+      isFavorite: false,
+      currentTab: 'summary',
+      // ★ 更新：为每个 Tab 增加图标路径配置，其余保持不变
+      tabs: [
+        { 
+          key: 'summary', 
+          label: '纪要',
+          icon: 'M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z',
+          extraPaths: ['M14 2v6h6', 'M16 13H8', 'M16 17H8', 'M10 9H8']
+        },
+        { 
+          key: 'transcript', 
+          label: '转写',
+          icon: 'M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z',
+          extraPaths: ['M14 2v6h6', 'M16 13H8', 'M16 17H8', 'M10 9H8']
+        },
+        { 
+          key: 'notes', 
+          label: '笔记',
+          icon: 'M12 20h9',
+          extraPaths: ['M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z']
+        }
+      ],
+      indicatorStyle: {},
+      isPlaying: false,
+      currentTime: 0
+    }
+  },
+  computed: {
+    progressPercent() {
+      if (!this.detail.duration) return 0
+      return (this.currentTime / this.detail.duration) * 100
+    }
+  },
+  created() {
+    const meetingId = Number(this.$route.params.meetingId)
+    if (!meetingId || isNaN(meetingId)) {
+      this.$message.error('无效的会议ID')
+      this.$router.back()
+      return
+    }
+    this.fetchDetail(meetingId)
+  },
+  mounted() {
+    this.$nextTick(() => this.updateIndicator())
+    window.addEventListener('resize', this.updateIndicator)
+  },
+  beforeDestroy() {
+    window.removeEventListener('resize', this.updateIndicator)
+  },
+  methods: {
+    fetchDetail(meetingId) {
+      this.loading = true
+      getMeeting(meetingId).then(res => {
+        const data = res.data || res
+        this.detail = data.meeting || data
+        this.isFavorite = String(this.detail.isFavorite) === '1'
+        this.segments = (data.segments || []).sort((a, b) => a.seqNo - b.seqNo)
+      }).catch(err => {
+        console.error('详情接口报错:', err)
+        this.$message.error(err.msg || '加载会议详情失败')
+      }).finally(() => {
+        this.loading = false
+      })
+    },
+    toggleFavorite() {
+      const newStatus = !this.isFavorite
+      favoriteMeeting(this.detail.meetingId, newStatus).then(() => {
+        this.isFavorite = newStatus
+        this.$message.success(newStatus ? '已添加到收藏' : '已取消收藏')
+      }).catch(() => this.$message.error('操作失败'))
+    },
+    async handleDownload() {
+      if (!this.detail || this.loading) return;
+      try {
+        const fileUrl = this.detail.fileUrl || this.detail.audioUrl || this.detail.videoUrl;
+        if (fileUrl) {
+          const link = document.createElement('a');
+          link.href = fileUrl;
+          const ext = fileUrl.split('.').pop()?.split('?')[0] || 'mp3';
+          link.download = `${this.detail.title || '会议记录'}.${ext}`;
+          link.target = '_blank';
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+          this.$message.success('开始下载');
+          return;
+        }
+        if (this.detail.minutesContent) {
+          const blob = new Blob([this.detail.minutesContent], { type: 'text/markdown;charset=utf-8' });
+          const url = URL.createObjectURL(blob);
+          const link = document.createElement('a');
+          link.href = url;
+          link.download = `${this.detail.title || '会议纪要'}.md`;
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+          URL.revokeObjectURL(url);
+          this.$message.success('纪要已导出');
+          return;
+        }
+        this.$message.warning('暂无可下载的内容');
+      } catch (err) {
+        console.error('下载失败:', err);
+        this.$message.error('下载失败，请稍后重试');
+      }
+    },
+    switchTab(key, event) {
+      this.currentTab = key
+      this.updateIndicator(event.currentTarget)
+    },
+    updateIndicator(el) {
+      const target = el || document.querySelector('.tab-btn.active')
+      const container = this.$refs.tabContainer
+      if (target && container) {
+        const rect = target.getBoundingClientRect()
+        const containerRect = container.getBoundingClientRect()
+        // ★ 关键修复：高度减去 10px 以匹配 HTML 原型的视觉比例
+        const offsetLeft = rect.left - containerRect.left - 4; 
+        this.indicatorStyle = {
+          width: `${rect.width}px`,
+          transform: `translateX(${offsetLeft}px)`,
+        }
+      }
+    },
+    handleCommand(cmd) {
+      if (cmd === 'rename') {
+        this.$prompt('请输入新名称', '重命名', {
+          confirmButtonText: '确定',
+          cancelButtonText: '取消',
+          inputValue: this.detail.title
+        }).then(({ value }) => {
+          if (!value || !value.trim()) return
+          renameMeeting(this.detail.meetingId, value.trim()).then(() => {
+            this.$message.success('重命名成功')
+            // 详情页无需刷新列表，直接更新本地标题即可
+            this.detail.title = value.trim()
+          })
+        }).catch(() => { })
+        return
+      }
+      if (cmd === 'delete') {
+        this.$confirm('确定删除该会议纪要吗？', '提示', { type: 'warning' }).then(() => {
+          const id = Number(this.detail.meetingId)
+          if (isNaN(id)) return this.$message.error('ID无效')
+          delMeeting([id]).then(() => {
+            this.$message.success('已删除')
+            this.$router.push('/huiyi/meeting/index')
+          })
+        }).catch(() => {})
+      } else if (cmd === 'copy') {
+        let text = ''
+        if (this.currentTab === 'transcript') {
+           text = this.segments.map(s => `[${this.formatTime(s.startOffsetMs)}] ${s.text}`).join('\n')
+        } else {
+           const div = document.createElement('div')
+           div.innerHTML = this.detail.minutesContent || ''
+           text = div.innerText || div.textContent || ''
+        }
+        navigator.clipboard.writeText(text).then(() => this.$message.success('内容已复制'))
+      }
+    },
+    togglePlay() { this.isPlaying = !this.isPlaying },
+    seekAudio(e) {
+      const bar = e.currentTarget
+      const percent = (e.offsetX / bar.offsetWidth)
+      this.currentTime = percent * (this.detail.duration || 0)
+    },
+    formatTime(ms) {
+      if (ms == null) return '00:00'
+      const total = Math.max(0, Math.floor(ms / 1000))
+      const m = String(Math.floor(total / 60)).padStart(2, '0')
+      const s = String(total % 60).padStart(2, '0')
+      return `${m}:${s}`
+    },
+    formatDuration(sec) {
+      if (!sec) return '--:--'
+      const m = Math.floor(sec / 60)
+      const s = sec % 60
+      return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`
+    }
+  }
+}
+</script>
+
+<style lang="scss" scoped>
+/* ==========================================
+   CSS 变量 (完全保留)
+   ========================================== */
+.meeting-detail-page {
+  --main-bg: #fafbfd;
+  --search-bg: #ebedf2;
+  --ink: #2b2f36;
+  --ink-soft: #5a606b;
+  --muted: #9aa1ad;
+  --blue: #2f7bff;
+  --blue-soft: #d1e0fa;
+  --line: rgba(20, 24, 40, .06);
+  --shadow-sm: 0 1px 2px rgba(20, 24, 40, .06);
+  --font: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif;
+  
+  height: 100vh;
+  background:
+    radial-gradient(900px 500px at 70% -10%, rgba(47, 123, 255, .05), transparent 60%),
+    radial-gradient(700px 600px at 100% 110%, rgba(244, 163, 192, .05), transparent 60%),
+    var(--main-bg); 
+  font-family: var(--font);
+  color: var(--ink);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  position: relative;
+}
+
+/* ==========================================
+   顶部导航栏 (完全保留)
+   ========================================== */
+.topbar {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  padding: 16px 24px; 
+  flex-shrink: 0;
+}
+
+.back-btn {
+  width: 36px; height: 36px; border-radius: 10px;          
+  border: 1px solid var(--line); background: #fff;
+  display: grid; place-items: center; cursor: pointer;
+  color: var(--ink-soft); transition: background 0.2s;
+  flex-shrink: 0; padding: 0; outline: none; box-sizing: border-box;         
+  &:hover { background: var(--search-bg); }
+}
+
+.record-info {
+  display: flex; flex-direction: column; align-items: flex-start;
+  margin-left: 12px; flex: 1; min-width: 0; gap: 0px;
+}
+.record-icon-svg { width: 48px; height: 48px; flex-shrink: 0; svg { width: 100%; height: 100%; } }
+.record-title { 
+  font-size: 18px; font-weight: 600; color: var(--ink); 
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1.2;
+}
+
+.top-actions { display: flex; align-items: center; gap: 10px; }
+.icon-btn {
+  width: 36px; height: 36px; border-radius: 50%;
+  display: grid; place-items: center;
+  background: transparent; border: none; cursor: pointer;
+  color: #3a3f47; transition: background 0.2s, transform 0.2s;
+  svg { width: 18px; height: 18px; }
+  i { font-size: 20px; }
+  &:hover { background: rgba(20, 24, 40, .06); transform: rotate(-15deg); }
+}
+.favorite-btn {
+  i { color: #c0c4cc; transition: color 0.2s, transform 0.2s; }
+  &.is-favorite i { color: #e6a23c; transform: scale(1.1); }
+  &:hover i { color: #e6a23c; }
+}
+.download-btn {
+  &:hover { transform: none !important; background: rgba(20, 24, 40, .06); }
+  svg { color: var(--ink-soft); transition: color 0.2s, transform 0.2s; }
+  &:hover svg { color: var(--blue); transform: translateY(2px); }
+  &[disabled] { opacity: 0.5; cursor: not-allowed; &:hover { transform: none !important; background: transparent; svg { transform: none; color: var(--ink-soft); } } }
+}
+
+/* ==========================================
+   ★ 中间内容区 & 严格复刻 Tab 样式
+   ========================================== */
+.content-area {
+  flex: 1;
+  overflow-y: auto;
+  padding: 0 0 100px 0; 
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  
+  &::-webkit-scrollbar { width: 6px; }
+  &::-webkit-scrollbar-thumb { background: #dcdfe6; border-radius: 3px; }
+}
+
+/* ★ 严格复刻 HTML .tab-group */
+.tab-group {
+  width: 100%; 
+  margin-bottom: 16px;
+  position: sticky; top: 0; z-index: 10;
+  padding-top: 8px;
+  padding-left: 30px;
+  padding-right: 30px;
+}
+
+/* 严格复刻 HTML .tab-button */
+.tab-buttons {
+  display: flex;
+  gap: 2px; 
+  background: var(--search-bg); /* #ebedf2 */
+  border-radius: 999px; 
+  padding: 4px; /* 对应 HTML padding */
+  position: relative;
+  height: 45px; /* 固定高度 */
+  width: 100%;
+  box-sizing: border-box;
+}
+
+/* ★ 严格复刻 HTML .tab-indicator (白色滑块) */
+.tab-indicator {
+  position: absolute;
+  background: #fff;
+  border-radius: 999px;
+  transition: transform 0.3s ease, width 0.3s ease; 
+  z-index: 1;
+  top: 4px; 
+  left: 4px;
+  bottom: 4px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+  pointer-events: none;
+}
+
+/* ★ 严格复刻 HTML .tab-btn (含图标支持) */
+.tab-btn {
+  flex: 1;
+  display: flex; 
+  align-items: center; 
+  justify-content: center; 
+  gap: 6px; /* 图标与文字间距 */
+  
+  border: none; 
+  background: transparent;
+  font-size: 15px; 
+  font-weight: 600; /* 对应 HTML 570 */
+  color: var(--ink-soft); 
+  
+  cursor: pointer; 
+  z-index: 2;
+  transition: color 0.3s;
+  border-radius: 999px;
+  
+  svg { 
+    width: 16px; 
+    height: 16px; 
+    stroke-width: 2;
+    transition: stroke 0.3s;
+  }
+
+  &.active { 
+    color: var(--blue);
+    svg { stroke: var(--blue); }
+  }
+  
+  &:hover:not(.active) { 
+    color: var(--blue); 
+    opacity: 0.8; 
+  }
+}
+
+/* 内容区域 (保持原有样式) */
+.tab-content { 
+  width: 100%; 
+  padding: 0 33px;
+  box-sizing: border-box;
+}
+
+.content-card {
+  background: #fff;
+  border-radius: 18px;
+  padding: 24px;
+  box-shadow: var(--shadow-sm);
+  border: 1px solid var(--line);
+  min-height: 300px;
+  animation: fadeIn 0.3s ease;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+@keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+.fade-in { animation: fadeIn 0.3s ease forwards; }
+
+.markdown-body {
+  font-size: 15px; line-height: 1.7; color: var(--ink);
+  ::v-deep h2 { color: var(--blue); font-size: 18px; margin: 20px 0 10px; border-bottom: none; }
+  ::v-deep strong { color: var(--ink); font-weight: 700; }
+  ::v-deep p { margin-bottom: 10px; }
+}
+
+.transcript-card { padding: 0; overflow: hidden; }
+.transcript-list { max-height: 60vh; overflow-y: auto; padding: 20px; }
+.transcript-item { display: flex; gap: 16px; margin-bottom: 16px; &:last-child { margin-bottom: 0; } }
+.time-badge {
+  flex-shrink: 0; font-size: 13px; font-weight: 600; color: var(--blue);
+  background: var(--blue-soft); padding: 4px 10px; border-radius: 8px;
+  height: fit-content; margin-top: 2px; font-family: monospace;
+}
+.transcript-text { margin: 0; line-height: 1.6; color: var(--ink-soft); font-size: 15px; }
+
+.empty-placeholder {
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  height: 300px; color: var(--muted); gap: 12px;
+  i { font-size: 40px; opacity: 0.5; }
+  p { font-size: 16px; }
+  &.small { height: 150px; }
+}
+
+/* ==========================================
+   底部播放器 (完全保留)
+   ========================================== */
+.audio-player {
+  position: absolute; bottom: 30px; left: 50%;
+  transform: translateX(-50%);
+  width: calc(100% - 60px); max-width: 600px;
+  background: #fff; border-radius: 20px;
+  padding: 16px 20px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, .15);
+  display: flex; flex-direction: column; gap: 12px;
+  z-index: 100; border: 1px solid rgba(0,0,0,0.02);
+}
+
+.progress-container { display: flex; align-items: center; gap: 12px; }
+.time { font-size: 12px; color: var(--ink-soft); min-width: 40px; font-family: monospace; }
+.progress-bar { flex: 1; height: 6px; background: var(--search-bg); border-radius: 3px; cursor: pointer; position: relative; }
+.progress { height: 100%; background: var(--blue); border-radius: 3px; position: relative; transition: width 0.1s linear; }
+.progress-handle {
+  width: 14px; height: 14px; background: #fff; border: 2px solid var(--blue); border-radius: 50%;
+  position: absolute; right: -7px; top: 50%; transform: translateY(-50%); box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.controls { display: flex; align-items: center; justify-content: center; gap: 24px; }
+.control-btn {
+  width: 48px; height: 48px; border-radius: 50%; background: var(--blue); color: #fff; border: none;
+  display: grid; place-items: center; cursor: pointer; box-shadow: 0 4px 12px rgba(47, 123, 255, 0.3);
+  transition: transform 0.2s; svg { width: 22px; height: 22px; } &:hover { transform: scale(1.05); }
+}
+.more-control-btn {
+  width: 36px; height: 36px; border-radius: 50%; background: var(--search-bg); border: none;
+  display: grid; place-items: center; cursor: pointer; color: var(--ink-soft); font-size: 18px;
+  &:hover { background: #dcdfe6; }
+}
+
+::v-deep .custom-action-dropdown {
+  border-radius: 12px; padding: 6px 0;
+  .el-dropdown-menu__item { padding: 10px 16px; display: flex; align-items: center; gap: 8px; }
+  .icon-clr-blue { color: var(--blue); }
+  .icon-clr-red { color: #f56c6c; }
+}
+::v-deep .back-btn {
+  color: #5a606b !important;
+  border-color: rgba(20, 24, 40, .06) !important;
+  background: #fff !important;
+}
+::v-deep .back-btn svg {
+  stroke-width: 2.5 !important;
+  width: 18px !important;
+  height: 18px !important;
+}
+::v-deep .record-title {
+  color: #2b2f36 !important;
+}
+</style>

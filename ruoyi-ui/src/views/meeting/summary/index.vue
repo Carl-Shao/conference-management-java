@@ -1,74 +1,7 @@
 <template>
   <div class="meeting-index">
-    <!-- 详情模式视图 - 插入到 template 最顶部 -->
-    <div v-if="isDetailMode" class="detail-mode-view">
-      <!-- 顶部返回栏 (还原 top-search-bar 样式) -->
-      <div class="top-search-bar detail-header">
-        <div class="header-left">
-          <button class="back-btn" @click="exitDetailMode" title="返回列表">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"
-              stroke-linejoin="round">
-              <polyline points="15 18 9 12 15 6" />
-            </svg>
-          </button>
-          <div class="title-block">
-            <h2 class="section-title">{{ currentDetail.title || '会议纪要详情' }}</h2>
-            <p class="card-meta header-meta">
-              <span>{{ currentDetail.createTime }}</span>
-              <span class="meta-divider">·</span>
-              <span>{{ formatDuration(currentDetail.duration) }}</span>
-            </p>
-          </div>
-        </div>
-        <div class="action-buttons-group">
-          <el-dropdown trigger="click" @command="handleDetailCommand">
-            <button class="icon-action-btn" title="更多操作"><i class="el-icon-more" style="font-size: 22px;" /></button>
-            <el-dropdown-menu slot="dropdown" class="custom-action-dropdown">
-              <el-dropdown-item command="copy"><i
-                  class="el-icon-document-copy icon-clr-blue" /><span>复制全文</span></el-dropdown-item>
-              <el-dropdown-item command="delete"><i
-                  class="el-icon-delete icon-clr-red" /><span>删除纪要</span></el-dropdown-item>
-            </el-dropdown-menu>
-          </el-dropdown>
-        </div>
-      </div>
-
-      <!-- 双栏内容区 (完美还原 HTML 右侧结构) -->
-      <div class="detail-content-wrapper">
-        <!-- 左侧：转写文稿 -->
-        <div class="transcript-panel">
-          <div class="panel-header"><span class="panel-tag">转写文稿</span><span class="word-count">{{
-            currentSegments.length }} 段</span></div>
-          <div class="meeting-list transcript-list">
-            <div v-for="seg in currentSegments" :key="seg.seqNo" class="meeting-card transcript-card">
-              <div class="time-badge">{{ formatTime(seg.startOffsetMs) }}</div>
-              <div class="card-info">
-                <p class="transcript-text">{{ seg.text }}</p>
-              </div>
-            </div>
-            <div v-if="!currentSegments.length && !detailLoading" class="empty-state-wrapper">
-              <p class="empty-text">暂无转写内容</p>
-            </div>
-          </div>
-        </div>
-        <!-- 右侧：AI 纪要 -->
-        <div class="summary-panel">
-          <div class="panel-header">
-            <div class="summary-title-wrap"><span class="panel-tag highlight">AI 智能纪要</span><i
-                class="el-icon-magic-stick summary-icon" /></div>
-          </div>
-          <div class="summary-content meeting-list">
-            <div v-if="currentDetail.minutesContent" class="markdown-body" v-html="currentDetail.minutesContent"></div>
-            <div v-else class="summary-placeholder">
-              <i v-if="detailLoading" class="el-icon-loading" />
-              <span>{{ detailLoading ? '加载中...' : '暂无AI纪要内容' }}</span>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
     <!-- 搜索模式 (全屏/独立视图) -->
-    <div v-else-if="isSearchMode" class="search-mode-overlay">
+    <div v-if="isSearchMode" class="search-mode-overlay">
       <div class="search-bar-wrapper">
         <!-- 左侧叉号按钮：返回原界面 -->
         <button class="search-close-btn" @click="exitSearch" aria-label="关闭搜索">
@@ -97,7 +30,7 @@
           </div>
 
           <div class="meeting-list search-result-list">
-            <div v-for="item in filteredMeetingList" :key="item.id" class="meeting-card search-result-card" @click="enterDetailMode(item)">
+            <div v-for="item in filteredMeetingList" :key="item.id" class="meeting-card search-result-card">
               <!-- ⚠️ 建议抽取为 <MeetingCard :item="item" /> 子组件避免重复 -->
               <div class="card-icon">
                 <i v-if="item.isFavorite" class="favorite-badge el-icon-star-on" />
@@ -394,12 +327,7 @@ export default {
         isFavorite: undefined,
         orderByColumn: 'createTime',
         isAsc: 'desc'
-      },
-      // 详情页相关状态
-      isDetailMode: false,
-      currentDetail: {},
-      currentSegments: [],
-      detailLoading: false,
+      }
     }
   },
   computed: {
@@ -462,7 +390,11 @@ export default {
       }
 
       listMeeting(params).then(response => {
-        this.meetingList = response.rows || []
+        this.meetingList = (response.rows || []).map(item => ({
+          ...item,
+          isFavorite: item.isFavorite === '1',
+          fileType: item.sourceType === '0' ? 'record' : 'upload'
+        }))
       }).finally(() => {
         this.loading = false
       })
@@ -530,7 +462,6 @@ export default {
           this.$refs.fileInput.value = ''
         })
     },
-
     /** ========== 高亮 & XSS 防护 ========== */
     highlightText(text, keyword) {
       if (!keyword || !keyword.trim()) return this.escapeHtml(text)
@@ -626,19 +557,10 @@ export default {
 
     /** ========== 卡片点击 → 详情页 ========== */
     handleCardClick(event, item) {
-      // 1. 防止点击下拉菜单时触发详情
       const target = event.target
-      const isDropdownClick = target.closest('.el-dropdown') ||
-        target.closest('.el-dropdown-menu') ||
-        target.classList.contains('card-more')
-      if (isDropdownClick) return
-
-      // 2. 保留原有的点击反馈动画
-      this.clickingId = item.id
-      setTimeout(() => { this.clickingId = null }, 300)
-
-      // 3. 不再路由跳转，直接调用已有的 enterDetailMode
-      this.enterDetailMode(item)
+      if (target.closest('.el-dropdown') || target.classList.contains('card-more')) return
+      // 固定使用 meetingId
+      this.$router.push(`/meeting/detail/${item.meetingId}`)
     },
 
     /** ========== 开始听记 ========== */
@@ -659,56 +581,6 @@ export default {
         path: '/meeting/record',
         query: { backRoute }
       })
-    },
-    
-    // 进入详情模式
-    enterDetailMode(row) {
-      this.isDetailMode = true;
-      this.detailLoading = true;
-      this.currentDetail = {};
-      this.currentSegments = [];
-
-      // 调用你已有的接口方法
-      getMeetingDetail(row.id).then(res => {
-        this.currentDetail = res.data || {};
-        this.currentSegments = (res.data.segments || []).sort((a, b) => a.seqNo - b.seqNo);
-      }).catch(() => {
-        this.$message.error('加载会议详情失败');
-      }).finally(() => {
-        this.detailLoading = false;
-      });
-    },
-    exitDetailMode() {
-      this.isDetailMode = false;
-      this.currentDetail = {};
-      this.currentSegments = [];
-    },
-    handleDetailCommand(cmd) {
-      if (cmd === 'delete') {
-        this.$confirm('确定删除该会议纪要吗？', '提示', { type: 'warning' }).then(() => {
-          // 复用你已有的删除方法，传入当前详情ID
-          delMeeting([this.currentDetail.id]).then(() => {
-            this.$message.success('已删除');
-            this.exitDetailMode();
-            this.getList(); // 刷新列表
-          });
-        }).catch(() => { });
-      } else if (cmd === 'copy') {
-        const text = this.currentSegments.map(s => `[${this.formatTime(s.startOffsetMs)}] ${s.text}`).join('\n');
-        navigator.clipboard.writeText(text).then(() => this.$message.success('全文已复制'));
-      }
-    },
-    formatTime(ms) {
-      if (ms == null) return '00:00';
-      const total = Math.max(0, Math.floor(ms / 1000));
-      const m = String(Math.floor(total / 60)).padStart(2, '0');
-      const s = String(total % 60).padStart(2, '0');
-      return `${m}:${s}`;
-    }, formatDuration(sec) {
-      if (!sec) return '00:00';
-      const m = Math.floor(sec / 60);
-      const s = sec % 60;
-      return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
     }
   }
 }
@@ -1250,53 +1122,6 @@ export default {
   i {
     font-size: 24px;
   }
-}
-/* 【新增】详情页样式 */
-.detail-mode-view {
-  height: calc(100vh - 84px);
-  display: flex;
-  flex-direction: column;
-  background: #fff;
-  padding: 24px;
-  box-sizing: border-box;
-}
-.detail-header { margin-bottom: 20px; flex-shrink: 0; }
-.header-left { display: flex; align-items: center; gap: 16px; }
-.back-btn {
-  width: 42px; height: 42px; border: none; background: #f5f6f8;
-  border-radius: 50%; display: flex; align-items: center; justify-content: center;
-  cursor: pointer; svg { width: 20px; height: 20px; color: #333; }
-  &:hover { background: #e8eaed; }
-}
-.detail-content-wrapper {
-  flex: 1; display: flex; gap: 20px; overflow: hidden; min-height: 0;
-}
-.transcript-panel, .summary-panel {
-  flex: 1; display: flex; flex-direction: column; 
-  border: 1px solid #ebeef5; border-radius: 8px; overflow: hidden;
-}
-.panel-header {
-  padding: 16px 20px; border-bottom: 1px solid #ebeef5; 
-  display: flex; align-items: center; justify-content: space-between;
-  background: #fafafa;
-}
-.panel-tag { font-weight: 600; color: #303133; font-size: 15px; }
-.panel-tag.highlight { color: #409eff; }
-.transcript-list, .summary-content { flex: 1; overflow-y: auto; padding: 16px; }
-.transcript-card {
-  display: flex; gap: 12px; padding: 12px; border-radius: 6px;
-  cursor: pointer; &:hover { background: #f5f7fa; }
-}
-.time-badge {
-  flex-shrink: 0; font-size: 12px; color: #909399; 
-  background: #f4f4f5; padding: 2px 8px; border-radius: 4px; height: fit-content;
-}
-.transcript-text { margin: 0; line-height: 1.6; color: #303133; font-size: 14px; }
-.markdown-body { line-height: 1.8; color: #303133; font-size: 14px; }
-.summary-placeholder {
-  display: flex; flex-direction: column; align-items: center; 
-  justify-content: center; height: 100%; color: #909399; gap: 12px;
-  i { font-size: 32px; }
 }
 </style>
 
