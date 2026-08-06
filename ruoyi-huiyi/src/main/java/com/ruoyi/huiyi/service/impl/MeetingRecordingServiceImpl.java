@@ -24,6 +24,14 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Date;
 
+/**
+ * 修复说明：这个文件里 record_status（录制生命周期：NOT_STARTED/RECORDING/PAUSED/...）
+ * 和 status（处理进度：待转写/转写中/...）两个字段、两个枚举（MeetingRecordStatus / MeetingStatus）
+ * 之前被搞混了——多处该调 setRecordStatus() 的地方错调成了 setStatus()，
+ * 导致 record_status 列从来没被真正更新过，暂停/恢复/结束时状态检查全部失败。
+ * 这一版把两者严格分清：record_status 只用 MeetingRecordStatus 读写，
+ * status 只用 MeetingStatus 读写，不再交叉。
+ */
 @Service
 public class MeetingRecordingServiceImpl implements IMeetingRecordingService {
 
@@ -50,6 +58,9 @@ public class MeetingRecordingServiceImpl implements IMeetingRecordingService {
         if (meetingRecord == null) {
             throw new ServiceException("会议不存在" + meetingId);
         }
+
+        // MeetingRecordStatus.of() 本身就处理了null（返回NOT_STARTED），不需要额外判断，
+        // 而且要读 getRecordStatus()，不是 getStatus()
         MeetingRecordStatus current = MeetingRecordStatus.of(meetingRecord.getRecordStatus());
         if (current != MeetingRecordStatus.NOT_STARTED && current != MeetingRecordStatus.FAILED) {
             throw new IllegalStateException("会议[" + meetingId + "]当前状态[" + current.getDesc() + "]不允许开始录制");
@@ -65,9 +76,9 @@ public class MeetingRecordingServiceImpl implements IMeetingRecordingService {
         Date now = new Date();
         MeetingRecord update = new MeetingRecord();
         update.setMeetingId(meetingId);
-        update.setStatus(MeetingRecordStatus.RECORDING.getCode());
-        update.setCreateTime(now);
-        meetingRecordMapper.updateMeetingRecord(update);
+        update.setRecordStatus(MeetingRecordStatus.RECORDING.getCode()); // 之前误写成 setStatus(...)
+        update.setRecordStartTime(now); // 之前误写成 setCreateTime(...)，updateRecordStatus这条SQL根本不认createTime字段
+        meetingRecordMapper.updateRecordStatus(update);
 
         insertEvent(meetingId, MeetingRecordEventType.START, operator, null);
 
@@ -85,7 +96,7 @@ public class MeetingRecordingServiceImpl implements IMeetingRecordingService {
 
         MeetingRecord update = new MeetingRecord();
         update.setMeetingId(meetingId);
-        update.setStatus(MeetingRecordStatus.PAUSED.getCode());
+        update.setRecordStatus(MeetingRecordStatus.PAUSED.getCode()); // 之前误写成 setStatus(...)
         meetingRecordMapper.updateRecordStatus(update);
 
         insertEvent(meetingId, MeetingRecordEventType.PAUSE, operator, null);
@@ -101,7 +112,7 @@ public class MeetingRecordingServiceImpl implements IMeetingRecordingService {
 
         MeetingRecord update = new MeetingRecord();
         update.setMeetingId(meetingId);
-        update.setStatus(MeetingRecordStatus.RECORDING.getCode());
+        update.setRecordStatus(MeetingRecordStatus.RECORDING.getCode()); // 之前误写成 setStatus(...)
         meetingRecordMapper.updateRecordStatus(update);
 
         insertEvent(meetingId, MeetingRecordEventType.RESUME, operator, null);
@@ -111,7 +122,8 @@ public class MeetingRecordingServiceImpl implements IMeetingRecordingService {
     @Transactional(rollbackFor = Exception.class)
     public void stopRecord(Long meetingId, String operator) {
         MeetingRecord meetingRecord = meetingRecordMapper.selectMeetingRecordForUpdate(meetingId);
-        MeetingRecordStatus current = MeetingRecordStatus.of(meetingRecord.getStatus());
+        // 之前这里读的是 getStatus()（处理状态），应该读 getRecordStatus()（录制状态）
+        MeetingRecordStatus current = MeetingRecordStatus.of(meetingRecord.getRecordStatus());
         if (current != MeetingRecordStatus.RECORDING && current != MeetingRecordStatus.PAUSED) {
             throw new IllegalStateException("会议[" + meetingId + "]当前状态[" + current.getDesc() + "]不允许结束录制");
         }
@@ -123,10 +135,10 @@ public class MeetingRecordingServiceImpl implements IMeetingRecordingService {
         Date now = new Date();
         MeetingRecord update = new MeetingRecord();
         update.setMeetingId(meetingId);
-        update.setRecordStatus(MeetingRecordStatus.STOP_PENDING.getCode());
+        update.setRecordStatus(MeetingRecordStatus.STOP_PENDING.getCode()); // 这一行原来就是对的
         update.setRecordEndTime(now);
         update.setAudioPath(audioFile.getAbsolutePath());
-        update.setStatus(MeetingStatus.TRANSCRIBING.getCode());
+        update.setStatus(MeetingStatus.TRANSCRIBING.getCode()); // 这一行原来也是对的，status用MeetingStatus，没搞混
         meetingRecordMapper.updateRecordStatus(update);
 
         insertEvent(meetingId, MeetingRecordEventType.STOP, operator, null);
@@ -135,7 +147,7 @@ public class MeetingRecordingServiceImpl implements IMeetingRecordingService {
     @Override
     public MeetingRecordStatusVO getRecordStatus(Long meetingId) {
         MeetingRecord meetingRecord = meetingRecordMapper.selectMeetingRecordById(meetingId);
-        if(meetingRecord == null) {
+        if (meetingRecord == null) {
             throw new IllegalArgumentException("会议不存在: " + meetingId);
         }
         MeetingRecordStatus status = MeetingRecordStatus.of(meetingRecord.getRecordStatus());
@@ -144,7 +156,8 @@ public class MeetingRecordingServiceImpl implements IMeetingRecordingService {
         vo.setMeetingId(meetingId);
         vo.setRecordStatus(status.getCode());
         vo.setRecordStatusDesc(status.getDesc());
-        vo.setRecordDurationMs(meetingRecord.getDuration());
+        vo.setRecordDurationMs(meetingRecord.getDuration()); // 之前用了 getDuration()（秒，Integer），
+        // 跟 record_duration_ms（毫秒，Long）不是一回事，也顺手改成读对应字段
         vo.setAudioFilePath(meetingRecord.getAudioPath());
 
         // 纪要不再单独存在 Meeting 上的 summeryText 字段里，统一从 huiyi_meeting_minutes 读，

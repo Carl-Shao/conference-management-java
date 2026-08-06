@@ -80,7 +80,7 @@
         <choose><when test="isFavorite != null">#{isFavorite}</when><otherwise>'0'</otherwise></choose>,
         #{folderId}, #{mergeFromIds},
         <choose><when test="isMerged != null">#{isMerged}</when><otherwise>'0'</otherwise></choose>,
-        <choose><when test="recordStatus != null">#{recordStatus}</when><otherwise>null</otherwise></choose>,
+        <choose><when test="recordStatus != null">#{recordStatus}</when><otherwise>0</otherwise></choose>,
         #{createBy}, sysdate()
         )
     </insert>

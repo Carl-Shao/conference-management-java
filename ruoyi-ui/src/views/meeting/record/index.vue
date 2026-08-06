@@ -200,7 +200,7 @@ export default {
                 next(false);
             }
         } else {
-            // 只移除class，不主动openSideBar
+            // ✅ 只移除class，不主动openSideBar
             this._disableRecordingLayout(); 
             next();
         }
@@ -370,7 +370,11 @@ export default {
 
         // 暂停/继续会议
         async handleToggleRecord() {
-            if (this.recordStatus === 'idle' || this.recordStatus === 'ended' || this.isApiLoading) return;
+            console.log('[排查] handleToggleRecord被调用, recordStatus=', this.recordStatus, ' isApiLoading=', this.isApiLoading, ' meeting.id=', this.meeting.id);
+            if (this.recordStatus === 'idle' || this.recordStatus === 'ended' || this.isApiLoading) {
+                console.log('[排查] 被守卫拦下了，没有继续往下执行');
+                return;
+            }
 
             this.isApiLoading = true;
             const prevStatus = this.recordStatus;
@@ -408,7 +412,11 @@ export default {
 
         // 结束会议
         async handleEnd() {
-            if (this.isApiLoading) return;
+            console.log('[排查] handleEnd被调用, isApiLoading=', this.isApiLoading, ' recordStatus=', this.recordStatus, ' meeting.id=', this.meeting.id);
+            if (this.isApiLoading) {
+                console.log('[排查] 被isApiLoading拦下了');
+                return;
+            }
             if (this.recordStatus === 'idle') {
                 // 还没开始录制，没什么可结束的，直接当返回处理
                 this.handleBack();
@@ -418,6 +426,7 @@ export default {
             if (confirm('确认结束当前会议吗？')) {
                 this.isApiLoading = true;
                 try {
+                    const durationMs = this.elapsedSeconds * 1000;
                     // stopListening 内部会关掉 WebSocket / AudioWorklet，并调用后端 /stop 接口
                     await this.stopListening();
 
@@ -483,6 +492,27 @@ export default {
             }, 1000);
         },
 
+        /**
+         * 根据项目里已经在用的后端API地址（VUE_APP_BASE_API）推导WebSocket该连的地址。
+         *
+         * - 如果 VUE_APP_BASE_API 是绝对地址（比如 http://localhost:8080）：
+         *   直接从这里换算出后端host，WebSocket直接连后端，完全绕开前端devServer代理，
+         *   彻底避开"代理没开 ws: true 导致WS升级请求到不了后端"这个问题。
+         * - 如果 VUE_APP_BASE_API 是相对路径（比如 /dev-api，说明走的是devServer代理）：
+         *   没法从这里推出后端真实host，只能沿用走代理这条路，
+         *   这种情况必须去 vue.config.js 的 devServer.proxy 对应规则里加上 ws: true，
+         *   代码这边是绕不开的，需要改配置文件。
+         */
+        buildWsUrl(wsPath) {
+            const base = process.env.VUE_APP_BASE_API || '';
+            if (/^https?:\/\//i.test(base)) {
+                const backendOrigin = base.replace(/^http/i, 'ws').replace(/\/$/, '');
+                return backendOrigin + wsPath;
+            }
+            const protocol = location.protocol === 'https:' ? 'wss://' : 'ws://';
+            return protocol + location.host + wsPath;
+        },
+
         async startListening() {
             if (this.recording || this.isApiLoading) {
                 return; // 防止重复点击
@@ -507,13 +537,36 @@ export default {
                 const wsPath = startRes.data.wsPath;
  
                 // 3. 建 WebSocket 连接
-                const wsUrl = (location.protocol === 'https:' ? 'wss://' : 'ws://') + location.host + wsPath;
+                // 不用 location.host 拼（那是前端开发服务器的地址，WebSocket升级请求
+                // 默认不会走devServer的HTTP代理，除非代理配置显式开了 ws: true），
+                // 改成从项目里已经在用的后端API地址（VUE_APP_BASE_API）推导出真实后端host
+                const wsUrl = this.buildWsUrl(wsPath);
                 this.ws = new WebSocket(wsUrl);
                 this.ws.binaryType = 'arraybuffer';
  
                 await new Promise((resolve, reject) => {
-                    this.ws.onopen = () => resolve();
-                    this.ws.onerror = (e) => reject(e);
+                    let settled = false; // 防止 resolve/reject 被调用多次
+
+                    // 10秒内没连上就当失败处理，不让isApiLoading永远卡在pending
+                    const timeoutId = setTimeout(() => {
+                        if (!settled) {
+                            settled = true;
+                            reject(new Error('WebSocket连接超时（10秒），请检查后端服务是否正常、握手是否被拒绝'));
+                        }
+                    }, 10000);
+
+                    this.ws.onopen = () => {
+                        if (settled) return;
+                        settled = true;
+                        clearTimeout(timeoutId);
+                        resolve();
+                    };
+                    this.ws.onerror = (e) => {
+                        if (settled) return;
+                        settled = true;
+                        clearTimeout(timeoutId);
+                        reject(e);
+                    };
                     // 后端转写结果会通过这个连接推回来（MeetingSessionManager.pushToClient）
                     this.ws.onmessage = (event) => {
                         try {
@@ -523,7 +576,15 @@ export default {
                             // 心跳等非JSON文本消息，忽略即可
                         }
                     };
-                    this.ws.onclose = () => {
+                    // 之前这里只打了个警告日志，没有reject——如果握手在onopen之前就被拒绝，
+                    // Promise永远不会settle，await会一直挂着，isApiLoading就永远是true
+                    this.ws.onclose = (event) => {
+                        if (!settled) {
+                            settled = true;
+                            clearTimeout(timeoutId);
+                            reject(new Error('WebSocket连接被关闭（code=' + event.code + '），未能建立成功，可能是握手被后端拒绝'));
+                            return;
+                        }
                         if (this.recording) {
                             console.warn('[MeetingRecorder] WebSocket意外断开');
                         }

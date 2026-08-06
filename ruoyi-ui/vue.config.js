@@ -38,9 +38,18 @@ module.exports = {
       [process.env.VUE_APP_BASE_API]: {
         target: baseUrl,
         changeOrigin: true,
+        ws: true, // 补上这个，之前没配，WebSocket升级请求默认不会被devServer代理转发
         pathRewrite: {
           ['^' + process.env.VUE_APP_BASE_API]: ''
         }
+      },
+      // 会议实时录制的WebSocket走这条：后端路径是 /ws/huiyi/record/{meetingId}，
+      // 不是 /dev-api 开头，上面那条代理规则匹配不到，必须单独配一条，
+      // 不需要pathRewrite——后端WebSocketConfig里注册的路径本来就是 /ws/... ，原样转发就行
+      '^/ws': {
+        target: baseUrl,
+        changeOrigin: true,
+        ws: true
       },
       // springdoc proxy
       '^/v3/api-docs/(.*)': {

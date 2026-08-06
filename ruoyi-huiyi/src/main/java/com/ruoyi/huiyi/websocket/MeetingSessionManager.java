@@ -7,7 +7,6 @@ import com.ruoyi.huiyi.domain.MeetingRecord;
 import com.ruoyi.huiyi.domain.MeetingTranscriptSegment;
 import com.ruoyi.huiyi.domain.dto.TranscriptPushDTO;
 import com.ruoyi.huiyi.domain.enums.MeetingRecordStatus;
-import com.ruoyi.huiyi.domain.vo.MeetingRecordStatusVO;
 import com.ruoyi.huiyi.mapper.MeetingRecordMapper;
 import com.ruoyi.huiyi.mapper.MeetingTranscriptSegmentMapper;
 import com.ruoyi.huiyi.mq.message.MinutesTaskMessage;
@@ -125,9 +124,16 @@ public class MeetingSessionManager {
 
     public void pauseSession(Long meetingId) {
         RecordingSession session = requireSession(meetingId);
-        doFlushAndSubmitAsr(session);
+
+        log.info("准备暂停");
+
         session.pause();
-        log.info("会议[{}]录制已暂停", meetingId);
+
+        log.info("session.pause完成");
+
+        doFlushAndSubmitAsr(session);
+
+        log.info("flush提交完成");
     }
 
     public void resumeSession(Long meetingId) {

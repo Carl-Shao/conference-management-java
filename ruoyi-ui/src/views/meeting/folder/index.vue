@@ -233,6 +233,14 @@
 </template>
 
 <script>
+import {
+  listFolder,
+  getFolder,
+  addFolder,
+  updateFolder,
+  delFolder
+} from '@/api/huiyi/folder';
+
 export default {
   name: 'MeetingIndex',
   data() {
