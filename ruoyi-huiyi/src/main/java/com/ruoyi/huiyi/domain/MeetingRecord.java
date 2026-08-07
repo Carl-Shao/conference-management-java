@@ -57,6 +57,12 @@ public class MeetingRecord extends BaseEntity {
     /** 录制结束时间 */
     private Date recordEndTime;
 
+    /** 纪要概括总结 **/
+    private String summary;
+
+    /** 搜索关键字 **/
+    private String keyword;
+
     public Long getMeetingId() { return meetingId; }
     public void setMeetingId(Long meetingId) { this.meetingId = meetingId; }
 
@@ -95,4 +101,18 @@ public class MeetingRecord extends BaseEntity {
 
     public Date getRecordEndTime() { return recordEndTime; }
     public void setRecordEndTime(Date recordEndTime) { this.recordEndTime = recordEndTime; }
+
+    public String getSummary() {
+        return summary;
+    }
+    public void setSummary(String summary) {
+        this.summary = summary;
+    }
+
+    public String getKeyword() {
+        return keyword;
+    }
+    public void setKeyword(String keyword) {
+        this.keyword = keyword;
+    }
 }

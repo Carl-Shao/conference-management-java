@@ -216,7 +216,7 @@ public class MeetingRecordServiceImpl implements IMeetingRecordService {
 
     @Override
     @Transactional
-    public void saveMinutesResult(Long meetingId, String content)
+    public void saveMinutesResult(Long meetingId, String title, String summary, String content)
     {
         MeetingMinutes minutes = new MeetingMinutes();
         minutes.setMeetingId(meetingId);
@@ -226,6 +226,10 @@ public class MeetingRecordServiceImpl implements IMeetingRecordService {
         MeetingRecord update = new MeetingRecord();
         update.setMeetingId(meetingId);
         update.setStatus(MeetingStatus.DONE.getCode()); // 已完成
+        update.setSummary((summary != null && !summary.isEmpty()) ? summary : buildSummary(content));
+        if(title != null && !title.isEmpty()) {
+            update.setTitle(title);
+        }
         meetingRecordMapper.updateMeetingRecord(update);
     }
 
@@ -236,5 +240,17 @@ public class MeetingRecordServiceImpl implements IMeetingRecordService {
         update.setMeetingId(meetingId);
         update.setStatus(MeetingStatus.FAILED.getCode()); // 失败
         meetingRecordMapper.updateMeetingRecord(update);
+    }
+
+    private String buildSummary(String minutesContent) {
+        if(minutesContent == null || minutesContent.isEmpty()) {
+            return null;
+        }
+        String plain = minutesContent
+                .replaceAll("[#*`_>-]", "")
+                .replaceAll("\\s+", " ")      // 多个空白/换行压成一个空格
+                .trim();
+        int maxLen = 100;
+        return plain.length() > maxLen ? plain.substring(0, maxLen) + "..." : plain;
     }
 }

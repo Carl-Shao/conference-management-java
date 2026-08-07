@@ -455,7 +455,7 @@ export default {
 .topbar {
   display: flex;
   align-items: center;
-  gap: 18px;
+  gap: 10px;
   padding: 16px 24px; 
   flex-shrink: 0;
 }
@@ -470,8 +470,8 @@ export default {
 }
 
 .record-info {
-  display: flex; flex-direction: column; align-items: flex-start;
-  margin-left: 12px; flex: 1; min-width: 0; gap: 0px;
+  display: flex; flex-direction: row; align-items: center;
+  margin-left: 0px; flex: 1; min-width: 0; gap: 0px;
 }
 .record-icon-svg { width: 48px; height: 48px; flex-shrink: 0; svg { width: 100%; height: 100%; } }
 .record-title { 

@@ -19,11 +19,6 @@
                         </div>
                     </div>
                 </div>
-                <div class="header-right">
-                    <el-tag v-if="connected" type="success" size="medium" effect="plain"
-                        style="font-size: 14px;">麦克风已连接</el-tag>
-                    <el-tag v-else type="info" size="medium" effect="plain" style="font-size: 14px;">连接中...</el-tag>
-                </div>
             </div>
 
             <!-- 主体内容：左右分栏 -->

@@ -3,6 +3,7 @@ package com.ruoyi.huiyi.mq.listener;
 import com.rabbitmq.client.Channel;
 import com.ruoyi.huiyi.config.RabbitMqConfig;
 import com.ruoyi.huiyi.domain.Meeting;
+import com.ruoyi.huiyi.domain.dto.MeetingMinutesResultDTO;
 import com.ruoyi.huiyi.mq.message.MinutesTaskMessage;
 import com.ruoyi.huiyi.service.IMeetingLlmService;
 import com.ruoyi.huiyi.service.IMeetingRecordService;
@@ -372,89 +373,30 @@ public class MinutesTaskListener {
                     "十一、输出格式要求\n" +
                     "====================\n" +
                     "\n" +
-                    "必须严格使用 Markdown 格式。\n" +
+                    "【重要】你必须且只能输出一个合法的 JSON 对象，不要输出任何 Markdown 代码块标记（如 ```json）、不要输出任何解释性文字、不要输出任何前言或后记。\n" +
                     "\n" +
+                    "JSON 结构如下：\n" +
                     "\n" +
-                    "输出结构如下：\n" +
+                    "{\n" +
+                    "  \"title\": \"此处填写提取的会议主题（不超过20个字的名词短语）\",\n" +
+                    "  \"summary\": \"此处输出一段约100字的会议摘要，高度概括会议核心议题、关键决策及最重要的待办事项。语言精炼客观，该字段将用于数据库全文检索索引，因此必须包含会议中的核心关键词（如项目名称、技术名词、人名、关键决策等）。\",\n" +
+                    "  \"content\": \"此处填写完整的会议纪要正文（Markdown格式）。\\n\\n正文结构要求如下：\\n\\n## 会议基本信息\\n|字段|内容|\\n|-|-|\\n|会议时间| |\\n|会议地点| |\\n|参会人员| |\\n|主持人| |\\n\\n（说明：以下正文部分，请根据会议实际讨论的内容模块，自动提炼并生成二级小标题进行分类。例如：'## 一、Q3产品规划评审'、'## 二、研发进度与阻塞点'。每个分类下闭环该模块的讨论、决议和待办。不要使用固定的通用标题。）\\n\\n## [根据内容自动生成的分类标题1]\\n**讨论要点**：\\n- （讨论事项 + 当前情况 + 关键观点）\\n**相关决议**：\\n- （该模块下明确形成的决定。若无，填\"无\"）\\n**相关待办**：\\n|事项|负责人|完成时间|状态|\\n|-|-|-|-|\\n|任务内容|负责人或未明确|时间或未明确|状态或未明确|\\n\\n## [根据内容自动生成的分类标题2]\\n...以此类推\\n\\n## 风险与遗留问题\\n（记录全局层面尚未解决的问题、存在争议的问题、后续需要关注的风险。若无，填\"无\"）\\n\\n## 会议综述\\n（总结已达成的共识、已解决的问题、未解决的问题、下一步行动方向。要求简洁、客观、商务化表达、不加入个人评价。）\"\n" +
+                    "}\n" +
                     "\n" +
-                    "# 会议纪要\n" +
-                    "\n" +
-                    "\n" +
-                    "## 1. 会议信息\n" +
-                    "\n" +
-                    "|字段|内容|\n" +
-                    "|-|-|\n" +
-                    "|会议主题| |\n" +
-                    "|会议时间| |\n" +
-                    "|会议地点| |\n" +
-                    "|参会人员| |\n" +
-                    "|主持人| |\n" +
-                    "\n" +
-                    "\n" +
-                    "## 2. 核心讨论要点\n" +
-                    "\n" +
-                    "- 要点1：\n" +
-                    "  （讨论事项 + 当前情况 + 关键观点）\n" +
-                    "\n" +
-                    "- 要点2：\n" +
-                    "  （讨论事项 + 当前情况 + 关键观点）\n" +
-                    "\n" +
-                    "\n" +
-                    "## 3. 关键决策\n" +
-                    "\n" +
-                    "- 决策1：\n" +
-                    "  （明确形成的会议决定）\n" +
-                    "\n" +
-                    "如果没有明确决策：\n" +
-                    "无明确决策。\n" +
-                    "\n" +
-                    "\n" +
-                    "## 4. 待办事项\n" +
-                    "\n" +
-                    "|事项|负责人|完成时间|状态|\n" +
-                    "|-|-|-|-|\n" +
-                    "|任务内容|负责人或未明确|时间或未明确|状态或未明确|\n" +
-                    "\n" +
-                    "\n" +
-                    "如果没有明确待办事项：\n" +
-                    "|事项|负责人|完成时间|状态|\n" +
-                    "|-|-|-|-|\n" +
-                    "|无|无|无|无|\n" +
-                    "\n" +
-                    "\n" +
-                    "## 5. 风险与未解决问题\n" +
-                    "\n" +
-                    "记录：\n" +
-                    "- 尚未解决的问题；\n" +
-                    "- 存在争议的问题；\n" +
-                    "- 后续需要关注的风险。\n" +
-                    "\n" +
-                    "如果没有：\n" +
-                    "无。\n" +
-                    "\n" +
-                    "\n" +
-                    "## 6. 会议总结\n" +
-                    "\n" +
-                    "总结：\n" +
-                    "- 已达成的共识；\n" +
-                    "- 已解决的问题；\n" +
-                    "- 未解决的问题；\n" +
-                    "- 下一步行动方向。\n" +
-                    "\n" +
-                    "要求：\n" +
-                    "- 简洁；\n" +
-                    "- 客观；\n" +
-                    "- 商务化表达；\n" +
-                    "- 不加入个人评价。\n" +
+                    "注意事项：\n" +
+                    "- content 字段中的 Markdown 换行符请使用 \\n 转义。\n" +
+                    "- 确保 JSON 格式合法，不要有尾随逗号。\n" +
+                    "- summary 字段是搜索索引的核心，请务必在100字左右包含尽可能多的关键信息。\n" +
                     "\n" +
                     "\n" +
                     "====================\n" +
                     "\n" +
                     "会议转录文本：" + message.getRecognizedText();
-            String minutes = meetingLlmService.generateMinutes(prompt);
+            MeetingMinutesResultDTO minutes = meetingLlmService.generateMinutes(prompt);
 
             // 生成结果落库：写 huiyi_meeting_minutes，并把会议状态更新为"已完成"
-            meetingRecordService.saveMinutesResult(message.getMeetingId(), minutes);
+            meetingRecordService.saveMinutesResult(message.getMeetingId(),
+                    minutes.getTitle(), minutes.getSummary(), minutes.getContent());
 
             // TODO: 这里把 minutes 存库，taskId 作为关联外键，
             // 前端轮询或WebSocket推送时用 taskId 查询状态和结果

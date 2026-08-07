@@ -83,9 +83,46 @@
           @click.native.prevent="enterSearchMode"
         />
 
+        <div class="middle-actions">
+          <el-dropdown trigger="click" @command="handleSortChange">
+            <button class="icon-action-btn sort-button" title="排序">
+              <svg viewBox="0 0 24 24" fill="currentColor">
+                <path d="M3 6h18v2H3V6zm0 4h12v2H3v-2zm0 4h6v2H3v-2zm0 4h18v2H3v-2z" />
+              </svg>
+            </button>
+            <el-dropdown-menu slot="dropdown" class="custom-action-dropdown">
+              <el-dropdown-item command="timeDesc"><i class="el-icon-time icon-clr-blue" /><span>最近生成</span></el-dropdown-item>
+              <el-dropdown-item command="timeAsc"><i class="el-icon-time icon-clr-green" /><span>最早生成</span></el-dropdown-item>
+              <el-dropdown-item command="titleAsc"><i class="el-icon-sort-up icon-clr-purple" /><span>按标题 A-Z</span></el-dropdown-item>
+              <el-dropdown-item command="titleDesc"><i class="el-icon-sort-down icon-clr-orange" /><span>按标题 Z-A</span></el-dropdown-item>
+            </el-dropdown-menu>
+          </el-dropdown>
+
+          <el-dropdown trigger="click" @command="handleFilterChange">
+            <button class="icon-action-btn filter-button" :class="{ 'is-active': currentFilter !== 'all' }" title="筛选">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M4 4h16l-8 8v8H8v-8L4 4z" />
+              </svg>
+            </button>
+            <el-dropdown-menu slot="dropdown" class="custom-action-dropdown">
+              <el-dropdown-item command="all">
+                <svg class="dropdown-svg-icon" viewBox="0 0 48 48" fill="none"><path d="M14 6H30L38 14V38C38 40.2091 36.2091 42 34 42H14C11.7909 42 10 40.2091 10 38V10C10 7.79086 11.7909 6 14 6Z" stroke="#909399" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" /><path d="M30 6V14H38" stroke="#909399" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" /><line x1="16" y1="22" x2="32" y2="22" stroke="#909399" stroke-width="2.5" stroke-linecap="round" /><line x1="16" y1="28" x2="28" y2="28" stroke="#909399" stroke-width="2.5" stroke-linecap="round" /><line x1="16" y1="34" x2="24" y2="34" stroke="#909399" stroke-width="2.5" stroke-linecap="round" /></svg>
+                <span>全部纪要</span>
+              </el-dropdown-item>
+              <el-dropdown-item command="record">
+                <svg class="dropdown-svg-icon" viewBox="0 0 46 46" fill="none"><rect x="18" y="6" width="12" height="20" rx="6" fill="#4A7DFF" /><path d="M12 22a12 12 0 0 0 24 0" stroke="#4A7DFF" stroke-width="2" stroke-linecap="round" /><line x1="24" y1="34" x2="24" y2="40" stroke="#4A7DFF" stroke-width="2" stroke-linecap="round" /><line x1="18" y1="40" x2="30" y2="40" stroke="#4A7DFF" stroke-width="2" stroke-linecap="round" /></svg>
+                <span>录制音频文件</span>
+              </el-dropdown-item>
+              <el-dropdown-item command="upload">
+                <svg class="dropdown-svg-icon" viewBox="0 0 26 26" fill="none"><path d="M12 4v12" stroke="#67C23A" stroke-width="2.2" stroke-linecap="round" /><path d="M8 9l4-5 4 5" stroke="#67C23A" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" /><path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2" stroke="#67C23A" stroke-width="2.2" stroke-linecap="round" /></svg>
+                <span>上传音频文件</span>
+              </el-dropdown-item>
+            </el-dropdown-menu>
+          </el-dropdown>
+        </div>
+
         <div class="action-buttons-group">
 
-          <!-- 1. 上传文件按钮 (蓝色渐变 + 文字) -->
           <button class="upload-btn" @click="$refs.fileInput.click()">
             <svg viewBox="0 0 24 24" fill="none">
               <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8" stroke="#fff" stroke-width="2" />
@@ -96,88 +133,6 @@
             <input ref="fileInput" type="file" accept=".mp3,.wav,.m4a,.mp4,.mov,.pdf,.docx" style="display: none;"
               @change="handleFileUpload" />
           </button>
-
-          <!-- 2. 排序按钮 (圆形 + hover旋转) -->
-          <el-dropdown trigger="click" @command="handleSortChange">
-            <button class="icon-action-btn sort-button" title="排序">
-              <svg viewBox="0 0 24 24" fill="currentColor">
-                <path d="M3 6h18v2H3V6zm0 4h12v2H3v-2zm0 4h6v2H3v-2zm0 4h18v2H3v-2z" />
-              </svg>
-            </button>
-
-            <!-- 修改点：为每个 dropdown-item 添加语义化图标 -->
-            <el-dropdown-menu slot="dropdown" class="custom-action-dropdown">
-              <el-dropdown-item command="timeDesc">
-                <i class="el-icon-time icon-clr-blue" />
-                <span>最近生成</span>
-              </el-dropdown-item>
-
-              <el-dropdown-item command="timeAsc">
-                <i class="el-icon-time icon-clr-green" />
-                <span>最早生成</span>
-              </el-dropdown-item>
-
-              <el-dropdown-item command="titleAsc">
-                <i class="el-icon-sort-up icon-clr-purple" />
-                <span>按标题 A-Z</span>
-              </el-dropdown-item>
-
-              <el-dropdown-item command="titleDesc">
-                <i class="el-icon-sort-down icon-clr-orange" />
-                <span>按标题 Z-A</span>
-              </el-dropdown-item>
-            </el-dropdown-menu>
-          </el-dropdown>
-
-          <!-- 3. 筛选按钮 (漏斗图标 + hover旋转) -->
-          <el-dropdown trigger="click" @command="handleFilterChange">
-            <button class="icon-action-btn filter-button" :class="{ 'is-active': currentFilter !== 'all' }" title="筛选">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M4 4h16l-8 8v8H8v-8L4 4z" />
-              </svg>
-            </button>
-
-            <el-dropdown-menu slot="dropdown" class="custom-action-dropdown">
-              <!-- 全部纪要：使用录制音频的麦克风图标（作为默认/全部的代表） -->
-              <el-dropdown-item command="all">
-                <svg class="dropdown-svg-icon" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path
-                    d="M14 6H30L38 14V38C38 40.2091 36.2091 42 34 42H14C11.7909 42 10 40.2091 10 38V10C10 7.79086 11.7909 6 14 6Z"
-                    stroke="#909399" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" />
-                  <path d="M30 6V14H38" stroke="#909399" stroke-width="2.5" stroke-linecap="round"
-                    stroke-linejoin="round" />
-                  <line x1="16" y1="22" x2="32" y2="22" stroke="#909399" stroke-width="2.5" stroke-linecap="round" />
-                  <line x1="16" y1="28" x2="28" y2="28" stroke="#909399" stroke-width="2.5" stroke-linecap="round" />
-                  <line x1="16" y1="34" x2="24" y2="34" stroke="#909399" stroke-width="2.5" stroke-linecap="round" />
-                </svg>
-                <span>全部纪要</span>
-              </el-dropdown-item>
-
-              <!-- 录制音频文件：复用产品规划会议的麦克风图标 -->
-              <el-dropdown-item command="record">
-                <svg class="dropdown-svg-icon" viewBox="0 0 46 46" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <rect x="18" y="6" width="12" height="20" rx="6" fill="#4A7DFF" />
-                  <path d="M12 22a12 12 0 0 0 24 0" stroke="#4A7DFF" stroke-width="2" stroke-linecap="round" />
-                  <line x1="24" y1="34" x2="24" y2="40" stroke="#4A7DFF" stroke-width="2" stroke-linecap="round" />
-                  <line x1="18" y1="40" x2="30" y2="40" stroke="#4A7DFF" stroke-width="2" stroke-linecap="round" />
-                </svg>
-                <span>录制音频文件</span>
-              </el-dropdown-item>
-
-              <!-- 上传音频文件：复用团队周例会的上传箭头图标 -->
-              <el-dropdown-item command="upload">
-                <svg class="dropdown-svg-icon" viewBox="0 0 26 26" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M12 4v12" stroke="#67C23A" stroke-width="2.2" stroke-linecap="round" />
-                  <path d="M8 9l4-5 4 5" stroke="#67C23A" stroke-width="2.2" stroke-linecap="round"
-                    stroke-linejoin="round" />
-                  <path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2" stroke="#67C23A" stroke-width="2.2"
-                    stroke-linecap="round" />
-                </svg>
-                <span>上传音频文件</span>
-              </el-dropdown-item>
-            </el-dropdown-menu>
-          </el-dropdown>
-
         </div>
       </div>
 

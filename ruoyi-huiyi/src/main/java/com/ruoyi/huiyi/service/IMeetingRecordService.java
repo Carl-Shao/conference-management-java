@@ -49,7 +49,7 @@ public interface IMeetingRecordService {
 
     void saveTranscriptResult(Long meetingId, String content);
 
-    void saveMinutesResult(Long meetingId, String content);
+    void saveMinutesResult(Long meetingId, String title, String summary, String content);
 
     void markProcessFailed(Long meetingId);
 }

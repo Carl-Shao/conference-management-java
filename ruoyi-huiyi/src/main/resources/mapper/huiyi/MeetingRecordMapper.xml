@@ -22,13 +22,14 @@
         <result property="createTime"    column="create_time"    />
         <result property="updateBy"      column="update_by"      />
         <result property="updateTime"    column="update_time"    />
+        <result property="summary"       column="summary"        />
     </resultMap>
 
     <sql id="selectMeetingRecordVo">
         select meeting_id, title, source_type, audio_path, duration, status, is_favorite,
         folder_id, merge_from_ids, is_merged,
         record_status, record_start_time, record_end_time,
-        create_by, create_time, update_by, update_time
+        create_by, create_time, update_by, update_time, summary
         from huiyi_meeting
     </sql>
 
@@ -45,11 +46,19 @@
             <if test="title != null and title != ''">
                 and title like concat('%', #{title}, '%')
             </if>
+            <if test="keyword != null and keyword != ''">
+            and (title like concat('%', #{keyword}, '%') or summary like concat('%', #{keyword}, '%'))
             <if test="sourceType != null and sourceType != ''">
                 and source_type = #{sourceType}
             </if>
             <if test="isFavorite != null and isFavorite != ''">
                 and is_favorite = #{isFavorite}
+            </if>
+            <if test="params.beginTime != null and params.beginTime != ''">
+                and create_time &gt;= #{params.beginTime}
+            </if>
+            <if test="params.endTime != null and params.endTime != ''">
+                and create_time &lt;= #{params.endTime}
             </if>
             <!-- 按创建人过滤，实现"每个用户只看自己的会议纪要" -->
             <if test="createBy != null and createBy != ''">
@@ -100,6 +109,7 @@
             <if test="isFavorite != null">is_favorite = #{isFavorite},</if>
             <if test="folderId != null">folder_id = #{folderId},</if>
             <if test="updateBy != null">update_by = #{updateBy},</if>
+            <if test="summary != null">summary = #{summary},</if>
             update_time = sysdate()
         </set>
         where meeting_id = #{meetingId}
