@@ -43,7 +43,7 @@ public class MeetingLlmServiceImpl implements IMeetingLlmService {
 
     private String buildRequestBody(String prompt) throws IOException{
         ObjectNode node = MAPPER.createObjectNode();
-        node.put("modle", llmProperties.getModel());
+        node.put("model", llmProperties.getModel());
         node.put("prompt", prompt);
         node.put("stream", false);
         return MAPPER.writeValueAsString(node);

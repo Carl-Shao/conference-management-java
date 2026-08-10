@@ -48,6 +48,7 @@
             </if>
             <if test="keyword != null and keyword != ''">
             and (title like concat('%', #{keyword}, '%') or summary like concat('%', #{keyword}, '%'))
+            </if>
             <if test="sourceType != null and sourceType != ''">
                 and source_type = #{sourceType}
             </if>
