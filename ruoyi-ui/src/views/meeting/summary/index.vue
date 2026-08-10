@@ -4,8 +4,9 @@
     <!-- 搜索模式 (全屏/独立视图) -->
     <!-- ======================= -->
     <div v-if="isSearchMode" class="search-mode-overlay">
+      <!-- 修改点：将筛选栏整合进 search-bar-wrapper -->
       <div class="search-bar-wrapper">
-        <!-- 左侧叉号按钮：返回原界面 -->
+        <!-- 左侧叉号按钮 -->
         <button class="search-close-btn" @click="exitSearch" aria-label="关闭搜索">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
             <line x1="18" y1="6" x2="6" y2="18" />
@@ -23,11 +24,11 @@
           clearable
           @input="handleSearchInput"
         />
-      </div>
 
-      <!-- 搜索模式下的操作栏：排序 + 筛选 + 日期 -->
-      <div class="search-filter-bar">
-        <div class="filter-bar-left">
+        <!-- 右侧操作区：排序 + 筛选 + 日期 (原 search-filter-bar 内容) -->
+        <div class="search-actions-right">
+          <div class="action-divider"></div>
+          
           <!-- 排序 -->
           <el-dropdown trigger="click" @command="handleSortChange">
             <button class="icon-action-btn sort-button" title="排序">
@@ -63,26 +64,26 @@
               </el-dropdown-item>
             </el-dropdown-menu>
           </el-dropdown>
-        </div>
 
-        <!-- 两个独立的日期选择器 -->
-        <div class="filter-bar-right">
+          <!-- 日期选择器组 -->
           <div class="date-picker-group">
             <el-date-picker
               v-model="beginTime"
               type="date"
               placeholder="开始日期"
-              value-format="yyyy-MM-dd"
+              value-format="yyyy-MM-dd HH:mm:ss"
+              :default-time="'00:00:00'"
               size="mini"
               class="single-date-picker"
               @change="handleDateChange"
             />
-            <span class="date-separator">至</span>
+            <span class="date-separator">-</span>
             <el-date-picker
               v-model="endTime"
               type="date"
               placeholder="结束日期"
-              value-format="yyyy-MM-dd"
+              value-format="yyyy-MM-dd HH:mm:ss"
+              :default-time="'23:59:59'"
               size="mini"
               class="single-date-picker"
               @change="handleDateChange"
@@ -145,9 +146,10 @@
     </div>
 
     <!-- ======================= -->
-    <!-- 普通模式 (默认视图)   -->
+    <!-- 普通模式 (默认视图) - 保持不变 -->
+    <!-- ======================= -->
     <div v-else class="normal-mode-view">
-      <!-- 1. 搜索栏置顶：作为页面最顶部的操作区 -->
+      <!-- ... 原有普通模式代码保持不变 ... -->
       <div class="top-search-bar">
         <el-input
           v-model="queryParams.title"
@@ -325,6 +327,7 @@
 </template>
 
 <script>
+// Script 部分完全不需要修改，保持原样即可
 import {
   listMeeting,
   getMeetingDetail,
@@ -337,11 +340,6 @@ import {
 
 import { uploadAudio } from '@/api/huiyi/audio'
 
-/**
- * ⭐️ 排序字段映射表
- * Key: 前端驼峰字段名 
- * Value: 后端数据库实际列名（下划线格式）
- */
 const SORT_COLUMN_MAP = {
   createTime: 'create_time',
   title: 'title',
@@ -354,14 +352,12 @@ export default {
   data() {
     return {
       isSearchMode: false,
-      beginTime: undefined, // ⭐️ 独立的开始日期
-      endTime: undefined,   // ⭐️ 独立的结束日期
+      beginTime: undefined, 
+      endTime: undefined,   
       clickingId: null,
       meetingList: [],
       loading: false,
       searchDebounceTimer: null,
-
-      // ⭐️ 所有查询条件统一收口
       queryParams: {
         pageNum: 1,
         pageSize: 999,
@@ -373,7 +369,6 @@ export default {
     }
   },
   computed: {
-    /** 是否有任何筛选条件（决定搜索模式是否展示结果） */
     hasAnyFilter() {
       return !!(
         (this.queryParams.title && this.queryParams.title.trim()) ||
@@ -390,39 +385,34 @@ export default {
     if (this.searchDebounceTimer) clearTimeout(this.searchDebounceTimer)
   },
   methods: {
-    /** ========== 核心：统一列表请求方法 ========== */
     getList() {
       this.loading = true
-
       const params = { ...this.queryParams }
-
-      // ⭐️ 处理时间段：独立的 beginTime / endTime
+      // 注意：不能写成 params.beginTime / params.endTime 这种顶层key，
+      // 后端 MeetingRecord(继承BaseEntity) 没有这两个字段，只在 params 这个 Map 属性里，
+      // Spring 绑定Map类型属性要求方括号写法 params[beginTime]=xxx，
+      // 顶层key会被Spring直接忽略掉（找不到对应setter，不报错，静默丢弃）
       if (this.beginTime) {
-        params.beginTime = this.beginTime
+        params['params[beginTime]'] = this.beginTime.length === 10
+          ? `${this.beginTime} 00:00:00`
+          : this.beginTime
       }
       if (this.endTime) {
-        params.endTime = this.endTime
+        params['params[endTime]'] = this.endTime.length === 10
+          ? `${this.endTime} 23:59:59`
+          : this.endTime
       }
-
-      // 清理空值
       Object.keys(params).forEach(key => {
-        if (params[key] === '' || params[key] === undefined || params[key] === null) {
-          delete params[key]
-        }
+        if (params[key] === '' || params[key] === undefined || params[key] === null) delete params[key]
       })
-
       listMeeting(params).then(response => {
         this.meetingList = (response.rows || []).map(item => ({
           ...item,
           isFavorite: item.isFavorite === '1',
           sourceType: item.sourceType === '0' ? 'record' : 'upload'
         }))
-      }).finally(() => {
-        this.loading = false
-      })
+      }).finally(() => { this.loading = false })
     },
-
-    /** ========== 搜索输入处理（带防抖） ========== */
     handleSearchInput(val) {
       if (this.searchDebounceTimer) clearTimeout(this.searchDebounceTimer)
       this.searchDebounceTimer = setTimeout(() => {
@@ -430,22 +420,14 @@ export default {
         this.getList()
       }, 300)
     },
-
-    /** ========== 日期变更 ========== */
-    handleDateChange() {
-      this.getList()
-    },
-
-    /** ========== 搜索模式控制 ========== */
+    handleDateChange() { this.getList() },
     enterSearchMode() {
       this.isSearchMode = true
       this.$nextTick(() => {
         const input = this.$refs.searchInputRef
         if (input) {
           input.focus()
-          if (this.queryParams.title) {
-            input.select()
-          }
+          if (this.queryParams.title) input.select()
         }
       })
     },
@@ -456,8 +438,6 @@ export default {
       this.endTime = undefined
       this.getList()
     },
-
-    /** ========== 上传音频文件 ========== */
     handleFileUpload(event) {
       const file = event.target.files[0]
       if (!file) return
@@ -468,43 +448,27 @@ export default {
         this.$refs.fileInput.value = ''
         return
       }
-
-      const loadingInstance = this.$loading({
-        lock: true,
-        text: `正在上传 "${file.name}"...`,
-        spinner: 'el-icon-loading'
+      const loadingInstance = this.$loading({ lock: true, text: `正在上传 "${file.name}"...`, spinner: 'el-icon-loading' })
+      uploadAudio([file]).then(response => {
+        this.$message.success(`文件 "${file.name}" 上传成功`)
+        this.getList()
+      }).catch(error => {
+        console.error(error)
+        this.$message.error(error.msg || '上传失败')
+      }).finally(() => {
+        loadingInstance.close()
+        this.$refs.fileInput.value = ''
       })
-
-      uploadAudio([file])
-        .then(response => {
-          this.$message.success(`文件 "${file.name}" 上传成功`)
-          this.getList()
-        })
-        .catch(error => {
-          console.error(error)
-          this.$message.error(error.msg || '上传失败')
-        })
-        .finally(() => {
-          loadingInstance.close()
-          this.$refs.fileInput.value = ''
-        })
     },
-
-    /** ========== 高亮 & XSS 防护 ========== */
     highlightText(text, keyword) {
       if (!keyword || !keyword.trim()) return this.escapeHtml(text)
       const escaped = keyword.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
-      return this.escapeHtml(text).replace(
-        new RegExp(`(${this.escapeHtml(escaped)})`, 'gi'),
-        '<span class="search-highlight">$1</span>'
-      )
+      return this.escapeHtml(text).replace(new RegExp(`(${this.escapeHtml(escaped)})`, 'gi'), '<span class="search-highlight">$1</span>')
     },
     escapeHtml(str) {
       const map = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' }
       return String(str || '').replace(/[&<>"']/g, c => map[c])
     },
-
-    /** ========== 排序变更 ========== */
     handleSortChange(command) {
       const map = {
         timeDesc: { col: 'createTime', asc: 'desc' },
@@ -512,7 +476,6 @@ export default {
         titleAsc: { col: 'title', asc: 'asc' },
         titleDesc:{ col: 'title', asc: 'desc' }
       }
-
       const config = map[command]
       if (config) {
         this.queryParams.orderByColumn = SORT_COLUMN_MAP[config.col] || config.col
@@ -520,101 +483,40 @@ export default {
         this.getList()
       }
     },
-
-    /** ========== 筛选变更 ========== */
     handleFilterChange(command) {
       this.queryParams.sourceType = (command === 'all') ? undefined : command
       this.getList()
     },
-
-    /** ========== 卡片更多操作 ========== */
     handleCommand(command, row) {
       switch (command) {
         case 'delete':
-          console.log('=== 删除调试 ===', JSON.stringify(row))
-          this.$confirm('确定删除该会议纪要吗？删除后不可恢复。', '提示', { type: 'warning' })
-            .then(() => {
-              return delMeeting([row.meetingId])
-            })
-            .then(() => {
-              this.$message.success('已删除')
-              this.getList()
-            })
-            .catch(() => {})
+          this.$confirm('确定删除该会议纪要吗？删除后不可恢复。', '提示', { type: 'warning' }).then(() => delMeeting([row.meetingId])).then(() => { this.$message.success('已删除'); this.getList() }).catch(() => {})
           break
-
         case 'download':
-          {
-            const link = this.$refs.downloadLink
-            link.href = row.downloadUrl || `/huiyi/meeting/download/${row.meetingId}`
-            link.download = `${row.title}.mp3`
-            link.click()
-          }
+          { const link = this.$refs.downloadLink; link.href = row.downloadUrl || `/huiyi/meeting/download/${row.meetingId}`; link.download = `${row.title}.mp3`; link.click() }
           break
-
         case 'addFavorite':
-          favoriteMeeting(row.meetingId, true).then(() => {
-            row.isFavorite = true
-            this.$message.success('已添加到收藏')
-          })
+          favoriteMeeting(row.meetingId, true).then(() => { row.isFavorite = true; this.$message.success('已添加到收藏') })
           break
-
         case 'removeFavorite':
-          favoriteMeeting(row.meetingId, false).then(() => {
-            row.isFavorite = false
-            this.$message.success('已从收藏列表移除')
-          })
+          favoriteMeeting(row.meetingId, false).then(() => { row.isFavorite = false; this.$message.success('已从收藏列表移除') })
           break
-
         case 'rename':
-          this.$prompt('请输入新名称', '重命名', {
-            confirmButtonText: '确定',
-            cancelButtonText: '取消',
-            inputValue: row.title
-          }).then(({ value }) => {
-            if (!value || !value.trim()) return
-            renameMeeting(row.meetingId, value.trim()).then(() => {
-              this.$message.success('重命名成功')
-              this.getList()
-            })
-          }).catch(() => {})
+          this.$prompt('请输入新名称', '重命名', { confirmButtonText: '确定', cancelButtonText: '取消', inputValue: row.title }).then(({ value }) => { if (!value || !value.trim()) return; renameMeeting(row.meetingId, value.trim()).then(() => { this.$message.success('重命名成功'); this.getList() }) }).catch(() => {})
           break
-
-        case 'move':
-          this.$message.info('移动功能待对接文件夹选择器')
-          break
-
-        case 'merge':
-          this.$message.info('合并功能待对接会议选择器')
-          break
+        case 'move': this.$message.info('移动功能待对接文件夹选择器'); break
+        case 'merge': this.$message.info('合并功能待对接会议选择器'); break
       }
     },
-
-    /** ========== 卡片点击 → 详情页 ========== */
     handleCardClick(event, item) {
       const target = event.target
       if (target.closest('.el-dropdown') || target.classList.contains('card-more')) return
       this.$router.push(`/meeting/detail/${item.meetingId}`)
     },
-
-    /** ========== 开始听记 ========== */
     startRecording() {
       let backRoute = ''
-      try {
-        backRoute = JSON.stringify({
-          name: this.$route.name,
-          path: this.$route.path,
-          query: this.$route.query || {}
-        })
-      } catch (e) {
-        console.warn('backRoute 序列化失败', e)
-        backRoute = this.$route.path
-      }
-
-      this.$router.push({
-        path: '/meeting/record',
-        query: { backRoute }
-      })
+      try { backRoute = JSON.stringify({ name: this.$route.name, path: this.$route.path, query: this.$route.query || {} }) } catch (e) { backRoute = this.$route.path }
+      this.$router.push({ path: '/meeting/record', query: { backRoute } })
     }
   }
 }
@@ -648,18 +550,18 @@ export default {
   to   { opacity: 1; transform: translateY(0); }
 }
 
+/* ⭐️ 修改：整合后的搜索栏容器 */
 .search-bar-wrapper {
-  display: relative;
+  display: flex; /* 改为 Flex 布局 */
   align-items: center;
-  gap: 20px;
-  padding: 8px 20px 8px 64px;
+  gap: 16px;
+  padding: 12px 24px;
   flex-shrink: 0;
+  border-bottom: 1px solid #f0f1f3; /* 添加底部分割线代替原来的 filter-bar */
 }
 
 .search-close-btn {
-  position: absolute;
-  left: 20px;
-  width: 30px; height: 30px;
+  width: 32px; height: 32px;
   border: none;
   background: #f5f6f8;
   border-radius: 50%;
@@ -670,18 +572,19 @@ export default {
   color: #606266;
 
   svg { width: 18px; height: 18px; }
-
   &:hover { background: #e8eaed; color: #303133; }
   &:active { transform: scale(0.92); }
 }
 
+/* ⭐️ 修改：搜索框自适应宽度 */
 .search-mode-input {
-  flex: 1;
+  flex: 1; 
+  min-width: 200px; /* 防止过窄 */
 
   ::v-deep .el-input__inner {
-    height: 30px;
-    line-height: 30px;
-    border-radius: 14px;
+    height: 36px;
+    line-height: 36px;
+    border-radius: 18px;
     border: none;
     background-color: #f5f6f8;
     font-size: 14px;
@@ -693,45 +596,29 @@ export default {
   }
 
   ::v-deep .el-input__prefix {
-    left: 10px;
+    left: 12px;
     font-size: 14px;
-    line-height: 0px;
-    top: -3px;
+    line-height: 36px;
   }
-
+  
   ::v-deep .el-input__suffix {
-    line-height: 40px;
-    top: -3px;
+    line-height: 36px;
   }
 }
 
-.middle-actions {
+/* ⭐️ 新增：右侧操作区容器 */
+.search-actions-right {
   display: flex;
   align-items: center;
-  gap: 8px;
-  margin-left: auto;        /* 推到右侧，紧挨上传按钮左边 */
-  margin-right: 12px;       /* 与上传按钮的间距，按需调整 */
-}
-
-/* 搜索模式下的筛选操作栏 */
-.search-filter-bar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 4px 20px 12px 20px;
+  gap: 12px;
   flex-shrink: 0;
-  border-bottom: 1px solid #f0f1f3;
 }
 
-.filter-bar-left {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.filter-bar-right {
-  display: flex;
-  align-items: center;
+.action-divider {
+  width: 1px;
+  height: 20px;
+  background-color: #e4e7ed;
+  margin: 0 4px;
 }
 
 .date-picker-group {
@@ -746,14 +633,14 @@ export default {
   flex-shrink: 0;
 }
 
-/* 独立日期选择器样式 */
+/* 独立日期选择器样式 - 稍微调小以适应单行 */
 .single-date-picker {
-  width: 140px;
+  width: 130px; 
 
   ::v-deep .el-input__inner {
     height: 32px;
     line-height: 32px;
-    border-radius: 14px;
+    border-radius: 16px;
     border: none;
     background-color: #f5f6f8;
     font-size: 13px;
@@ -768,6 +655,7 @@ export default {
   ::v-deep .el-input__prefix {
     left: 8px;
     font-size: 14px;
+    line-height: 32px;
   }
 }
 
@@ -776,24 +664,18 @@ export default {
   align-items: center;
   justify-content: center;
   padding: 80px 20px;
-
-  p {
-    font-size: 15px;
-    color: #b0b3b8;
-  }
+  p { font-size: 15px; color: #b0b3b8; }
 }
 
 /* ========== 搜索结果专属样式 ========== */
-.search-result-list {
-  gap: 0;
-}
+.search-result-list { gap: 0; }
 
 .search-result-card {
-  padding: 0px 20px;
+  padding: 0px 24px;
   border-radius: 0;
   background: transparent;
   transition: opacity 0.2s ease, background-color 0.2s ease;
-  margin: 0 12px -15px;
+  margin: 0;
 
   & + .search-result-card {
     border-top: 1px solid #e8e9ea;
@@ -805,10 +687,7 @@ export default {
     opacity: 0.55;
   }
 
-  .card-icon,
-  .card-info {
-    pointer-events: none;
-  }
+  .card-icon, .card-info { pointer-events: none; }
 }
 
 .search-results {
@@ -818,11 +697,12 @@ export default {
 }
 
 .results-hint {
-  padding: 12px 20px 4px;
+  padding: 12px 24px 4px;
   font-size: 13px;
   color: #909399;
 }
 
+/* ========== 普通模式样式 (保持不变) ========== */
 .normal-mode-view {
   flex: 1;
   min-height: 0vh;
@@ -831,7 +711,6 @@ export default {
   overflow: visible;
 }
 
-/* 置顶搜索栏：页面最顶部 */
 .top-search-bar {
   display: flex;
   align-items: center;
@@ -841,7 +720,6 @@ export default {
   z-index: 99;
 }
 
-/* 内容区标题 */
 .section-title {
   margin: 0 0 16px 0;
   margin-left: 20px;
@@ -851,7 +729,6 @@ export default {
   line-height: 1.4;
 }
 
-/* 搜索框样式保持不变 */
 .meeting-search {
   margin-left: 20px;
   max-width: 360px;
@@ -866,28 +743,11 @@ export default {
     font-size: 14px;
     padding-left: 40px;
     transition: background-color 0.2s;
-
-    &::placeholder {
-      color: #b0b3b8;
-    }
-
-    &:focus {
-      background-color: #edeef0;
-      box-shadow: none;
-    }
+    &::placeholder { color: #b0b3b8; }
+    &:focus { background-color: #edeef0; box-shadow: none; }
   }
-
-  ::v-deep .el-input__prefix {
-    left: 8px;
-    font-size: 14px;
-    line-height: 32px;
-    transition: none;
-  }
-
-  ::v-deep .el-input__prefix .el-icon-search {
-    font-size: 14px;
-    line-height: inherit;
-  }
+  ::v-deep .el-input__prefix { left: 8px; font-size: 14px; line-height: 32px; transition: none; }
+  ::v-deep .el-input__prefix .el-icon-search { font-size: 14px; line-height: inherit; }
 }
 
 ::v-deep .search-highlight {
@@ -897,7 +757,6 @@ export default {
   background: transparent;
 }
 
-/* 右侧按钮组布局 */
 .action-buttons-group {
   display: flex;
   align-items: center;
@@ -907,7 +766,6 @@ export default {
   z-index: 100;
 }
 
-/* 上传按钮：蓝色渐变 + 白色图标文字 */
 .upload-btn {
   display: inline-flex;
   align-items: center;
@@ -926,29 +784,23 @@ export default {
   position: relative;
   z-index: 101;  
   overflow: visible;
-
-  svg {
-    width: 20px;
-    height: 20px;
-    flex-shrink: 0;
-  }
-
-  &:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 12px 28px rgba(31, 107, 240, 0.4);
-    z-index: 102; 
-  }
-
-  &:active {
-    transform: translateY(-1px);
-  }
+  svg { width: 20px; height: 20px; flex-shrink: 0; }
+  &:hover { transform: translateY(-2px); box-shadow: 0 12px 28px rgba(31, 107, 240, 0.4); z-index: 102; }
+  &:active { transform: translateY(-1px); }
 }
 
-/* 排序 & 筛选按钮：圆形透明底 + hover旋转 */
+.middle-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: auto;       
+  margin-right: 12px;      
+}
+
 .icon-action-btn {
   z-index: 100;
-  width: 42px;
-  height: 42px;
+  width: 36px; /* 稍微缩小以适应搜索栏 */
+  height: 36px;
   border: none;
   background: transparent;
   border-radius: 50%;
@@ -958,74 +810,24 @@ export default {
   cursor: pointer;
   color: #5a606b;
   transition: background 0.2s, transform 0.2s;
-
-  svg {
-    width: 22px;
-    height: 22px;
-  }
-
-  &:hover {
-    background: rgba(20, 24, 40, 0.06);
-    transform: rotate(-15deg);
-  }
-
-  /* 筛选激活态 */
-  &.is-active {
-    color: #2f7bff;
-    background: rgba(47, 123, 255, 0.08);
-  }
-}
-
-.sort-trigger {
-  display: inline-flex;
-  align-items: center;
-  cursor: pointer;
-  font-size: 14px;
-  color: #606266;
-  padding: 8px 12px;
-  border-radius: 8px;
-  transition: background 0.2s;
-  user-select: none;
-
-  &:hover {
-    background: #f5f6f8;
-  }
-
-  i {
-    margin-left: 4px;
-    font-size: 12px;
-  }
+  svg { width: 20px; height: 20px; }
+  &:hover { background: rgba(20, 24, 40, 0.06); transform: rotate(-15deg); }
+  &.is-active { color: #2f7bff; background: rgba(47, 123, 255, 0.08); }
 }
 
 .meeting-list {
   flex: 1;
   min-height: 0;
   overflow-y: auto;
-
   padding-bottom: 120px;
-
   scrollbar-width: thin;
   scrollbar-color: #dcdfe6 transparent;
-
   -webkit-overflow-scrolling: touch;
 }
-
-.meeting-list::-webkit-scrollbar {
-  width: 6px;
-}
-
-.meeting-list::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-.meeting-list::-webkit-scrollbar-thumb {
-  background: #dcdfe6;
-  border-radius: 10px;
-}
-
-.meeting-list::-webkit-scrollbar-thumb:hover {
-  background: #c0c4cc;
-}
+.meeting-list::-webkit-scrollbar { width: 6px; }
+.meeting-list::-webkit-scrollbar-track { background: transparent; }
+.meeting-list::-webkit-scrollbar-thumb { background: #dcdfe6; border-radius: 10px; }
+.meeting-list::-webkit-scrollbar-thumb:hover { background: #c0c4cc; }
 
 .content-section {
   flex: 1;
@@ -1045,30 +847,12 @@ export default {
   border-radius: 16px;
   transition: background 0.2s ease;
   cursor: pointer;
-
-  &:hover {
-    background: #e6f0ff;
-  }
-
-  &.is-clicking {
-    background: #d6e8ff !important;
-    transform: scale(0.97);
-    transition: all 0.1s ease-out;
-  }
-
-  .el-dropdown {
-    position: relative;
-    z-index: 2;
-  }
+  &:hover { background: #e6f0ff; }
+  &.is-clicking { background: #d6e8ff !important; transform: scale(0.97); transition: all 0.1s ease-out; }
+  .el-dropdown { position: relative; z-index: 2; }
 }
 
-.search-result-card {
-  &.is-clicking {
-    opacity: 0.4 !important;
-    background: #f0f7ff !important;
-    transition: all 0.1s ease-out;
-  }
-}
+.search-result-card.is-clicking { opacity: 0.4 !important; background: #f0f7ff !important; transition: all 0.1s ease-out; }
 
 .card-icon {
   flex-shrink: 0;
@@ -1076,245 +860,61 @@ export default {
   height: 48px;
   margin-right: 16px;
   position: relative;
-
-  svg {
-    width: 100%;
-    height: 100%;
-  }
-
-  .favorite-badge {
-    position: absolute;
-    top: 2px;
-    left: 2px;
-    font-size: 17px;
-    color: #e6a23c;
-    z-index: 1;
-    pointer-events: none;
-    filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.15));
-  }
+  svg { width: 100%; height: 100%; }
+  .favorite-badge { position: absolute; top: 2px; left: 2px; font-size: 17px; color: #e6a23c; z-index: 1; pointer-events: none; filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.15)); }
 }
 
-.card-info {
-  flex: 1;
-  min-width: 0;
-}
-
-.card-title {
-  margin: 0 0 6px 0;
-  font-size: 16px;
-  font-weight: 600;
-  color: #303133;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.card-meta {
-  margin: 0;
-  font-size: 13px;
-  color: #909399;
-
-  .meta-divider {
-    margin: 0 6px;
-  }
-}
-
-.card-more {
-  flex-shrink: 0;
-  font-size: 20px;
-  color: #909399;
-  padding: 8px;
-  border-radius: 8px;
-  cursor: pointer;
-  transition: all 0.2s;
-
-  &:hover {
-    background: #f5f6f8;
-    color: #606266;
-  }
-}
+.card-info { flex: 1; min-width: 0; }
+.card-title { margin: 0 0 6px 0; font-size: 16px; font-weight: 600; color: #303133; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.card-meta { margin: 0; font-size: 13px; color: #909399; .meta-divider { margin: 0 6px; } }
+.card-more { flex-shrink: 0; font-size: 20px; color: #909399; padding: 8px; border-radius: 8px; cursor: pointer; transition: all 0.2s; &:hover { background: #f5f6f8; color: #606266; } }
 
 .empty-state-wrapper {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 24px;
+  position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+  flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 24px;
 }
+.empty-illustration { display: flex; flex-direction: column; align-items: center; gap: 18px; animation: emptyFadeIn 0.5s ease-out; }
+.folder-wrap { width: 170px; height: 140px; animation: emptyFloat 5s ease-in-out infinite; svg { width: 100%; height: 100%; overflow: visible; } }
+.qmark { transform-box: fill-box; transform-origin: center; animation: emptyWiggle 4s ease-in-out infinite; }
+.empty-text { font-size: 22px; font-weight: 500; color: #9aa1ad; letter-spacing: 0.3px; }
 
-.empty-illustration {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 18px;
-  animation: emptyFadeIn 0.5s ease-out;
-}
-
-.folder-wrap {
-  width: 170px;
-  height: 140px;
-  animation: emptyFloat 5s ease-in-out infinite;
-
-  svg {
-    width: 100%;
-    height: 100%;
-    overflow: visible;
-  }
-}
-
-.qmark {
-  transform-box: fill-box;
-  transform-origin: center;
-  animation: emptyWiggle 4s ease-in-out infinite;
-}
-
-.empty-text {
-  font-size: 22px;
-  font-weight: 500;
-  color: #9aa1ad;
-  letter-spacing: 0.3px;
-}
-
-@keyframes emptyFadeIn {
-  from { opacity: 0; transform: translateY(12px); }
-  to   { opacity: 1; transform: translateY(0); }
-}
-
-@keyframes emptyFloat {
-  0%, 100% { transform: translateY(0); }
-  50%      { transform: translateY(-12px); }
-}
-
-@keyframes emptyWiggle {
-  0%, 100% { transform: rotate(0); }
-  25%      { transform: rotate(8deg); }
-  75%      { transform: rotate(-8deg); }
-}
+@keyframes emptyFadeIn { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes emptyFloat { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-12px); } }
+@keyframes emptyWiggle { 0%, 100% { transform: rotate(0); } 25% { transform: rotate(8deg); } 75% { transform: rotate(-8deg); } }
 
 .fab-btn {
-  position: absolute;
-  flex-shrink: 0;
-  left: 50%;
-  bottom: 50px;
-  transform: translateX(-50%);
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 12px;
-  padding: 18px 116px;
-  min-width: 220px;
+  position: absolute; flex-shrink: 0; left: 50%; bottom: 50px; transform: translateX(-50%);
+  display: inline-flex; align-items: center; justify-content: center; gap: 12px;
+  padding: 18px 116px; min-width: 220px;
   background: linear-gradient(135deg, #4a7dff 0%, #3b6de6 100%);
-  color: #fff;
-  border-radius: 40px;
-  font-size: 20px;
-  font-weight: 600;
-  cursor: pointer;
-  box-shadow: 0 6px 20px rgba(74, 125, 255, 0.45);
-  transition: all 0.25s ease;
-  z-index: 100;
-  user-select: none;
-  white-space: nowrap;
-
-  &:hover {
-    transform: translateX(-50%) translateY(-3px);
-    box-shadow: 0 8px 28px rgba(74, 125, 255, 0.55);
-  }
-
-  &:active {
-    transform: translateX(-50%) translateY(0);
-  }
-
-  i {
-    font-size: 24px;
-  }
+  color: #fff; border-radius: 40px; font-size: 20px; font-weight: 600; cursor: pointer;
+  box-shadow: 0 6px 20px rgba(74, 125, 255, 0.45); transition: all 0.25s ease; z-index: 100; user-select: none; white-space: nowrap;
+  &:hover { transform: translateX(-50%) translateY(-3px); box-shadow: 0 8px 28px rgba(74, 125, 255, 0.55); }
+  &:active { transform: translateX(-50%) translateY(0); }
+  i { font-size: 24px; }
 }
 </style>
 
-<!-- 全局下拉菜单样式（保持不变） -->
+<!-- 全局下拉菜单样式 -->
 <style lang="scss">
-.app-main {
-  overflow: visible !important;
-}
-
-.meeting-page-wrapper .app-main,
-.app-main:has(.meeting-index) {
-  overflow: visible !important;
-}
+.app-main { overflow: visible !important; }
+.meeting-page-wrapper .app-main, .app-main:has(.meeting-index) { overflow: visible !important; }
 
 .custom-action-dropdown.el-dropdown-menu {
-  border-radius: 20px !important;
-  padding: 6px 0 !important;
-  overflow: hidden;
-
+  border-radius: 20px !important; padding: 6px 0 !important; overflow: hidden;
   .el-dropdown-menu__item {
-    font-size: 15px !important;
-    line-height: 22px !important;
-    padding: 10px 20px !important;
-    color: #303133 !important;
-
-    i {
-      font-size: 18px !important;
-      margin-right: 8px;
-      vertical-align: middle;
-      display: inline-flex;
-      align-items: center;
-      height: 22px;
-    }
-
-    span {
-      vertical-align: middle;
-    }
-
-    &:hover,
-    &:focus {
-      background-color: #f5f7fa !important;
-      color: #303133 !important;
-    }
+    font-size: 15px !important; line-height: 22px !important; padding: 10px 20px !important; color: #303133 !important;
+    i { font-size: 18px !important; margin-right: 8px; vertical-align: middle; display: inline-flex; align-items: center; height: 22px; }
+    span { vertical-align: middle; }
+    &:hover, &:focus { background-color: #f5f7fa !important; color: #303133 !important; }
   }
-
-  .icon-clr-green {
-    color: #67c23a !important;
-  }
-
-  .icon-clr-yellow {
-    color: #e6a23c !important;
-  }
-
-  .icon-clr-blue {
-    color: #409eff !important;
-  }
-
-  .icon-clr-purple {
-    color: #9b59b6 !important;
-  }
-
-  .icon-clr-orange {
-    color: #ff8c00 !important;
-  }
-
-  .icon-clr-red {
-    color: #f56c6c !important;
-  }
-
-  .el-dropdown-menu__item--divided:before {
-    margin: 4px 20px !important;
-  }
-
-  .dropdown-svg-icon {
-    width: 26px;
-    height: 26px;
-    margin-right: 10px;
-    vertical-align: middle;
-    display: inline-flex;
-    align-items: center;
-    flex-shrink: 0;
-  }
+  .icon-clr-green { color: #67c23a !important; }
+  .icon-clr-yellow { color: #e6a23c !important; }
+  .icon-clr-blue { color: #409eff !important; }
+  .icon-clr-purple { color: #9b59b6 !important; }
+  .icon-clr-orange { color: #ff8c00 !important; }
+  .icon-clr-red { color: #f56c6c !important; }
+  .el-dropdown-menu__item--divided:before { margin: 4px 20px !important; }
+  .dropdown-svg-icon { width: 26px; height: 26px; margin-right: 10px; vertical-align: middle; display: inline-flex; align-items: center; flex-shrink: 0; }
 }
 </style>
