@@ -5,6 +5,7 @@ import com.ruoyi.huiyi.domain.dto.MeetingMergeDTO;
 import com.ruoyi.huiyi.domain.dto.MeetingMoveFolderDTO;
 import com.ruoyi.huiyi.domain.vo.MeetingDetailVO;
 
+import java.io.File;
 import java.util.List;
 
 public interface IMeetingRecordService {
@@ -46,6 +47,8 @@ public interface IMeetingRecordService {
     int saveNote(Long meetingId, String content);
 
     void saveMinutesEdit(Long meetingId, String content);
+
+    File resolvePlayableAudioFile(Long meetingId);
 
     void saveTranscriptResult(Long meetingId, String content);
 

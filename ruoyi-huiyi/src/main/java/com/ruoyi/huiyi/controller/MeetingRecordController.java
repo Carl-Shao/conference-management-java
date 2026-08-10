@@ -5,16 +5,25 @@ import com.ruoyi.common.core.controller.BaseController;
 import com.ruoyi.common.core.domain.AjaxResult;
 import com.ruoyi.common.core.page.TableDataInfo;
 import com.ruoyi.common.enums.BusinessType;
+import com.ruoyi.common.exception.ServiceException;
 import com.ruoyi.common.utils.SecurityUtils;
+import com.ruoyi.common.utils.StringUtils;
 import com.ruoyi.huiyi.domain.MeetingRecord;
 import com.ruoyi.huiyi.domain.dto.MeetingMergeDTO;
 import com.ruoyi.huiyi.domain.dto.MeetingMoveFolderDTO;
 import com.ruoyi.huiyi.domain.vo.MeetingDetailVO;
 import com.ruoyi.huiyi.service.IMeetingRecordService;
+import com.ruoyi.huiyi.util.HttpRangeUtils;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import java.io.File;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.io.RandomAccessFile;
 import java.util.List;
 
 /**
@@ -108,5 +117,59 @@ public class MeetingRecordController extends BaseController {
     @PutMapping("/{meetingId}/note")
     public AjaxResult saveNote(@PathVariable Long meetingId, @RequestBody String content) {
         return toAjax(meetingRecordService.saveNote(meetingId, content));
+    }
+
+    /** 文件流接口 */
+    @PreAuthorize("@ss.hasPermi('huiyi:record:query')")
+    @GetMapping("/{meetingId}/audio")
+    public void streamAudio(@PathVariable Long meetingId, HttpServletRequest request,
+                            HttpServletResponse response) throws IOException {
+        File file;
+        try{
+            file = meetingRecordService.resolvePlayableAudioFile(meetingId);
+        } catch(ServiceException e) {
+            response.setStatus(HttpServletResponse.SC_FORBIDDEN);
+            return;
+        }
+        if(file == null) {
+            response.setStatus(HttpServletResponse.SC_NOT_FOUND);
+            return;
+        }
+
+        long fileLength = file.length();
+        HttpRangeUtils.RangeResult range = HttpRangeUtils.parse(request.getHeader("Range"), fileLength);
+
+        response.setContentType("audio/wav");
+        response.setHeader("Accept-Ranges", "bytes");
+
+        if (range.isRangeRequest && !range.satisfiable)
+        {
+            response.setStatus(HttpServletResponse.SC_REQUESTED_RANGE_NOT_SATISFIABLE);
+            response.setHeader("Content-Range", "bytes */" + fileLength);
+            return;
+        }
+        if (range.isRangeRequest)
+        {
+            response.setStatus(HttpServletResponse.SC_PARTIAL_CONTENT);
+            response.setHeader("Content-Range", "bytes " + range.start + "-" + range.end + "/" + fileLength);
+        }
+        else
+        {
+            response.setStatus(HttpServletResponse.SC_OK);
+        }
+        response.setContentLengthLong(range.end - range.start + 1);
+
+        try (RandomAccessFile raf = new RandomAccessFile(file, "r");
+             OutputStream os = response.getOutputStream()) {
+            raf.seek(range.start);
+            byte[] buffer = new byte[8192];
+            long remaining = range.end - range.start + 1;
+            int read;
+            while(remaining > 0 && (read = raf.read(buffer, 0, (int) Math.min(buffer.length, remaining))) != -1) {
+                os.write(buffer, 0, read);
+                remaining -= read;
+            }
+            os.flush();
+        } catch (IOException e){}
     }
 }

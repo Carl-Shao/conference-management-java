@@ -133,6 +133,8 @@
 
     <!-- ==================== 底部播放器 (保持原样) ==================== -->
     <div class="audio-player">
+      <audio ref="audioRef" :src="audioSrc" preload="auto" @timeupdate="onTimeUpdate"
+        @loadedmetadata="onAudioLoaded" @ended="onAudioEnded" @error="onAudioError"></audio>
       <div class="progress-container">
         <span class="time">{{ formatTime(currentTime * 1000) }}</span>
         <div class="progress-bar" @click="seekAudio">
@@ -153,7 +155,7 @@
 </template>
 
 <script>
-import { getMeeting, delMeeting, favoriteMeeting, renameMeeting, saveMeetingNote, saveMeetingMinutes } from '@/api/huiyi/minutes'
+import { getMeeting, delMeeting, favoriteMeeting, renameMeeting, saveMeetingNote, saveMeetingMinutes, getMeetingAudioBlob } from '@/api/huiyi/minutes'
 
 export default {
   name: 'MeetingDetail',
@@ -193,13 +195,15 @@ export default {
       ],
       indicatorStyle: {},
       isPlaying: false,
-      currentTime: 0
+      currentTime: 0,
+      audioSrc: '',
+      audioDuration: 0,
     }
   },
   computed: {
     progressPercent() {
-      if (!this.detail.duration) return 0
-      return (this.currentTime / this.detail.duration) * 100
+      if (!this.audioDuration) return 0
+      return (this.currentTime / this.audioDuration) * 100
     }
   },
   created() {
@@ -217,6 +221,9 @@ export default {
   },
   beforeDestroy() {
     window.removeEventListener('resize', this.updateIndicator)
+    if(this.audioSrc) {
+      URL.revokeObjectURL(this.audioSrc)
+    }
   },
   methods: {
     fetchDetail(meetingId) {
@@ -242,6 +249,8 @@ export default {
         this.segments = segments.sort((a, b) => (a.startTime || 0) - (b.startTime || 0))
         // 5. 收藏状态
         this.isFavorite = String(this.detail.isFavorite) === '1'
+        // 6. 请求音频流
+        this.loadAudio(meetingId)
       }).catch(err => {
         console.error('详情接口报错:', err)
         this.$message.error(err.msg || '加载会议详情失败')
@@ -291,22 +300,60 @@ export default {
         this.$message.error('下载失败，请稍后重试');
       }
     },
+    async loadAudio(meetingId) {
+      try {
+        const res = await getMeetingAudioBlob(meetingId)
+        const blob = res instanceof Blob ? res : new Blob([res])
+        console.log('Blob type:', blob.type, 'size:', blob.size)
+        if (blob.size === 0 || blob.type.includes('json')) {
+          const text = await blob.text()
+          console.error('后端返回非音频数据:', text)
+          this.$message.error('音频加载失败：服务端返回异常')
+          return
+        }
+
+        if (this.audioSrc) URL.revokeObjectURL(this.audioSrc)
+        this.audioSrc = URL.createObjectURL(blob)
+
+        await this.$nextTick()
+        const audioEl = this.$refs.audioRef
+        if (audioEl && audioEl instanceof HTMLAudioElement) {
+          audioEl.load()
+        }
+      } catch (err) {
+        console.error('音频加载失败:', err)
+        this.$message.error('音频加载失败')
+      }
+    },
     switchTab(key, event) {
       this.currentTab = key
-      this.updateIndicator(event.currentTarget)
+      this.$nextTick(() => {
+        // 直接从 DOM 中查找，不依赖 event.currentTarget
+        this.updateIndicator()
+      })
     },
     updateIndicator(el) {
-      const target = el || document.querySelector('.tab-btn.active')
+      let target = el
+      if (!target || !(target instanceof HTMLElement)) {
+        const container = this.$refs.tabContainer
+        target = container?.querySelector('.tab-btn.active')
+      }
+
       const container = this.$refs.tabContainer
-      if (target && container) {
-        const rect = target.getBoundingClientRect()
-        const containerRect = container.getBoundingClientRect()
-        // ★ 关键修复：高度减去 10px 以匹配 HTML 原型的视觉比例
-        const offsetLeft = rect.left - containerRect.left - 4; 
-        this.indicatorStyle = {
-          width: `${rect.width}px`,
-          transform: `translateX(${offsetLeft}px)`,
-        }
+      // 双重安全检查：target 和 container 都必须是有效 DOM 元素
+      if (!target || !container ||
+        typeof target.getBoundingClientRect !== 'function' ||
+        typeof container.getBoundingClientRect !== 'function') {
+        return
+      }
+
+      const rect = target.getBoundingClientRect()
+      const containerRect = container.getBoundingClientRect()
+      const offsetLeft = rect.left - containerRect.left - 4
+
+      this.indicatorStyle = {
+        width: `${rect.width}px`,
+        transform: `translateX(${offsetLeft}px)`,
       }
     },
     startEdit(type) {
@@ -397,11 +444,85 @@ export default {
         navigator.clipboard.writeText(text).then(() => this.$message.success('内容已复制'))
       }
     },
-    togglePlay() { this.isPlaying = !this.isPlaying },
+    togglePlay() {
+      const audio = this.$refs.audioRef
+      if (!audio || !this.audioSrc) {
+        this.$message.warning('音频尚未加载完成')
+        return
+      }
+      if (this.isPlaying) {
+        audio.pause()
+      } else {
+        audio.play().catch(err => {
+          console.error('播放失败:', err)
+          this.$message.error('音频播放失败')
+        })
+      }
+      this.isPlaying = !this.isPlaying
+    },
     seekAudio(e) {
       const bar = e.currentTarget
-      const percent = (e.offsetX / bar.offsetWidth)
-      this.currentTime = percent * (this.detail.duration || 0)
+      const percent = e.offsetX / bar.offsetWidth
+      const audio = this.$refs.audioRef
+      if (audio && this.audioDuration) {
+        audio.currentTime = percent * this.audioDuration
+      }
+    },
+     onTimeUpdate() {
+      const audio = this.$refs.audioRef
+      if (audio) this.currentTime = audio.currentTime
+    },
+    onAudioLoaded() {
+      const audio = this.$refs.audioRef
+      if (audio && audio.duration) {
+        this.audioDuration = audio.duration
+        // 如果后端没返回 duration，用真实的覆盖
+        if (!this.detail.duration) {
+          this.$set(this.detail, 'duration', Math.floor(audio.duration))
+        }
+      }
+    },
+    onAudioEnded() {
+      this.isPlaying = false
+      this.currentTime = 0
+    },
+    onAudioError(e) {
+      const audio = e.target
+      if (!audio.src || !audio.src.startsWith('blob:')) {
+        return
+      }
+      const errCode = audio.error?.code
+      const messages = {
+        1: '音频加载被中止',
+        2: '音频网络加载失败',
+        3: '音频解码失败，文件可能已损坏',
+        4: '浏览器不支持该音频格式'
+      }
+      console.error('音频播放错误详情:', {
+        code: errCode,
+        message: messages[errCode] || '未知错误',
+        src: this.audioSrc?.substring(0, 80),
+        networkState: audio.networkState,
+        readyState: audio.readyState,
+        blobUrlValid: this.audioSrc?.startsWith('blob:')
+      })
+      // 仅当 error.code 存在时才提示用户，避免虚假 error 干扰
+      if (errCode) {
+        this.$message.error(messages[errCode] || '音频加载异常')
+        this.isPlaying = false
+      } else {
+        console.warn('收到无 error.code 的 error 事件，可能是 Blob URL 预加载的正常行为')
+      }
+    },
+    onAudioLoaded() {
+      const audio = this.$refs.audioRef
+      if (audio) {
+        this.audioDuration = audio.duration
+        // 如果接口返回的 duration 不准，以实际为准
+        if (!this.detail.duration) {
+          this.$set(this.detail, 'duration', Math.floor(audio.duration))
+        }
+      }
     },
     formatTime(ms) {
       if (ms == null) return '00:00'

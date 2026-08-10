@@ -3,6 +3,7 @@ package com.ruoyi.huiyi.service.impl;
 
 import com.ruoyi.common.exception.ServiceException;
 import com.ruoyi.common.utils.SecurityUtils;
+import com.ruoyi.huiyi.config.MeetingRecordProperties;
 import com.ruoyi.huiyi.domain.MeetingMinutes;
 import com.ruoyi.huiyi.domain.MeetingNote;
 import com.ruoyi.huiyi.domain.MeetingRecord;
@@ -21,6 +22,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.io.File;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -40,6 +42,9 @@ public class MeetingRecordServiceImpl implements IMeetingRecordService {
 
     @Autowired
     private MeetingNoteMapper meetingNoteMapper;
+
+    @Autowired
+    private MeetingRecordProperties meetingRecordProperties;
 
     private MeetingRecord requireOwnership(Long meetingId) {
         MeetingRecord record = meetingRecordMapper.selectMeetingRecordById(meetingId);
@@ -197,6 +202,19 @@ public class MeetingRecordServiceImpl implements IMeetingRecordService {
         minutes.setMeetingId(meetingId);
         minutes.setContent(content);
         meetingMinutesMapper.insertOrUpdate(minutes);
+    }
+
+    @Override
+    public File resolvePlayableAudioFile(Long meetingId) {
+        MeetingRecord meetingRecord = meetingRecordMapper.selectMeetingRecordById(meetingId);
+        if(meetingRecord == null || meetingRecord.getAudioPath() == null || meetingRecord.getAudioPath().isEmpty()) {
+            return null;
+        }
+        requireOwnership(meetingId);
+        File direct = new File(meetingRecord.getAudioPath());
+        File resolved = direct.isAbsolute() ? direct
+                : new File(meetingRecordProperties.getAudioBasePath(), meetingRecord.getAudioPath());
+        return (resolved.exists() && resolved.isFile()) ? resolved : null;
     }
 
     @Override

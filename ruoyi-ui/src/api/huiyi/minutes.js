@@ -1,4 +1,5 @@
 import request from '@/utils/request'
+import { get } from 'sortablejs'
 
 /**
  * ========================
@@ -143,9 +144,21 @@ export function saveMeetingNote(meetingId, content) {
  */
 export function saveMeetingMinutes(meetingId, content) {
   return request({
-    url: '/huiyi/meeting/' + meetingId + '/minutes',
+    url: '/huiyi/record/' + meetingId + '/minutes',
     method: 'put',
     headers: { 'Content-Type': 'application/json' },
     data: JSON.stringify(content)
+  })
+}
+
+/**
+ * 获取会议音频流 (返回 Blob)
+ */
+export function getMeetingAudioBlob(meetingId) {
+  return request({
+    url: 'huiyi/record/' + meetingId + '/audio',
+    method: 'get',
+    responseType: 'blob',
+    skipInterceptor: true
   })
 }
