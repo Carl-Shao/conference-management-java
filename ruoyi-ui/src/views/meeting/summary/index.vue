@@ -161,44 +161,6 @@
           @click.native.prevent="enterSearchMode"
         />
 
-        <div class="middle-actions">
-          <!-- 排序 -->
-          <el-dropdown trigger="click" @command="handleSortChange">
-            <button class="icon-action-btn sort-button" title="排序">
-              <svg viewBox="0 0 24 24" fill="currentColor">
-                <path d="M3 6h18v2H3V6zm0 4h12v2H3v-2zm0 4h6v2H3v-2zm0 4h18v2H3v-2z" />
-              </svg>
-            </button>
-            <el-dropdown-menu slot="dropdown" class="custom-action-dropdown">
-              <el-dropdown-item command="timeDesc"><i class="el-icon-time icon-clr-blue" /><span>按时间正序</span></el-dropdown-item>
-              <el-dropdown-item command="timeAsc"><i class="el-icon-time icon-clr-green" /><span>按时间倒序</span></el-dropdown-item>
-            </el-dropdown-menu>
-          </el-dropdown>
-
-          <!-- 筛选 -->
-          <el-dropdown trigger="click" @command="handleFilterChange">
-            <button class="icon-action-btn filter-button" :class="{ 'is-active': queryParams.sourceType }" title="筛选">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M4 4h16l-8 8v8H8v-8L4 4z" />
-              </svg>
-            </button>
-            <el-dropdown-menu slot="dropdown" class="custom-action-dropdown">
-              <el-dropdown-item command="all">
-                <svg class="dropdown-svg-icon" viewBox="0 0 48 48" fill="none"><path d="M14 6H30L38 14V38C38 40.2091 36.2091 42 34 42H14C11.7909 42 10 40.2091 10 38V10C10 7.79086 11.7909 6 14 6Z" stroke="#909399" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" /><path d="M30 6V14H38" stroke="#909399" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" /><line x1="16" y1="22" x2="32" y2="22" stroke="#909399" stroke-width="2.5" stroke-linecap="round" /><line x1="16" y1="28" x2="28" y2="28" stroke="#909399" stroke-width="2.5" stroke-linecap="round" /><line x1="16" y1="34" x2="24" y2="34" stroke="#909399" stroke-width="2.5" stroke-linecap="round" /></svg>
-                <span>全部纪要</span>
-              </el-dropdown-item>
-              <el-dropdown-item command="0">
-                <svg class="dropdown-svg-icon" viewBox="0 0 46 46" fill="none"><rect x="18" y="6" width="12" height="20" rx="6" fill="#4A7DFF" /><path d="M12 22a12 12 0 0 0 24 0" stroke="#4A7DFF" stroke-width="2" stroke-linecap="round" /><line x1="24" y1="34" x2="24" y2="40" stroke="#4A7DFF" stroke-width="2" stroke-linecap="round" /><line x1="18" y1="40" x2="30" y2="40" stroke="#4A7DFF" stroke-width="2" stroke-linecap="round" /></svg>
-                <span>录制音频文件</span>
-              </el-dropdown-item>
-              <el-dropdown-item command="1">
-                <svg class="dropdown-svg-icon" viewBox="0 0 26 26" fill="none"><path d="M12 4v12" stroke="#67C23A" stroke-width="2.2" stroke-linecap="round" /><path d="M8 9l4-5 4 5" stroke="#67C23A" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" /><path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2" stroke="#67C23A" stroke-width="2.2" stroke-linecap="round" /></svg>
-                <span>上传音频文件</span>
-              </el-dropdown-item>
-            </el-dropdown-menu>
-          </el-dropdown>
-        </div>
-
         <div class="action-buttons-group">
           <button class="upload-btn" @click="$refs.fileInput.click()">
             <svg viewBox="0 0 24 24" fill="none">
@@ -550,7 +512,7 @@ export default {
   to   { opacity: 1; transform: translateY(0); }
 }
 
-/* ⭐️ 修改：整合后的搜索栏容器 */
+/* 修改：整合后的搜索栏容器 */
 .search-bar-wrapper {
   display: flex; /* 改为 Flex 布局 */
   align-items: center;
@@ -576,7 +538,7 @@ export default {
   &:active { transform: scale(0.92); }
 }
 
-/* ⭐️ 修改：搜索框自适应宽度 */
+/* 修改：搜索框自适应宽度 */
 .search-mode-input {
   flex: 1; 
   min-width: 200px; /* 防止过窄 */
@@ -606,7 +568,7 @@ export default {
   }
 }
 
-/* ⭐️ 新增：右侧操作区容器 */
+/* 新增：右侧操作区容器 */
 .search-actions-right {
   display: flex;
   align-items: center;
@@ -718,6 +680,7 @@ export default {
   margin-bottom: 28px;
   flex-shrink: 0;
   z-index: 99;
+  justify-content: space-between; 
 }
 
 .section-title {

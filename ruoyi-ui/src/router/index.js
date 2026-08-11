@@ -112,7 +112,14 @@ export const constantRoutes = [
         name: 'MeetingFolder',
         meta: { title: '会议文件夹', noCache: true },
         hidden: true
-      }
+      },
+      {
+        path: 'folder-detail/:meetingId',
+        component: () => import('@/views/meeting/folder-detail/index'),
+        name: 'FolderDetail',
+        meta: { title: '文件夹详情', noCache: true, activeMenu: '/meeting/folder' },
+        hidden: true
+      },
     ]
   },
   {

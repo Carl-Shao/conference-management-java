@@ -66,7 +66,6 @@
 
     <!-- ==================== 主内容区 ==================== -->
     <div class="content-area">
-      <!-- ★ 严格复刻 HTML 原型的胶囊 Tab (含图标) -->
       <div class="tab-group">
         <div class="tab-buttons" ref="tabContainer">
           <div class="tab-indicator" :style="indicatorStyle"></div>
@@ -133,22 +132,59 @@
 
     <!-- ==================== 底部播放器 (保持原样) ==================== -->
     <div class="audio-player">
-      <audio ref="audioRef" :src="audioSrc" preload="auto" @timeupdate="onTimeUpdate"
-        @loadedmetadata="onAudioLoaded" @ended="onAudioEnded" @error="onAudioError"></audio>
+      <audio ref="audioRef" :src="audioSrc" preload="auto" @timeupdate="onTimeUpdate" @loadedmetadata="onAudioLoaded"
+        @ended="onAudioEnded" @error="onAudioError"></audio>
       <div class="progress-container">
         <span class="time">{{ formatTime(currentTime * 1000) }}</span>
         <div class="progress-bar" @click="seekAudio">
-          <div class="progress" :style="{ width: progressPercent + '%' }"><div class="progress-handle"></div></div>
+          <div class="progress" :style="{ width: progressPercent + '%' }">
+            <div class="progress-handle"></div>
+          </div>
         </div>
         <span class="time">{{ formatDuration(detail.duration) }}</span>
       </div>
       <div class="controls">
-        <div class="more-controls"><button class="more-control-btn"><i class="el-icon-video-play"></i></button></div>
-        <button class="control-btn play-pause" @click="togglePlay">
-          <svg v-if="!isPlaying" viewBox="0 0 24 24" fill="currentColor" stroke="none"><polygon points="5 3 19 12 5 21 5 3"/></svg>
-          <svg v-else viewBox="0 0 24 24" fill="currentColor" stroke="none"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>
+        <!-- 左侧：倒退 15 秒 -->
+        <button class="control-btn skip-btn" title="倒退15秒" @click="skipTime(-15)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"
+            stroke-linejoin="round">
+            <path d="M7 8.5A8 8 0 1 1 5.2 14" />
+            <polyline points="7 5 5 9 9 10.5" />
+            <text x="13" y="16" text-anchor="middle" font-size="7" font-weight="600" fill="currentColor" stroke="none"
+              font-family="Arial, sans-serif">
+              15
+            </text>
+          </svg>
         </button>
-        <div class="more-controls"><button class="more-control-btn"><i class="el-icon-s-operation"></i></button></div>
+        <button class="control-btn play-pause" @click="togglePlay">
+          <svg v-if="!isPlaying" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="3"
+            stroke-linecap="round" stroke-linejoin="round">
+            <polygon points="5 3 19 12 5 21 5 3" />
+          </svg>
+            <svg v-else viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"
+            stroke-linejoin="round">
+            <line x1="8" y1="5" x2="8" y2="19" />
+            <line x1="16" y1="5" x2="16" y2="19" />
+          </svg>
+        </button>
+        <!-- 右侧 1：快进 15 秒 -->
+        <button class="control-btn skip-btn" title="快进15秒" @click="skipTime(15)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"
+            stroke-linejoin="round">
+            <g transform="translate(24,0) scale(-1,1)">
+              <path d="M7 8.5A8 8 0 1 1 5.2 14" />
+              <polyline points="7 5 5 9 9 10.5" />
+            </g>
+            <text x="11" y="16" text-anchor="middle" font-size="7" font-weight="700" fill="currentColor" stroke="none"
+              font-family="Arial, sans-serif">
+              15
+            </text>
+          </svg>
+        </button>
+        <!-- 右侧 2：倍速播放 (点击循环切换 1x -> 1.25x -> 1.5x -> 2x) -->
+        <button class="control-btn rate-btn" :title="`当前 ${playbackRate}x`" @click="changePlaybackRate">
+          {{ playbackRate }}x
+        </button>
       </div>
     </div>
   </div>
@@ -172,7 +208,7 @@ export default {
       editContent: '',         // 编辑器临时内容
       saveTimer: false,           // 保存中状态
 
-      // ★ 更新：为每个 Tab 增加图标路径配置，其余保持不变
+      // 更新：为每个 Tab 增加图标路径配置，其余保持不变
       tabs: [
         { 
           key: 'summary', 
@@ -198,6 +234,8 @@ export default {
       currentTime: 0,
       audioSrc: '',
       audioDuration: 0,
+      playbackRate: 1, // 当前倍速，默认 1x
+      playbackRates: [1, 1.25, 1.5, 2], // 可选的倍速数组
     }
   },
   computed: {
@@ -536,6 +574,29 @@ export default {
       const m = Math.floor(sec / 60)
       const s = sec % 60
       return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`
+    },
+    skipTime(seconds) {
+      const audio = this.$refs.audioRef
+      if (!audio || !this.audioDuration) {
+        this.$message.warning('音频尚未加载完成')
+        return
+      }
+      let newTime = audio.currentTime + seconds
+      newTime = Math.max(0, Math.min(newTime, this.audioDuration))
+
+      audio.currentTime = newTime
+      if (this.isPlaying && audio.paused) {
+        audio.play()
+      }
+    },
+    changePlaybackRate() {
+      const audio = this.$refs.audioRef
+      if (!audio) return
+      const currentIndex = this.playbackRates.indexOf(this.playbackRate)
+      const nextIndex = (currentIndex + 1) % this.playbackRates.length
+      this.playbackRate = this.playbackRates[nextIndex]
+      audio.playbackRate = this.playbackRate
+      this.$message.success(`播放速度已调整为 ${this.playbackRate}x`)
     }
   }
 }
@@ -781,11 +842,23 @@ export default {
   position: absolute; right: -7px; top: 50%; transform: translateY(-50%); box-shadow: 0 2px 4px rgba(0,0,0,0.1);
 }
 
-.controls { display: flex; align-items: center; justify-content: center; gap: 24px; }
+.controls { display: flex; align-items: center; justify-content: center; gap: 20px; }
 .control-btn {
   width: 48px; height: 48px; border-radius: 50%; background: var(--blue); color: #fff; border: none;
   display: grid; place-items: center; cursor: pointer; box-shadow: 0 4px 12px rgba(47, 123, 255, 0.3);
   transition: transform 0.2s; svg { width: 22px; height: 22px; } &:hover { transform: scale(1.05); }
+  &.play-pause { background: transparent; box-shadow: none; color: var(--blue); 
+    &:hover { background: rgba(47, 123, 255, 0.08); transform: scale(1.08); }}
+  &.skip-btn { background: transparent; box-shadow: none; color: var(--ink-soft); svg { width: 26px; height: 26px; }
+    &:hover { color: var(--blue); background: rgba(47, 123, 255, 0.06); transform: scale(1.1); }
+    &:active { transform: scale(0.95); }}
+  &.rate-btn { display: flex; align-items: center; justify-content: center; gap: 5px; min-width: 65px;
+  height: 34px; padding: 0 12px; border-radius: 18px; background: linear-gradient( 135deg, #f5f7fa, #e8ecf3 );
+  border: 1px solid rgba(0,0,0,0.08); color: #374151; font-size: 14px; font-weight: 600;
+  cursor: pointer; transition: all .25s ease; box-shadow: 0 2px 6px rgba(0,0,0,.08); }
+  .rate-btn:hover { transform: translateY(-2px); background: linear-gradient( 135deg, #409eff, #66b1ff );
+  color:white; box-shadow: 0 5px 15px rgba(64,158,255,.35); }
+  .rate-btn:active { transform: scale(.95); }
 }
 .more-control-btn {
   width: 36px; height: 36px; border-radius: 50%; background: var(--search-bg); border: none;

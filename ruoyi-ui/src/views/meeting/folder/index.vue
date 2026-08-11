@@ -179,18 +179,6 @@
             </el-dropdown-menu>
           </el-dropdown>
         </div>
-
-        <div class="action-buttons-group">
-          <button class="upload-btn" @click="$refs.fileInput.click()">
-            <svg viewBox="0 0 24 24" fill="none">
-              <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8" stroke="#fff" stroke-width="2" />
-              <path d="M16 6l-4-4-4 4" stroke="#fff" stroke-width="2" />
-              <path d="M12 2v11" stroke="#fff" stroke-width="2" />
-            </svg>
-            <span>上传文件</span>
-            <input ref="fileInput" type="file" accept=".mp3,.wav,.m4a,.mp4,.mov,.pdf,.docx" style="display: none;" @change="handleFileUpload" />
-          </button>
-        </div>
       </div>
 
       <div class="content-section">
@@ -200,7 +188,11 @@
           <div class="folder-card new-folder-card" @click="createNewFolder">
             <div class="folder-top-left"></div>
             <div class="folder-center">
-              <svg class="blue-folder-svg" viewBox="0 0 24 24" fill="none"><path d="M5 7C5 6.44772 5.44772 6 6 6H10L12 8H18C18.5523 8 19 8.44772 19 9V19C19 19.5523 18.5523 20 18 20H6C5.44772 20 5 19.5523 5 19V7Z" fill="#2f7bff"/><path d="M10 6L8 4H4C3.44772 4 3 4.44772 3 5V18C3 18.5523 3.44772 19 4 19H6" stroke="#1f6bf0" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              <svg class="blue-folder-svg" viewBox="0 0 24 24" fill="none">
+                <circle cx="12" cy="12" r="10" stroke="rgba(47, 123, 255, 0.8)" stroke-width="2" fill="none" />
+                <line x1="12" y1="7" x2="12" y2="17" stroke="rgba(47, 123, 255, 0.8)" stroke-width="2" stroke-linecap="round" />
+                <line x1="7" y1="12" x2="17" y2="12" stroke="rgba(47, 123, 255, 0.8)" stroke-width="2" stroke-linecap="round" />
+              </svg>
             </div>
             <div class="folder-bottom-left">新建文件夹</div>
           </div>
@@ -241,10 +233,6 @@
             <p></p>
           </div>
         </div>
-      </div>
-
-      <div class="fab-btn" @click="startRecording">
-        <i class="el-icon-microphone" /><span>开始听记</span>
       </div>
     </div>
 
@@ -388,7 +376,13 @@ export default {
     handleCardClick(event, item) {
       const target = event.target
       if (target.closest('.el-dropdown') || target.classList.contains('card-more')) return
-      this.$router.push(`/meeting/detail/${item.meetingId}`)
+      this.clickingId = item.id
+      setTimeout(() => {
+        this.$router.push(`/meeting/detail/${item.meetingId}`)
+        this.$nextTick(() => {
+          this.clickingId = null
+        })
+      }, 200)
     },
 
     handleFileUpload(event) {
@@ -504,10 +498,21 @@ export default {
     },
 
     async handleFolderClick(item) {
-      this.clickedFolderId = item.id
-      const detail = await getFolder(item.id).then(res => res.data || res).catch(() => null)
+      this.clickedFolderId = item.folderId
+
+      const detail = await getFolder(item.folderId)
+        .then(res => res.data || res)
+        .catch(() => null)
+
       if (!detail) return
-      // TODO: this.$router.push({ path: `/meeting/folder/${item.id}`, query: { name: item.title } })
+
+      this.$router.push({
+        path: '/meeting/folder-detail',
+        query: {
+          folderId: item.folderId,
+          name: item.title || item.folderName
+        }
+      })
     },
 
     startRecording() {
@@ -677,11 +682,12 @@ export default {
 
 /* ================= 文件夹网格 ================= */
 .folder-grid {
-  display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-  gap: 20px; padding: 0 34px; margin-top: 20px;
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+  gap: 17px; padding: 0 34px; margin-top: 20px;
 }
 
 .folder-card {
+  zoom: 0.78;
   display: flex; flex-direction: column; align-items: stretch; justify-content: flex-start;
   padding: 20px; border-radius: 20px; background: white;
   box-shadow: 0 10px 30px rgba(0,0,0,.28); transition: all 0.3s ease;
