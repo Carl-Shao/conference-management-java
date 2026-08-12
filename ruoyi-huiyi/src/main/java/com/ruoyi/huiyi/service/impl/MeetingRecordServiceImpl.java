@@ -23,6 +23,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.io.File;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -82,6 +84,9 @@ public class MeetingRecordServiceImpl implements IMeetingRecordService {
     @Override
     public int insertMeetingRecord(MeetingRecord meetingRecord)
     {
+        String time = LocalDateTime.now()
+                        .format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm"));
+        meetingRecord.setTitle(time + " 录音");
         meetingRecord.setCreateBy(getUsername());
         if("0".equals(meetingRecord.getSourceType()) && meetingRecord.getSourceType() == null) {
             meetingRecord.setRecordStatus(MeetingRecordStatus.NOT_STARTED.getCode());

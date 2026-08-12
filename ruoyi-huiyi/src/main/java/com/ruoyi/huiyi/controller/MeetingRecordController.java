@@ -7,10 +7,10 @@ import com.ruoyi.common.core.page.TableDataInfo;
 import com.ruoyi.common.enums.BusinessType;
 import com.ruoyi.common.exception.ServiceException;
 import com.ruoyi.common.utils.SecurityUtils;
-import com.ruoyi.common.utils.StringUtils;
 import com.ruoyi.huiyi.domain.MeetingRecord;
 import com.ruoyi.huiyi.domain.dto.MeetingMergeDTO;
 import com.ruoyi.huiyi.domain.dto.MeetingMoveFolderDTO;
+import com.ruoyi.huiyi.domain.vo.MeetingCreateVO;
 import com.ruoyi.huiyi.domain.vo.MeetingDetailVO;
 import com.ruoyi.huiyi.service.IMeetingRecordService;
 import com.ruoyi.huiyi.util.HttpRangeUtils;
@@ -63,7 +63,10 @@ public class MeetingRecordController extends BaseController {
     @PostMapping
     public AjaxResult add(@RequestBody MeetingRecord meetingRecord) {
         meetingRecordService.insertMeetingRecord(meetingRecord);
-        return success(meetingRecord.getMeetingId());
+        MeetingCreateVO vo = new MeetingCreateVO();
+        vo.setMeetingId(meetingRecord.getMeetingId());
+        vo.setMeetingTitle(meetingRecord.getTitle());
+        return success(vo);
     }
 
     @PreAuthorize("@ss.hasPermi('huiyi:record:edit')")

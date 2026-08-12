@@ -13,6 +13,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 
 @Service
 public class MeetingLlmServiceImpl implements IMeetingLlmService {
@@ -65,6 +67,11 @@ public class MeetingLlmServiceImpl implements IMeetingLlmService {
             String title = node.path("title").asText(null);
             String summary = node.path("summary").asText(null);
             String content = node.path("content").asText(null);
+            if(title != null && !title.trim().isEmpty()) {
+                String time = LocalDateTime.now()
+                        .format(DateTimeFormatter.ofPattern("MM-dd"));
+                title = time + " " + title;
+            }
             if(content == null || content.isEmpty()) {
                 // JSON解析成功了，但content字段是空的，视为格式不对，走兜底
                 log.warn("LLM返回的JSON里content字段为空，原文: {}", rawText);

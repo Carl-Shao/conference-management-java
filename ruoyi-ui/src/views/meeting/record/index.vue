@@ -47,17 +47,17 @@
                     <div class="controls-overlay">
                         <!-- 底部控制按钮 -->
                         <div class="control-buttons">
-                            <!-- 还没开始录制：只显示"开始听记"按钮 -->
-                            <template v-if="recordStatus === 'idle'">
-                                <el-button type="primary" round :loading="isApiLoading" @click="startListening">
-                                    <i class="el-icon-video-camera" style="margin-right: 6px;"></i>开始听记
-                                </el-button>
-                            </template>
                             <!-- 已经开始录制：显示 标记/暂停继续/结束 三个按钮 -->
-                            <template v-else>
+                            <template v-if="recordStatus !== 'idle'">
                                 <!-- 标记按钮 -->
-                                <div class="control-btn" @click="handleMark">
-                                    <i class="el-icon-collection-tag" style="font-size: 32px;"></i>
+                                <div class="control-btn mark-btn" @click="handleMark">
+                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="32" height="32"
+                                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                        stroke-linejoin="round">
+                                        <path d="M8 27V5" />
+                                        <path d="M8 5 C13 3, 15 5, 19 7 C22 8.5, 25 5, 27 5 V15 C20 18, 20 17, 15 15 C10 14, 5 15, 8 15 Z"/>
+                                        <path d="M4 29H19"/>
+                                    </svg>
                                 </div>
 
                                 <!-- 暂停/继续按钮 -->
@@ -71,6 +71,9 @@
                                 <div class="control-btn" @click="handleEnd">
                                     <i class="el-icon-switch-button" style="font-size: 32px;"></i>
                                 </div>
+                            </template>
+                            <template v-else>
+                                <span style="color: #909399; font-size: 14px;">正在初始化录音设备...</span>
                             </template>
                         </div>
 
@@ -196,21 +199,25 @@ export default {
                 next(false);
             }
         } else {
-            // ✅ 只移除class，不主动openSideBar
+            // 只移除class，不主动openSideBar
             this._disableRecordingLayout(); 
             next();
         }
     },
 
     created() {
-        // 如果是带着已有 meetingId 进来的（比如从"全部会议纪要"列表点进一条还没结束的录制），
-        // 只用来展示标题，不自动开始录制——录制只能由用户点"开始听记"触发
         this.meeting.id = this.$route.params.id || this.$route.query.meetingId || this.from?.id;
         this._enableRecordingLayout();
         this.startTimer();
-        this.$nextTick(() => this.startMicrophone());
-        // 注意：这里不再自动调用 startRecord。录制状态默认是 'idle'，
-        // 用户点击"开始听记"按钮时才会创建会议记录并真正开始录制。
+        this.$nextTick(async () => {
+            await this.startMicrophone();
+            // 确保麦克风连接成功（connected为true）再自动开始
+            if (this.connected) {
+                this.startListening();
+            } else {
+                this.$message.warning('麦克风未就绪，请手动点击开始听记');
+            }
+        });
     },
 
     methods: {
@@ -399,11 +406,24 @@ export default {
 
         // 添加标记
         handleMark() {
+            const timeTag = `[${this.formattedTimer}]`;
+            const markLine = `📌${timeTag}\n 标记了重点`;
+            this.notesContent = this.notesContent
+                ? `${this.notesContent}\n${markLine}\n`
+                : `${markLine}\n`;
+            this.debouncedSaveNotes();
             this.$message.success(`已在 ${this.formattedTimer} 处添加标记`);
             if (this.transcripts.length > 0) {
                 const lastId = this.transcripts[this.transcripts.length - 1].id;
                 this.markedIds.add(lastId);
             }
+            this.$nextTick(() => {
+                const textarea = this.$refs.notesInput?.$el?.querySelector('textarea');
+                if (textarea) {
+                    textarea.value = this.notesContent; // 手动同步 DOM 值
+                    textarea.dispatchEvent(new Event('input', { bubbles: true }));
+                }
+            });
         },
 
         // 结束会议
@@ -450,29 +470,52 @@ export default {
             }
         },
 
+        async handleBack() {
+            if (this.recordStatus === 'ended' || this.recordStatus === 'idle') {
+                this.navigateToBack();
+                return;
+            }
+            const confirmed = window.confirm('会议正在录制中，返回将自动结束会议并保存内容，确定要离开吗？');
+            if (!confirmed) return;
+            this.isApiLoading = true;
+            try {
+                if (this.meeting.id && this.notesContent) {
+                    if (this.saveTimeout) clearTimeout(this.saveTimeout); // 取消防抖
+                    try {
+                        await saveMeetingNote(this.meeting.id, this.notesContent);
+                    } catch (e) {
+                        console.warn('返回时自动保存笔记失败', e);
+                    }
+                }
+                await this.stopListening();
+                if (this.timerInterval) clearInterval(this.timerInterval);
+                if (this.animationFrame) cancelAnimationFrame(this.animationFrame);
+                if (this.microphone) this.microphone.disconnect();
+                if (this.audioContext && this.audioContext.state !== 'closed') {
+                    this.audioContext.close();
+                }
+                this.recordStatus = 'ended';
+                this.navigateToBack();
+            } catch (error) {
+                console.error('自动结束会议失败:', error);
+                this.$message.error('结束会议失败，请重试或手动结束');
+            } finally {
+                this.isApiLoading = false;
+            }
+        },
 
-        handleBack() {
+        navigateToBack() {
             const backRouteStr = this.$route.query.backRoute;
-
             if (!backRouteStr) {
                 this.$router.push('/index');
                 return;
             }
-
             try {
                 const routeInfo = JSON.parse(backRouteStr);
-
                 if (routeInfo.name) {
-                    this.$router.push({
-                        name: routeInfo.name,
-                        query: routeInfo.query || {}
-                    });
+                    this.$router.push({ name: routeInfo.name, query: routeInfo.query || {} });
                 } else {
-                    // 兜底：如果没有 name（极端情况），再用 path
-                    this.$router.push({
-                        path: routeInfo.path,
-                        query: routeInfo.query || {}
-                    });
+                    this.$router.push({ path: routeInfo.path, query: routeInfo.query || {} });
                 }
             } catch (e) {
                 console.error('解析 backRoute 失败', e);
@@ -556,7 +599,8 @@ export default {
                     title: this.meeting.title || ('会议记录 ' + new Date().toLocaleString()),
                     sourceType: '0'
                 });
-                this.meeting.id = addRes.data;
+                this.meeting.id = addRes.data.meetingId;
+                this.meeting.title = addRes.data.meetingTitle;
  
                 // 2. 开始录制，拿 wsPath（具体字段名以你 MeetingRecordVO 实际结构为准，
                 //    如果不是 data.wsPath 而是别的字段名，这里改一下就行）
