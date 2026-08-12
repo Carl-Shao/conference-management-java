@@ -7,7 +7,6 @@ import com.ruoyi.huiyi.config.MeetingRecordProperties;
 import com.ruoyi.huiyi.domain.*;
 import com.ruoyi.huiyi.domain.dto.MeetingFolderTagDTO;
 import com.ruoyi.huiyi.domain.dto.MeetingMergeDTO;
-import com.ruoyi.huiyi.domain.dto.MeetingMoveFolderDTO;
 import com.ruoyi.huiyi.domain.dto.MeetingSetFoldersDTO;
 import com.ruoyi.huiyi.domain.enums.MeetingRecordStatus;
 import com.ruoyi.huiyi.domain.enums.MeetingStatus;

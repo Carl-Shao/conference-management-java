@@ -4,6 +4,7 @@ import com.ruoyi.common.exception.ServiceException;
 import com.ruoyi.common.utils.SecurityUtils;
 import com.ruoyi.huiyi.domain.MeetingFolder;
 import com.ruoyi.huiyi.mapper.MeetingFolderMapper;
+import com.ruoyi.huiyi.mapper.MeetingFolderRelMapper;
 import com.ruoyi.huiyi.mapper.MeetingRecordMapper;
 import com.ruoyi.huiyi.service.IMeetingFolderService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -19,7 +20,7 @@ public class MeetingFolderServiceImpl implements IMeetingFolderService {
     private MeetingFolderMapper meetingFolderMapper;
 
     @Autowired
-    private MeetingRecordMapper meetingRecordMapper;
+    private MeetingFolderRelMapper meetingFolderRelMapper;
 
     private MeetingFolder requireOwnership(Long folderId) {
         MeetingFolder folder = meetingFolderMapper.selectMeetingFolderById(folderId);
@@ -62,12 +63,13 @@ public class MeetingFolderServiceImpl implements IMeetingFolderService {
     @Transactional
     public int deleteMeetingFolderByIds(Long[] folderIds)
     {
-        for (Long folderId : folderIds) {
-            requireOwnership(folderId);
+        for (Long folderId : folderIds)
+        {
+            requireOwnership(folderId); // 批量删除，逐个校验
         }
         for (Long folderId : folderIds)
         {
-            meetingRecordMapper.clearFolderId(folderId);
+            meetingFolderRelMapper.deleteByFolderId(folderId); // 删标签本身，连带把打过这个标签的关联关系一起清掉，会议记录本身不受影响
         }
         return meetingFolderMapper.deleteMeetingFolderByIds(folderIds);
     }

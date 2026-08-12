@@ -12,7 +12,6 @@
         <result property="duration"      column="duration"       />
         <result property="status"        column="status"         />
         <result property="isFavorite"    column="is_favorite"    />
-        <result property="folderId"      column="folder_id"      />
         <result property="mergeFromIds"  column="merge_from_ids" />
         <result property="isMerged"      column="is_merged"      />
         <result property="recordStatus"      column="record_status"       />
@@ -27,7 +26,7 @@
 
     <sql id="selectMeetingRecordVo">
         select meeting_id, title, source_type, audio_path, duration, status, is_favorite,
-        folder_id, merge_from_ids, is_merged,
+        merge_from_ids, is_merged,
         record_status, record_start_time, record_end_time,
         create_by, create_time, update_by, update_time, summary
         from huiyi_meeting
@@ -65,9 +64,21 @@
             <if test="createBy != null and createBy != ''">
                 and create_by = #{createBy}
             </if>
-            <!-- folderId 用于文件夹详情页；不传该参数时表示"全部会议纪要"，不限制文件夹 -->
+            <!-- folderId 用于"某个标签下的会议"视图；不传该参数时表示"全部会议纪要"，不限制标签。
+                 现在文件夹是标签式的多对多关系，改成EXISTS子查询关联表，不再是单列直接比较 -->
             <if test="folderId != null">
-                and folder_id = #{folderId}
+                and exists (
+                select 1 from huiyi_meeting_folder_rel r
+                where r.meeting_id = huiyi_meeting.meeting_id and r.folder_id = #{folderId}
+                )
+            </if>
+            <!-- excludeFolderId 用于"把会议加进某个文件夹"的选择器：只返回还没在这个标签下的会议，
+                 避免用户在选择列表里对着已经加过的记录重复勾选 -->
+            <if test="excludeFolderId != null">
+                and not exists (
+                select 1 from huiyi_meeting_folder_rel r2
+                where r2.meeting_id = huiyi_meeting.meeting_id and r2.folder_id = #{excludeFolderId}
+                )
             </if>
             <if test="status != null">
                 and status = #{status}
@@ -87,7 +98,7 @@
     <insert id="insertMeetingRecord" parameterType="com.ruoyi.huiyi.domain.MeetingRecord" useGeneratedKeys="true" keyProperty="meetingId">
         insert into huiyi_meeting (
         title, source_type, audio_path, duration, status, is_favorite,
-        folder_id, merge_from_ids, is_merged, record_status, create_by, create_time
+        merge_from_ids, is_merged, record_status, create_by, create_time
         ) values (
         #{title}, #{sourceType}, #{audioPath}, #{duration},
         <choose><when test="status != null">#{status}</when><otherwise>0</otherwise></choose>,
@@ -108,7 +119,6 @@
             <if test="duration != null">duration = #{duration},</if>
             <if test="status != null">status = #{status},</if>
             <if test="isFavorite != null">is_favorite = #{isFavorite},</if>
-            <if test="folderId != null">folder_id = #{folderId},</if>
             <if test="updateBy != null">update_by = #{updateBy},</if>
             <if test="summary != null">summary = #{summary},</if>
             update_time = sysdate()
@@ -135,29 +145,12 @@
         update huiyi_meeting set is_favorite = #{isFavorite}, update_time = sysdate() where meeting_id = #{meetingId}
     </update>
 
-    <update id="batchMoveFolder">
-        update huiyi_meeting set folder_id = #{folderId}, update_time = sysdate()
-        where meeting_id in
-        <foreach collection="meetingIds" item="meetingId" open="(" separator="," close=")">
-            #{meetingId}
-        </foreach>
-    </update>
-
     <update id="markAsMerged">
         update huiyi_meeting set is_merged = '1', update_time = sysdate()
         where meeting_id in
         <foreach collection="meetingIds" item="meetingId" open="(" separator="," close=")">
             #{meetingId}
         </foreach>
-    </update>
-
-    <select id="countByFolderId" resultType="int">
-        select count(1) from huiyi_meeting
-        where del_flag = '0' and is_merged = '0' and folder_id = #{folderId}
-    </select>
-
-    <update id="clearFolderId">
-        update huiyi_meeting set folder_id = null, update_time = sysdate() where folder_id = #{folderId}
     </update>
 
     <select id="selectMeetingRecordForUpdate" resultMap="MeetingRecordResult">

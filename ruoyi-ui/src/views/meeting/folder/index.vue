@@ -485,7 +485,8 @@ export default {
       this.$confirm(
         `确定删除文件夹「${item.title || item.folderName}」吗？文件夹内的会议记录不会被删除，只会移出文件夹。`,
         '删除确认',
-        { type: 'warning', confirmButtonText: '删除', cancelButtonText: '取消' }
+        { type: 'warning', confirmButtonText: '删除', cancelButtonText: '取消', customClass: 'new-folder-dialog', 
+        distinguishCancelAndClose: true, showClose: false }
       ).then(async () => {
         try {
           await delFolder(item.id)
@@ -820,6 +821,31 @@ body .new-folder-dialog.el-message-box { border-radius: 14px !important; }
     color: #fff !important;
   }
   .el-message-box__btns .el-button:first-child {
+    background-color: #f56c6c !important;
+    border-color: #f56c6c !important;
+    color: #fff !important;
+  }
+}
+
+.new-folder-dialog.el-message-box {
+  border-radius: 14px !important;
+  .el-message-box__btns .el-button {
+    border-radius: 14px !important;
+    font-weight: 600;
+    padding: 10px 28px;
+  }
+  .el-message-box__btns .el-button--primary {
+    background-color: #4a7dff !important;
+    border-color: #4a7dff !important;
+    color: #fff !important;
+  }
+  .el-message-box__btns .el-button:first-child {
+    background-color: #f56c6c !important;
+    border-color: #f56c6c !important;
+    color: #fff !important;
+  }
+  .el-message-box__btns .el-button--warning,
+  .el-message-box__btns .el-button--danger {
     background-color: #f56c6c !important;
     border-color: #f56c6c !important;
     color: #fff !important;

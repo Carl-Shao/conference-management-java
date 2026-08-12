@@ -3,7 +3,6 @@ package com.ruoyi.huiyi.service;
 import com.ruoyi.huiyi.domain.MeetingRecord;
 import com.ruoyi.huiyi.domain.dto.MeetingFolderTagDTO;
 import com.ruoyi.huiyi.domain.dto.MeetingMergeDTO;
-import com.ruoyi.huiyi.domain.dto.MeetingMoveFolderDTO;
 import com.ruoyi.huiyi.domain.dto.MeetingSetFoldersDTO;
 import com.ruoyi.huiyi.domain.vo.MeetingDetailVO;
 

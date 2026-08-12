@@ -39,8 +39,15 @@ public class MeetingRecord extends BaseEntity {
     /** 是否收藏（0否 1是） */
     private String isFavorite;
 
-    /** 所属文件夹ID */
+    /** 按文件夹（标签）过滤时用，不映射数据库列（现在是多对多关联表，不是单列了） */
     private Long folderId;
+
+    /** 排除已经在某个文件夹（标签）里的会议，不映射数据库列。
+     *  给"往文件夹里加会议"的选择器用：传当前这个folderId，列表就只返回还没加进来的会议，不会出现重复可选 */
+    private Long excludeFolderId;
+
+    /** 该会议当前打了哪些文件夹（标签），不映射数据库列，查详情/列表时按需从关联表填充展示用 */
+    private java.util.List<Long> folderIds;
 
     /** 合并来源的会议ID，逗号分隔 */
     private String mergeFromIds;
@@ -86,6 +93,12 @@ public class MeetingRecord extends BaseEntity {
 
     public Long getFolderId() { return folderId; }
     public void setFolderId(Long folderId) { this.folderId = folderId; }
+
+    public Long getExcludeFolderId() { return excludeFolderId; }
+    public void setExcludeFolderId(Long excludeFolderId) { this.excludeFolderId = excludeFolderId; }
+
+    public java.util.List<Long> getFolderIds() { return folderIds; }
+    public void setFolderIds(java.util.List<Long> folderIds) { this.folderIds = folderIds; }
 
     public String getMergeFromIds() { return mergeFromIds; }
     public void setMergeFromIds(String mergeFromIds) { this.mergeFromIds = mergeFromIds; }

@@ -100,9 +100,35 @@ export function favoriteMeeting(meetingId, favorite) {
  * @param {Object} data MeetingMoveFolderDTO { meetingIds: [], folderId: '' }
  *   - folderId 传空表示移出文件夹
  */
-export function moveMeetingFolder(data) {
+export function addMeetingToFolder(data) {
   return request({
-    url: '/huiyi/record/moveFolder',
+    url: '/huiyi/meeting/folder/add',
+    method: 'put',
+    data: data
+  })
+}
+
+/**
+ * 批量给会议去掉某个标签，不影响其他标签归属
+ * @param {Object} data MeetingMoveFolderDTO { meetingIds: [], folderId: '' }
+ *   - folderId 传空表示移出文件夹
+ */
+export function removeMeetingFromFolder(data) {
+  return request({
+    url: '/huiyi/meeting/folder/remove',
+    method: 'put',
+    data: data
+  })
+}
+
+/**
+ * 合并多条会议记录
+ * @param {Object} data MeetingMoveFolderDTO { meetingIds: [], folderId: '' }
+ *   - folderId 传空表示移出文件夹
+ */
+export function setMeetingFolders(data) {
+  return request({
+    url: '/huiyi/meeting/folders',
     method: 'put',
     data: data
   })

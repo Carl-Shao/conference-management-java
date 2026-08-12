@@ -17,7 +17,9 @@
 
     <sql id="selectMeetingFolderVo">
         select f.folder_id, f.folder_name, f.remark, f.create_by, f.create_time, f.update_by, f.update_time,
-        (select count(1) from huiyi_meeting m where m.folder_id = f.folder_id and m.del_flag = '0' and m.is_merged = '0') as meeting_count
+        (select count(1) from huiyi_meeting_folder_rel r
+        inner join huiyi_meeting m on m.meeting_id = r.meeting_id
+        where r.folder_id = f.folder_id and m.del_flag = '0' and m.is_merged = '0') as meeting_count
         from huiyi_folder f
     </sql>
 

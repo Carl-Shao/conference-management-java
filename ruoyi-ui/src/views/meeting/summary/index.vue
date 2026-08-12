@@ -452,7 +452,8 @@ export default {
     handleCommand(command, row) {
       switch (command) {
         case 'delete':
-          this.$confirm('确定删除该会议纪要吗？删除后不可恢复。', '提示', { type: 'warning' }).then(() => delMeeting([row.meetingId])).then(() => { this.$message.success('已删除'); this.getList() }).catch(() => {})
+          this.$confirm('确定删除该会议纪要吗？删除后不可恢复。', '提示', { type: 'warning',confirmButtonText: '删除',
+        cancelButtonText: '取消', customClass: 'delete-confirm-dialog', distinguishCancelAndClose: true, showClose: false }).then(() => delMeeting([row.meetingId])).then(() => { this.$message.success('已删除'); this.getList() }).catch(() => {})
           break
         case 'download':
           { const link = this.$refs.downloadLink; link.href = row.downloadUrl || `/huiyi/meeting/download/${row.meetingId}`; link.download = `${row.title}.mp3`; link.click() }
@@ -464,7 +465,9 @@ export default {
           favoriteMeeting(row.meetingId, false).then(() => { row.isFavorite = false; this.$message.success('已从收藏列表移除') })
           break
         case 'rename':
-          this.$prompt('请输入新名称', '重命名', { confirmButtonText: '确定', cancelButtonText: '取消', inputValue: row.title }).then(({ value }) => { if (!value || !value.trim()) return; renameMeeting(row.meetingId, value.trim()).then(() => { this.$message.success('重命名成功'); this.getList() }) }).catch(() => {})
+          this.$prompt('请输入新名称', '重命名', { confirmButtonText: '确定', cancelButtonText: '取消', inputValue: row.title,
+            inputPattern: /\S+/, inputErrorMessage: '名称不能为空', customClass: 'new-folder-dialog' 
+           }).then(({ value }) => { if (!value || !value.trim()) return; renameMeeting(row.meetingId, value.trim()).then(() => { this.$message.success('重命名成功'); this.getList() }) }).catch(() => {})
           break
         case 'move': this.$message.info('移动功能待对接文件夹选择器'); break
         case 'merge': this.$message.info('合并功能待对接会议选择器'); break
@@ -879,5 +882,61 @@ export default {
   .icon-clr-red { color: #f56c6c !important; }
   .el-dropdown-menu__item--divided:before { margin: 4px 20px !important; }
   .dropdown-svg-icon { width: 26px; height: 26px; margin-right: 10px; vertical-align: middle; display: inline-flex; align-items: center; flex-shrink: 0; }
+}
+
+.new-folder-dialog.el-message-box {
+  border-radius: 14px !important;
+  .el-message-box__btns .el-button {
+    border-radius: 14px !important;
+    font-weight: 600;
+    padding: 10px 28px;
+  }
+  .el-message-box__btns .el-button--primary {
+    background-color: #4a7dff !important;
+    border-color: #4a7dff !important;
+    color: #fff !important;
+  }
+  .el-message-box__btns .el-button:first-child {
+    background-color: #f56c6c !important;
+    border-color: #f56c6c !important;
+    color: #fff !important;
+  }
+}
+.delete-confirm-dialog.el-message-box {
+  border-radius: 14px !important;
+  .el-message-box__title {
+    font-size: 18px;
+    font-weight: 600;
+    color: #303133;
+  }
+  .el-message-box__message p {
+    font-size: 14px;
+    color: #606266;
+    line-height: 1.6;
+  }
+  .el-message-box__btns .el-button {
+    border-radius: 14px !important;
+    font-weight: 600;
+    padding: 10px 28px;
+  }
+  .el-message-box__btns .el-button:first-child {
+    background-color: #f5f6f8 !important;
+    border-color: #dcdfe6 !important;
+    color: #606266 !important;
+    &:hover {
+      background-color: #e8eaed !important;
+      border-color: #dcdfe6 !important;
+      color: #606266 !important;
+    }
+  }
+  .el-message-box__btns .el-button:last-child {
+    background-color: #f56c6c !important;
+    border-color: #f56c6c !important;
+    color: #fff !important;
+    &:hover {
+      background-color: #f78989 !important;
+      border-color: #f78989 !important;
+    }
+  }
 }
 </style>
