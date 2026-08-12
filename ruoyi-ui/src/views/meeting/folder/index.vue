@@ -168,14 +168,14 @@
           <!-- 动态文件夹 -->
           <div 
             v-for="item in folderList" 
-            :key="item.id" 
+            :key="item.folderId" 
             class="folder-card"
             :class="{ 'clicked': clickedFolderId === item.id }"
             @click="handleFolderClick(item)"
             @animationend="clickedFolderId = null"
           >
             <div class="folder-header">
-              <span class="folder-file-count">{{ item.fileCount || 0 }}个文件</span>
+              <span class="folder-file-count">{{ item.meetingCount || 0 }}个文件</span>
               
               <el-dropdown trigger="click" @command="(cmd) => handleFolderCommand(cmd, item)" @click.native.stop>
                 <i class="el-icon-more folder-more" @click.stop />
@@ -476,11 +476,9 @@ export default {
       if (!detail) return
 
       this.$router.push({
-        path: '/meeting/folder-detail',
-        query: {
-          folderId: item.folderId,
-          name: item.title || item.folderName
-        }
+        name: 'FolderDetail',
+        params: { folderId: item.folderId },
+        query: { name: item.title || item.folderName }
       })
     },
 

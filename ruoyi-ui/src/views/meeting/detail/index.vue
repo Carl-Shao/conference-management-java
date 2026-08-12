@@ -22,7 +22,13 @@
             <path d="M16 28V32C16 33.1046 16.8954 34 18 34H30C31.1046 34 32 33.1046 32 32V28" stroke="#67C23A" stroke-width="2" stroke-linecap="round" />
           </svg>
         </div>
-        <div class="record-title">{{ detail.title || '加载中...' }}</div>
+        <input v-if="isEditingTitle" ref="titleInputRef" v-model="editingTitleValue" class="inline-title-input"
+          @blur="finishEditTitle" @keydown.enter="finishEditTitle" @keydown.escape="cancelEditTitle" />
+        <!-- 原标题：点击触发编辑 -->
+        <div v-else class="record-title" @click="startEditTitle" :title="'点击编辑: ' + (detail.title || '')">
+          {{ detail.title || '加载中...' }}
+        </div>
+
       </div>
 
       <div class="top-actions">
@@ -51,13 +57,16 @@
           </button>
           <el-dropdown-menu slot="dropdown" class="custom-action-dropdown">
             <el-dropdown-item command="copy">
-              <i class="el-icon-document-copy icon-clr-blue"></i>复制全文
+              <i class="el-icon-document-copy icon-clr-blue"></i>
+              <span>复制全文</span>
             </el-dropdown-item>
             <el-dropdown-item command="rename">
-              <i class="el-icon-edit-outline icon-clr-blue"></i>重命名
+              <i class="el-icon-edit icon-clr-purple"></i>
+              <span>重命名</span>
             </el-dropdown-item>
-            <el-dropdown-item divided command="delete">
-              <i class="el-icon-delete icon-clr-red"></i>删除纪要
+            <el-dropdown-item command="delete">
+              <i class="el-icon-delete icon-clr-red"></i>
+              <span>删除纪要</span>
             </el-dropdown-item>
           </el-dropdown-menu>
         </el-dropdown>
@@ -202,6 +211,8 @@ export default {
       loading: false,
       isFavorite: false,
       currentTab: 'summary',
+      isEditingTitle: false,      // 是否处于标题编辑模式
+      editingTitleValue: '',
 
       summaryEditing: false,   // 纪要是否处于编辑模式
       notesEditing: false,     // 笔记是否处于编辑模式
@@ -338,6 +349,41 @@ export default {
         this.$message.error('下载失败，请稍后重试');
       }
     },
+    startEditTitle() {
+      if (this.loading) return
+      this.editingTitleValue = this.detail.title || ''
+      this.isEditingTitle = true
+      this.$nextTick(() => {
+        const input = this.$refs.titleInputRef
+        if (input) {
+          input.focus()
+          input.select() // 自动全选方便修改
+        }
+      })
+    },
+    async finishEditTitle() {
+      const newTitle = (this.editingTitleValue || '').trim()
+      const oldTitle = (this.detail.title || '').trim()
+      // 内容没变或为空，直接取消编辑
+      if (!newTitle || newTitle === oldTitle) {
+        this.isEditingTitle = false
+        return
+      }
+      try {
+        await renameMeeting(this.detail.meetingId, newTitle)
+        this.detail.title = newTitle
+        this.$message.success('重命名成功')
+      } catch (err) {
+        this.$message.error(err?.msg || '重命名失败')
+        // 失败时保持编辑状态，让用户可以重试或按 Esc 取消
+        return
+      } finally {
+        this.isEditingTitle = false
+      }
+    },
+    cancelEditTitle() {
+      this.isEditingTitle = false
+    },
     async loadAudio(meetingId) {
       try {
         const res = await getMeetingAudioBlob(meetingId)
@@ -447,10 +493,8 @@ export default {
     },
     handleCommand(cmd) {
       if (cmd === 'rename') {
-        this.$prompt('请输入新名称', '重命名', {
-          confirmButtonText: '确定',
-          cancelButtonText: '取消',
-          inputValue: this.detail.title
+        this.$prompt('请输入新名称', '重命名', { confirmButtonText: '确定', cancelButtonText: '取消', inputValue: this.detail.title,
+        inputPattern: /\S+/, inputErrorMessage: '名称不能为空', customClass: 'detail-rename-dialog', distinguishCancelAndClose: true
         }).then(({ value }) => {
           if (!value || !value.trim()) return
           renameMeeting(this.detail.meetingId, value.trim()).then(() => {
@@ -462,7 +506,8 @@ export default {
         return
       }
       if (cmd === 'delete') {
-        this.$confirm('确定删除该会议纪要吗？', '提示', { type: 'warning' }).then(() => {
+        this.$confirm('确定删除该会议纪要吗？', '提示', { type: 'warning',confirmButtonText: '删除', cancelButtonText: '取消',
+        customClass: 'detail-delete-dialog', distinguishCancelAndClose: true, showClose: false }).then(() => {
           const id = Number(this.detail.meetingId)
           if (isNaN(id)) return this.$message.error('ID无效')
           delMeeting([id]).then(() => {
@@ -659,6 +704,14 @@ export default {
 .record-title { 
   font-size: 18px; font-weight: 600; color: var(--ink); 
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1.2;
+  cursor: pointer; border-radius: 6px; padding: 2px 6px; margin-left: -6px; 
+  &:hover { background: rgba(20, 24, 40, 0.04); }
+}
+.inline-title-input {
+  font-size: 18px; font-weight: 600; color: var(--ink); line-height: 1.2; border: none;
+  border-radius: 6px; padding: 2px 6px; margin-left: -6px; outline: none; background: transparent;
+  width: 100%; max-width: 400px; box-sizing: border-box; font-family: var(--font);
+  &::selection { background: var(--blue-soft); }
 }
 
 .top-actions { display: flex; align-items: center; gap: 10px; }
@@ -913,5 +966,105 @@ export default {
   
   &::placeholder { color: var(--muted); opacity: 0.6; }
 }
+</style>
 
+<style lang="scss">
+/* ========== 详情页下拉菜单 ========== */
+.custom-action-dropdown.el-dropdown-menu {
+  border-radius: 20px !important;
+  padding: 6px 0 !important;
+  overflow: hidden;
+  min-width: 160px;
+  .el-dropdown-menu__item {
+    font-size: 15px !important;
+    line-height: 22px !important;
+    padding: 10px 20px !important;
+    color: #303133 !important;
+    display: flex !important;
+    align-items: center !important;
+    i {
+      font-size: 18px !important;
+      margin-right: 10px !important;
+      width: 22px !important;
+      text-align: center !important;
+      flex-shrink: 0;
+    }
+    span { flex: 1; }
+
+    &:hover, &:focus {
+      background-color: #f5f7fa !important;
+    }
+    &.custom-divider {
+      position: relative;
+      &::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 20px;
+        right: 20px;
+        height: 1px;
+        background: #ebeef5;
+      }
+    }
+  }
+  .icon-clr-blue { color: #409eff !important; }
+  .icon-clr-purple { color: #9b59b6 !important; }
+  .icon-clr-red { color: #f56c6c !important; }
+}
+/* ========== 详情页-重命名弹窗 (独立类名) ========== */
+.detail-rename-dialog.el-message-box {
+  border-radius: 14px !important;
+  padding-bottom: 20px !important;
+  .el-message-box__header { padding: 20px 24px 10px; }
+  .el-message-box__title { font-size: 18px; font-weight: 600; color: #303133; }
+  .el-message-box__content { padding: 10px 24px; }
+  .el-message-box__input input {
+    border-radius: 10px !important;
+    height: 40px;
+    line-height: 40px;
+  }
+  .el-message-box__btns {
+    padding: 10px 24px 0;
+    .el-button {
+      border-radius: 14px !important;
+      font-weight: 600;
+      padding: 10px 28px;
+    }
+    .el-button--primary {
+      background-color: #4a7dff !important;
+      border-color: #4a7dff !important;
+    }
+  }
+}
+/* ========== 详情页-删除确认弹窗 (独立类名) ========== */
+.detail-delete-dialog.el-message-box {
+  border-radius: 14px !important;
+  padding-bottom: 20px !important;
+  .el-message-box__header { padding: 20px 24px 10px; }
+  .el-message-box__title { font-size: 18px; font-weight: 600; color: #303133; }
+  .el-message-box__message p { font-size: 14px; color: #606266; line-height: 1.6; }
+  .el-message-box__content { padding: 10px 24px; }
+  .el-message-box__btns {
+    padding: 10px 24px 0;
+    .el-button {
+      border-radius: 14px !important;
+      font-weight: 600;
+      padding: 10px 28px;
+    }
+    /* 取消按钮 */
+    .el-button:first-child {
+      background-color: #f5f6f8 !important;
+      border-color: #dcdfe6 !important;
+      color: #606266 !important;
+      &:hover { background-color: #e8eaed !important; }
+    }
+    /* 删除按钮 - 红色 */
+    .el-button:last-child {
+      background-color: #f56c6c !important;
+      border-color: #f56c6c !important;
+      color: #fff !important;
+      &:hover { background-color: #f78989 !important; border-color: #f78989 !important; }
+    }
+  }
+}
 </style>

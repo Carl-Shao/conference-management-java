@@ -103,7 +103,7 @@
         #{title}, #{sourceType}, #{audioPath}, #{duration},
         <choose><when test="status != null">#{status}</when><otherwise>0</otherwise></choose>,
         <choose><when test="isFavorite != null">#{isFavorite}</when><otherwise>'0'</otherwise></choose>,
-        #{folderId}, #{mergeFromIds},
+        #{mergeFromIds},
         <choose><when test="isMerged != null">#{isMerged}</when><otherwise>'0'</otherwise></choose>,
         <choose><when test="recordStatus != null">#{recordStatus}</when><otherwise>0</otherwise></choose>,
         #{createBy}, sysdate()

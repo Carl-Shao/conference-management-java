@@ -4,9 +4,7 @@
     <!-- 搜索模式 (全屏/独立视图) -->
     <!-- ======================= -->
     <div v-if="isSearchMode" class="search-mode-overlay">
-      <!-- 修改点：将筛选栏整合进 search-bar-wrapper -->
       <div class="search-bar-wrapper">
-        <!-- 左侧叉号按钮 -->
         <button class="search-close-btn" @click="exitSearch" aria-label="关闭搜索">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
             <line x1="18" y1="6" x2="6" y2="18" />
@@ -14,7 +12,6 @@
           </svg>
         </button>
 
-        <!-- 搜索框 -->
         <el-input
           ref="searchInputRef"
           v-model="queryParams.title"
@@ -25,7 +22,6 @@
           @input="handleSearchInput"
         />
 
-        <!-- 右侧操作区：排序 + 筛选 + 日期 (原 search-filter-bar 内容) -->
         <div class="search-actions-right">
           <div class="action-divider"></div>
           
@@ -100,8 +96,8 @@
           </div>
 
           <div class="meeting-list search-result-list">
-            <div v-for="item in meetingList" :key="item.id" class="meeting-card search-result-card"
-              :class="{ 'is-clicking': clickingId === item.id }" @click="handleCardClick($event, item)">
+            <div v-for="item in meetingList" :key="item.meetingId" class="meeting-card search-result-card"
+              :class="{ 'is-clicking': clickingId === item.meetingId }" @click="handleCardClick($event, item)">
               <div class="card-icon">
                 <i v-if="item.isFavorite" class="favorite-badge el-icon-star-on" />
                 <svg v-if="item.sourceType === 'record'" viewBox="0 0 48 48" fill="none">
@@ -146,10 +142,22 @@
     </div>
 
     <!-- ======================= -->
-    <!-- 普通模式 (默认视图) - 保持不变 -->
+    <!-- 普通模式 (默认视图) -->
     <!-- ======================= -->
     <div v-else class="normal-mode-view">
-      <!-- ... 原有普通模式代码保持不变 ... -->
+      <!-- 文件夹导航栏 -->
+      <div v-if="currentFolder" class="folder-nav-bar">
+        <button class="folder-back-btn" @click="goBackToRoot" aria-label="返回全部纪要">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"
+            stroke-linejoin="round">
+            <path d="M19 12H5" />
+            <path d="M12 19l-7-7 7-7" />
+          </svg>
+        </button>
+        <span class="folder-nav-title">{{ currentFolder.name }}</span>
+        <span class="folder-nav-count">{{ meetingList.length }} 条纪要</span>
+      </div>
+      
       <div class="top-search-bar">
         <el-input
           v-model="queryParams.title"
@@ -160,65 +168,14 @@
           @input="handleSearchInput"
           @click.native.prevent="enterSearchMode"
         />
-
-        <div class="middle-actions">
-          <!-- 排序 -->
-          <el-dropdown trigger="click" @command="handleSortChange">
-            <button class="icon-action-btn sort-button" title="排序">
-              <svg viewBox="0 0 24 24" fill="currentColor">
-                <path d="M3 6h18v2H3V6zm0 4h12v2H3v-2zm0 4h6v2H3v-2zm0 4h18v2H3v-2z" />
-              </svg>
-            </button>
-            <el-dropdown-menu slot="dropdown" class="custom-action-dropdown">
-              <el-dropdown-item command="timeDesc"><i class="el-icon-time icon-clr-blue" /><span>按时间正序</span></el-dropdown-item>
-              <el-dropdown-item command="timeAsc"><i class="el-icon-time icon-clr-green" /><span>按时间倒序</span></el-dropdown-item>
-            </el-dropdown-menu>
-          </el-dropdown>
-
-          <!-- 筛选 -->
-          <el-dropdown trigger="click" @command="handleFilterChange">
-            <button class="icon-action-btn filter-button" :class="{ 'is-active': queryParams.sourceType }" title="筛选">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M4 4h16l-8 8v8H8v-8L4 4z" />
-              </svg>
-            </button>
-            <el-dropdown-menu slot="dropdown" class="custom-action-dropdown">
-              <el-dropdown-item command="all">
-                <svg class="dropdown-svg-icon" viewBox="0 0 48 48" fill="none"><path d="M14 6H30L38 14V38C38 40.2091 36.2091 42 34 42H14C11.7909 42 10 40.2091 10 38V10C10 7.79086 11.7909 6 14 6Z" stroke="#909399" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" /><path d="M30 6V14H38" stroke="#909399" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" /><line x1="16" y1="22" x2="32" y2="22" stroke="#909399" stroke-width="2.5" stroke-linecap="round" /><line x1="16" y1="28" x2="28" y2="28" stroke="#909399" stroke-width="2.5" stroke-linecap="round" /><line x1="16" y1="34" x2="24" y2="34" stroke="#909399" stroke-width="2.5" stroke-linecap="round" /></svg>
-                <span>全部纪要</span>
-              </el-dropdown-item>
-              <el-dropdown-item command="0">
-                <svg class="dropdown-svg-icon" viewBox="0 0 46 46" fill="none"><rect x="18" y="6" width="12" height="20" rx="6" fill="#4A7DFF" /><path d="M12 22a12 12 0 0 0 24 0" stroke="#4A7DFF" stroke-width="2" stroke-linecap="round" /><line x1="24" y1="34" x2="24" y2="40" stroke="#4A7DFF" stroke-width="2" stroke-linecap="round" /><line x1="18" y1="40" x2="30" y2="40" stroke="#4A7DFF" stroke-width="2" stroke-linecap="round" /></svg>
-                <span>录制音频文件</span>
-              </el-dropdown-item>
-              <el-dropdown-item command="1">
-                <svg class="dropdown-svg-icon" viewBox="0 0 26 26" fill="none"><path d="M12 4v12" stroke="#67C23A" stroke-width="2.2" stroke-linecap="round" /><path d="M8 9l4-5 4 5" stroke="#67C23A" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" /><path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2" stroke="#67C23A" stroke-width="2.2" stroke-linecap="round" /></svg>
-                <span>上传音频文件</span>
-              </el-dropdown-item>
-            </el-dropdown-menu>
-          </el-dropdown>
-        </div>
-
-        <div class="action-buttons-group">
-          <button class="upload-btn" @click="$refs.fileInput.click()">
-            <svg viewBox="0 0 24 24" fill="none">
-              <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8" stroke="#fff" stroke-width="2" />
-              <path d="M16 6l-4-4-4 4" stroke="#fff" stroke-width="2" />
-              <path d="M12 2v11" stroke="#fff" stroke-width="2" />
-            </svg>
-            <span>上传文件</span>
-            <input ref="fileInput" type="file" accept=".mp3,.wav,.m4a,.mp4,.mov,.pdf,.docx" style="display: none;"
-              @change="handleFileUpload" />
-          </button>
-        </div>
       </div>
 
       <!-- 2. 内容区：标题 + 列表 -->
       <div class="content-section">
-        <h2 class="section-title">我的会议纪要</h2>
+        <h2 class="section-title">{{ currentFolder ? '' : '我的文件夹' }}</h2>
 
         <div class="meeting-list">
-          <div v-for="item in meetingList" :key="item.id" class="meeting-card" :class="{ 'is-clicking': clickingId === item.id }"
+          <div v-for="item in meetingList" :key="item.meetingId" class="meeting-card" :class="{ 'is-clicking': clickingId === item.meetingId }"
             @click="handleCardClick($event, item)">
             <!-- 左侧图标 -->
             <div class="card-icon">
@@ -294,17 +251,14 @@
                       <feDropShadow dx="0" dy="8" stdDeviation="7" flood-color="#3a4658" flood-opacity=".18" />
                     </filter>
                   </defs>
-                  <!-- 后片 -->
                   <path d="M30 42 q0-9 9-9 h32 l11 13 h72 q9 0 9 9 v62 q0 9-9 9 H39 q-9 0-9-9 z"
                     fill="url(#empty-back)" />
-                  <!-- 问号 -->
                   <g class="qmark" filter="url(#empty-ds)">
                     <text x="148" y="66" font-size="62" font-weight="800" fill="#3f4f63" font-family="Arial"
                       opacity=".35" transform="translate(2,3)">?</text>
                     <text x="148" y="66" font-size="62" font-weight="800" fill="url(#empty-qg)"
                       font-family="Arial">?</text>
                   </g>
-                  <!-- 前片 -->
                   <path d="M22 72 q0-7 7-7 h58 l9 11 h76 q7 0 7 7 v40 q0 9-9 9 H31 q-9 0-9-9 z" fill="url(#empty-front)"
                     filter="url(#empty-ds)" />
                   <path d="M24 73 q0-6 6-6 h56 l8 10" fill="none" stroke="#ffffff" stroke-width="2.5"
@@ -316,10 +270,6 @@
           </div>
         </div>
       </div>
-
-      <div class="fab-btn" @click="startRecording">
-        <i class="el-icon-microphone" /><span>开始听记</span>
-      </div>
     </div>
 
     <a ref="downloadLink" style="display:none" />
@@ -327,18 +277,8 @@
 </template>
 
 <script>
-// Script 部分完全不需要修改，保持原样即可
-import {
-  listMeeting,
-  getMeetingDetail,
-  delMeeting,
-  renameMeeting,
-  favoriteMeeting,
-  moveMeetingToFolder,
-  mergeMeetings
-} from '@/api/huiyi/minutes'
-
-import { uploadAudio } from '@/api/huiyi/audio'
+import { listMeeting, getFolder } from '@/api/huiyi/folder'
+import { delMeeting, renameMeeting, favoriteMeeting } from '@/api/huiyi/minutes' 
 
 const SORT_COLUMN_MAP = {
   createTime: 'create_time',
@@ -349,9 +289,18 @@ const SORT_COLUMN_MAP = {
 
 export default {
   name: 'MeetingIndex',
+  props: {
+    // 允许父组件直接传入 folderId
+    folderId: {
+      type: [String, Number],
+      default: undefined
+    }
+  },
   data() {
     return {
       isSearchMode: false,
+      currentFolder: null,
+      activeFolderId: undefined, 
       beginTime: undefined, 
       endTime: undefined,   
       clickingId: null,
@@ -379,7 +328,28 @@ export default {
     }
   },
   created() {
+    this.initFolderContext()
     this.getList()
+  },
+  watch: {
+    // 监听 props 变化
+    folderId(newVal) {
+      this.initFolderContext()
+      this.getList()
+    },
+    // 监听 路由 变化
+    '$route.query': {
+      handler() {
+        this.initFolderContext()
+        this.getList()
+      }
+    },
+    '$route.params': {
+      handler() {
+        this.initFolderContext()
+        this.getList()
+      }
+    }
   },
   beforeDestroy() {
     if (this.searchDebounceTimer) clearTimeout(this.searchDebounceTimer)
@@ -388,10 +358,9 @@ export default {
     getList() {
       this.loading = true
       const params = { ...this.queryParams }
-      // 注意：不能写成 params.beginTime / params.endTime 这种顶层key，
-      // 后端 MeetingRecord(继承BaseEntity) 没有这两个字段，只在 params 这个 Map 属性里，
-      // Spring 绑定Map类型属性要求方括号写法 params[beginTime]=xxx，
-      // 顶层key会被Spring直接忽略掉（找不到对应setter，不报错，静默丢弃）
+      if (this.activeFolderId) {
+        params.folderId = this.activeFolderId
+      }
       if (this.beginTime) {
         params['params[beginTime]'] = this.beginTime.length === 10
           ? `${this.beginTime} 00:00:00`
@@ -402,17 +371,74 @@ export default {
           ? `${this.endTime} 23:59:59`
           : this.endTime
       }
+
       Object.keys(params).forEach(key => {
         if (params[key] === '' || params[key] === undefined || params[key] === null) delete params[key]
       })
+
       listMeeting(params).then(response => {
         this.meetingList = (response.rows || []).map(item => ({
           ...item,
-          isFavorite: item.isFavorite === '1',
+          meetingId: item.meetingId || item.id,
+          isFavorite: item.isFavorite === '1' || item.isFavorite === true,
           sourceType: item.sourceType === '0' ? 'record' : 'upload'
         }))
       }).finally(() => { this.loading = false })
     },
+    
+    initFolderContext() {
+      const targetFolderId = this.folderId
+        || this.$route.query.folderId
+        || (this.$route.params && this.$route.params.folderId)
+      const targetFolderName = this.$route.query.folderName
+      if (targetFolderId) {
+        this.activeFolderId = targetFolderId
+        this.currentFolder = {
+          id: targetFolderId,
+          name: targetFolderName ? decodeURIComponent(targetFolderName) : '加载中...'
+        }
+        if (!targetFolderName) {
+          getFolder(targetFolderId).then(res => {
+            if (res.data) {
+              this.currentFolder = {
+                ...this.currentFolder,
+                name: res.data.name || res.data.folderName || '未命名文件夹'
+              }
+            }
+          }).catch(() => {
+            this.currentFolder = {
+              ...this.currentFolder,
+              name: '文件夹'
+            }
+          })
+        }
+      } else {
+        this.activeFolderId = undefined
+        this.currentFolder = null
+      }
+    },
+
+    goBackToRoot() {
+      this.currentFolder = null
+      this.activeFolderId = undefined
+      if (this.folderId !== undefined) {
+        this.$emit('back')
+        return
+      }
+      
+      const rootPath = '/meeting/folder' 
+      if (this.$route.path !== rootPath || Object.keys(this.$route.query).length > 0) {
+        this.$router.replace({
+          path: rootPath,
+          query: {}
+        }).catch(err => {
+          if (err.name !== 'NavigationDuplicated') console.error(err)
+        })
+      } else {
+        this.getList()
+      }
+    },
+
     handleSearchInput(val) {
       if (this.searchDebounceTimer) clearTimeout(this.searchDebounceTimer)
       this.searchDebounceTimer = setTimeout(() => {
@@ -437,28 +463,6 @@ export default {
       this.beginTime = undefined
       this.endTime = undefined
       this.getList()
-    },
-    handleFileUpload(event) {
-      const file = event.target.files[0]
-      if (!file) return
-      const allowedTypes = ['.mp3', '.wav', '.m4a', '.mp4', '.mov']
-      const ext = '.' + file.name.split('.').pop().toLowerCase()
-      if (!allowedTypes.includes(ext)) {
-        this.$message.error(`不支持的文件格式: ${ext}`)
-        this.$refs.fileInput.value = ''
-        return
-      }
-      const loadingInstance = this.$loading({ lock: true, text: `正在上传 "${file.name}"...`, spinner: 'el-icon-loading' })
-      uploadAudio([file]).then(response => {
-        this.$message.success(`文件 "${file.name}" 上传成功`)
-        this.getList()
-      }).catch(error => {
-        console.error(error)
-        this.$message.error(error.msg || '上传失败')
-      }).finally(() => {
-        loadingInstance.close()
-        this.$refs.fileInput.value = ''
-      })
     },
     highlightText(text, keyword) {
       if (!keyword || !keyword.trim()) return this.escapeHtml(text)
@@ -488,21 +492,22 @@ export default {
       this.getList()
     },
     handleCommand(command, row) {
+      const id = row.meetingId
       switch (command) {
         case 'delete':
-          this.$confirm('确定删除该会议纪要吗？删除后不可恢复。', '提示', { type: 'warning' }).then(() => delMeeting([row.meetingId])).then(() => { this.$message.success('已删除'); this.getList() }).catch(() => {})
+          this.$confirm('确定删除该会议纪要吗？删除后不可恢复。', '提示', { type: 'warning' }).then(() => delMeeting(id)).then(() => { this.$message.success('已删除'); this.getList() }).catch(() => {})
           break
         case 'download':
-          { const link = this.$refs.downloadLink; link.href = row.downloadUrl || `/huiyi/meeting/download/${row.meetingId}`; link.download = `${row.title}.mp3`; link.click() }
+          { const link = this.$refs.downloadLink; link.href = row.downloadUrl || `/huiyi/record/${id}/audio`; link.download = `${row.title}.mp3`; link.click() }
           break
         case 'addFavorite':
-          favoriteMeeting(row.meetingId, true).then(() => { row.isFavorite = true; this.$message.success('已添加到收藏') })
+          favoriteMeeting(id, true).then(() => { row.isFavorite = true; this.$message.success('已添加到收藏') })
           break
         case 'removeFavorite':
-          favoriteMeeting(row.meetingId, false).then(() => { row.isFavorite = false; this.$message.success('已从收藏列表移除') })
+          favoriteMeeting(id, false).then(() => { row.isFavorite = false; this.$message.success('已从收藏列表移除') })
           break
         case 'rename':
-          this.$prompt('请输入新名称', '重命名', { confirmButtonText: '确定', cancelButtonText: '取消', inputValue: row.title }).then(({ value }) => { if (!value || !value.trim()) return; renameMeeting(row.meetingId, value.trim()).then(() => { this.$message.success('重命名成功'); this.getList() }) }).catch(() => {})
+          this.$prompt('请输入新名称', '重命名', { confirmButtonText: '确定', cancelButtonText: '取消', inputValue: row.title }).then(({ value }) => { if (!value || !value.trim()) return; renameMeeting(id, value.trim()).then(() => { this.$message.success('重命名成功'); this.getList() }) }).catch(() => {})
           break
         case 'move': this.$message.info('移动功能待对接文件夹选择器'); break
         case 'merge': this.$message.info('合并功能待对接会议选择器'); break
@@ -513,16 +518,58 @@ export default {
       if (target.closest('.el-dropdown') || target.classList.contains('card-more')) return
       this.$router.push(`/meeting/detail/${item.meetingId}`)
     },
-    startRecording() {
-      let backRoute = ''
-      try { backRoute = JSON.stringify({ name: this.$route.name, path: this.$route.path, query: this.$route.query || {} }) } catch (e) { backRoute = this.$route.path }
-      this.$router.push({ path: '/meeting/record', query: { backRoute } })
-    }
   }
 }
 </script>
 
 <style lang="scss" scoped>
+/* 样式保持不变 */
+.folder-nav-bar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 0 20px 16px 20px;
+  flex-shrink: 0;
+  animation: navSlideDown 0.25s ease-out;
+}
+@keyframes navSlideDown {
+  from { opacity: 0; transform: translateY(-8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.folder-back-btn {
+  width: 34px;
+  height: 34px;
+  border: none;
+  background: #f5f6f8;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: all 0.2s;
+  color: #606266;
+
+  svg { width: 18px; height: 18px; }
+  &:hover { background: #e8eaed; color: #303133; }
+  &:active { transform: scale(0.92); }
+}
+.folder-nav-title {
+  font-size: 18px;
+  font-weight: 600;
+  color: #303133;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 400px;
+}
+.folder-nav-count {
+  font-size: 13px;
+  color: #909399;
+  flex-shrink: 0;
+  margin-left: auto;
+  padding-right: 4px;
+}
 .meeting-index {
   padding: 24px;
   background: #ffffff;
@@ -550,14 +597,13 @@ export default {
   to   { opacity: 1; transform: translateY(0); }
 }
 
-/* ⭐️ 修改：整合后的搜索栏容器 */
 .search-bar-wrapper {
-  display: flex; /* 改为 Flex 布局 */
+  display: flex;
   align-items: center;
   gap: 16px;
   padding: 12px 24px;
   flex-shrink: 0;
-  border-bottom: 1px solid #f0f1f3; /* 添加底部分割线代替原来的 filter-bar */
+  border-bottom: 1px solid #f0f1f3;
 }
 
 .search-close-btn {
@@ -576,10 +622,9 @@ export default {
   &:active { transform: scale(0.92); }
 }
 
-/* ⭐️ 修改：搜索框自适应宽度 */
 .search-mode-input {
   flex: 1; 
-  min-width: 200px; /* 防止过窄 */
+  min-width: 200px;
 
   ::v-deep .el-input__inner {
     height: 36px;
@@ -606,7 +651,6 @@ export default {
   }
 }
 
-/* ⭐️ 新增：右侧操作区容器 */
 .search-actions-right {
   display: flex;
   align-items: center;
@@ -633,7 +677,6 @@ export default {
   flex-shrink: 0;
 }
 
-/* 独立日期选择器样式 - 稍微调小以适应单行 */
 .single-date-picker {
   width: 130px; 
 
@@ -667,7 +710,6 @@ export default {
   p { font-size: 15px; color: #b0b3b8; }
 }
 
-/* ========== 搜索结果专属样式 ========== */
 .search-result-list { gap: 0; }
 
 .search-result-card {
@@ -702,7 +744,6 @@ export default {
   color: #909399;
 }
 
-/* ========== 普通模式样式 (保持不变) ========== */
 .normal-mode-view {
   flex: 1;
   min-height: 0vh;
@@ -799,7 +840,7 @@ export default {
 
 .icon-action-btn {
   z-index: 100;
-  width: 36px; /* 稍微缩小以适应搜索栏 */
+  width: 36px;
   height: 36px;
   border: none;
   background: transparent;
@@ -856,12 +897,12 @@ export default {
 
 .card-icon {
   flex-shrink: 0;
-  width: 64px;
-  height: 48px;
-  margin-right: 16px;
+  width: 86px;
+  height: 50px;
+  margin-right: 0px;
   position: relative;
   svg { width: 100%; height: 100%; }
-  .favorite-badge { position: absolute; top: 2px; left: 2px; font-size: 17px; color: #e6a23c; z-index: 1; pointer-events: none; filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.15)); }
+  .favorite-badge { position: absolute; top: 2px; left: 15px; font-size: 17px; color: #e6a23c; z-index: 1; pointer-events: none; filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.15)); }
 }
 
 .card-info { flex: 1; min-width: 0; }

@@ -896,12 +896,12 @@ export default {
 
 .card-icon {
   flex-shrink: 0;
-  width: 64px;
-  height: 48px;
-  margin-right: 16px;
+  width: 86px;
+  height: 50px;
+  margin-right: 0px;
   position: relative;
   svg { width: 100%; height: 100%; }
-  .favorite-badge { position: absolute; top: 2px; left: 2px; font-size: 17px; color: #e6a23c; z-index: 1; pointer-events: none; filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.15)); }
+  .favorite-badge { position: absolute; top: 2px; left: 15px; font-size: 17px; color: #e6a23c; z-index: 1; pointer-events: none; filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.15)); }
 }
 
 .card-info { flex: 1; min-width: 0; }
