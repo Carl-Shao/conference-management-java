@@ -4,19 +4,15 @@ package com.ruoyi.huiyi.service.impl;
 import com.ruoyi.common.exception.ServiceException;
 import com.ruoyi.common.utils.SecurityUtils;
 import com.ruoyi.huiyi.config.MeetingRecordProperties;
-import com.ruoyi.huiyi.domain.MeetingMinutes;
-import com.ruoyi.huiyi.domain.MeetingNote;
-import com.ruoyi.huiyi.domain.MeetingRecord;
-import com.ruoyi.huiyi.domain.MeetingTranscript;
+import com.ruoyi.huiyi.domain.*;
+import com.ruoyi.huiyi.domain.dto.MeetingFolderTagDTO;
 import com.ruoyi.huiyi.domain.dto.MeetingMergeDTO;
 import com.ruoyi.huiyi.domain.dto.MeetingMoveFolderDTO;
+import com.ruoyi.huiyi.domain.dto.MeetingSetFoldersDTO;
 import com.ruoyi.huiyi.domain.enums.MeetingRecordStatus;
 import com.ruoyi.huiyi.domain.enums.MeetingStatus;
 import com.ruoyi.huiyi.domain.vo.MeetingDetailVO;
-import com.ruoyi.huiyi.mapper.MeetingMinutesMapper;
-import com.ruoyi.huiyi.mapper.MeetingNoteMapper;
-import com.ruoyi.huiyi.mapper.MeetingRecordMapper;
-import com.ruoyi.huiyi.mapper.MeetingTranscriptMapper;
+import com.ruoyi.huiyi.mapper.*;
 import com.ruoyi.huiyi.service.IMeetingRecordService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -35,6 +31,12 @@ public class MeetingRecordServiceImpl implements IMeetingRecordService {
 
     @Autowired
     private MeetingRecordMapper meetingRecordMapper;
+
+    @Autowired
+    private MeetingFolderRelMapper meetingFolderRelMapper;
+
+    @Autowired
+    private MeetingFolderMapper meetingFolderMapper;
 
     @Autowired
     private MeetingTranscriptMapper meetingTranscriptMapper;
@@ -127,12 +129,38 @@ public class MeetingRecordServiceImpl implements IMeetingRecordService {
     }
 
     @Override
-    public int moveToFolder(MeetingMoveFolderDTO dto)
-    {
-        for(Long id : dto.getMeetingIds()) {
+    @Transactional
+    public int addToFolder(MeetingFolderTagDTO dto) {
+        checkFolderOwnership(dto.getFolderId());
+        for (Long id : dto.getMeetingIds()) {
             requireOwnership(id);
         }
-        return meetingRecordMapper.batchMoveFolder(dto.getMeetingIds(), dto.getFolderId());
+        return meetingFolderRelMapper.batchAdd(dto.getMeetingIds(), dto.getFolderId());
+    }
+
+    @Override
+    @Transactional
+    public int removeFromFolder(MeetingFolderTagDTO dto) {
+        checkFolderOwnership(dto.getFolderId());
+        for (Long id : dto.getMeetingIds()) {
+            requireOwnership(id);
+        }
+        return meetingFolderRelMapper.batchRemove(dto.getMeetingIds(), dto.getFolderId());
+    }
+
+    @Override
+    @Transactional
+    public void setMeetingFolders(MeetingSetFoldersDTO dto) {
+        requireOwnership(dto.getMeetingId());
+        if(dto.getFolderIds() != null) {
+            for (Long folderId : dto.getFolderIds()) {
+                checkFolderOwnership(folderId);
+            }
+        }
+        meetingFolderRelMapper.deleteByMeetingId(dto.getMeetingId());
+        if (dto.getFolderIds() != null && !dto.getFolderIds().isEmpty()) {
+            meetingFolderRelMapper.insertMeetingFolders(dto.getMeetingId(), dto.getFolderIds());
+        }
     }
 
     @Override
@@ -275,5 +303,15 @@ public class MeetingRecordServiceImpl implements IMeetingRecordService {
                 .trim();
         int maxLen = 100;
         return plain.length() > maxLen ? plain.substring(0, maxLen) + "..." : plain;
+    }
+
+    private void checkFolderOwnership(Long folderId) {
+        MeetingFolder folder = meetingFolderMapper.selectMeetingFolderById(folderId);
+        if (folder == null) {
+            throw new ServiceException("文件夹不存在: " + folderId);
+        }
+        if (!folder.getCreateBy().equals(SecurityUtils.getUsername())) {
+            throw new ServiceException("无权操作该文件夹");
+        }
     }
 }

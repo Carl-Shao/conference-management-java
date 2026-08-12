@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.huiyi.mapper.MeetingFolderRelMapper">
+
+    <resultMap type="com.ruoyi.huiyi.mapper.MeetingFolderRelMapper$MeetingFolderRelRow" id="RelRowResult">
+        <result property="meetingId" column="meeting_id" />
+        <result property="folderId"  column="folder_id"  />
+    </resultMap>
+
+    <!-- INSERT IGNORE：唯一键(meeting_id,folder_id)冲突时静默跳过，不报错，
+         这样"批量打标签"对已经打过的会议重复调用也是安全的，天然幂等 -->
+    <insert id="batchAdd">
+        insert ignore into huiyi_meeting_folder_rel (meeting_id, folder_id, create_time)
+        values
+        <foreach collection="meetingIds" item="meetingId" separator=",">
+            (#{meetingId}, #{folderId}, sysdate())
+        </foreach>
+    </insert>
+
+    <delete id="batchRemove">
+        delete from huiyi_meeting_folder_rel
+        where folder_id = #{folderId}
+        and meeting_id in
+        <foreach collection="meetingIds" item="meetingId" open="(" separator="," close=")">
+            #{meetingId}
+        </foreach>
+    </delete>
+
+    <select id="selectFolderIdsByMeetingId" resultType="Long">
+        select folder_id from huiyi_meeting_folder_rel where meeting_id = #{meetingId}
+    </select>
+
+    <select id="selectByMeetingIds" resultMap="RelRowResult">
+        select meeting_id, folder_id from huiyi_meeting_folder_rel
+        where meeting_id in
+        <foreach collection="meetingIds" item="meetingId" open="(" separator="," close=")">
+            #{meetingId}
+        </foreach>
+    </select>
+
+    <!-- 全量替换用的插入部分，删除部分复用下面已有的 deleteByMeetingId，
+         两条语句放Service层里用事务包起来调，不在一条SQL里写多语句
+         （多语句依赖JDBC连接串开allowMultiQueries=true，大多数项目默认没开，容易环境不一致翻车） -->
+    <insert id="insertMeetingFolders">
+        insert into huiyi_meeting_folder_rel (meeting_id, folder_id, create_time)
+        values
+        <foreach collection="folderIds" item="folderId" separator=",">
+            (#{meetingId}, #{folderId}, sysdate())
+        </foreach>
+    </insert>
+
+    <delete id="deleteByFolderId">
+        delete from huiyi_meeting_folder_rel where folder_id = #{folderId}
+    </delete>
+
+    <delete id="deleteByMeetingId">
+        delete from huiyi_meeting_folder_rel where meeting_id = #{meetingId}
+    </delete>
+
+    <select id="countByFolderId" resultType="int">
+        select count(1) from huiyi_meeting_folder_rel r
+        inner join huiyi_meeting m on m.meeting_id = r.meeting_id
+        where r.folder_id = #{folderId} and m.del_flag = '0' and m.is_merged = '0'
+    </select>
+
+</mapper>

@@ -1,8 +1,10 @@
 package com.ruoyi.huiyi.service;
 
 import com.ruoyi.huiyi.domain.MeetingRecord;
+import com.ruoyi.huiyi.domain.dto.MeetingFolderTagDTO;
 import com.ruoyi.huiyi.domain.dto.MeetingMergeDTO;
 import com.ruoyi.huiyi.domain.dto.MeetingMoveFolderDTO;
+import com.ruoyi.huiyi.domain.dto.MeetingSetFoldersDTO;
 import com.ruoyi.huiyi.domain.vo.MeetingDetailVO;
 
 import java.io.File;
@@ -30,8 +32,14 @@ public interface IMeetingRecordService {
     /** 收藏/取消收藏 */
     int toggleFavorite(Long meetingId, boolean favorite);
 
-    /** 批量移动到文件夹 */
-    int moveToFolder(MeetingMoveFolderDTO dto);
+    /** 批量给一批会议打上某个标签 */
+    int addToFolder(MeetingFolderTagDTO dto);
+
+    /** 批量给一批会议去掉某个标签 */
+    int removeFromFolder(MeetingFolderTagDTO dto);
+
+    /** 单个会议一次性设置完整标签集合（覆盖式，配合"编辑标签"多选框弹窗用） */
+    void setMeetingFolders(MeetingSetFoldersDTO dto);
 
     /**
      * 合并多条会议记录：
