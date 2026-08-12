@@ -101,7 +101,7 @@ public class MeetingRecordController extends BaseController {
 
     /** 批量移动到文件夹（folderId 传空表示移出文件夹） */
     /** 批量给会议打标签（加入某个文件夹），不影响这些会议原有的其他标签 */
-    @PreAuthorize("@ss.hasPermi('huiyi:meeting:edit')")
+    @PreAuthorize("@ss.hasPermi('huiyi:record:edit')")
     @Log(title = "会议纪要打标签", businessType = BusinessType.UPDATE)
     @PutMapping("/folder/add")
     public AjaxResult addToFolder(@RequestBody MeetingFolderTagDTO dto)
@@ -110,7 +110,7 @@ public class MeetingRecordController extends BaseController {
     }
 
     /** 批量给会议去掉某个标签，不影响其他标签归属 */
-    @PreAuthorize("@ss.hasPermi('huiyi:meeting:edit')")
+    @PreAuthorize("@ss.hasPermi('huiyi:record:edit')")
     @Log(title = "会议纪要去标签", businessType = BusinessType.UPDATE)
     @PutMapping("/folder/remove")
     public AjaxResult removeFromFolder(@RequestBody MeetingFolderTagDTO dto)
@@ -119,7 +119,7 @@ public class MeetingRecordController extends BaseController {
     }
 
     /** 单条会议一次性设置完整标签集合（多选框场景），传空数组等于清空所有标签 */
-    @PreAuthorize("@ss.hasPermi('huiyi:meeting:edit')")
+    @PreAuthorize("@ss.hasPermi('huiyi:record:edit')")
     @Log(title = "会议纪要设置标签", businessType = BusinessType.UPDATE)
     @PutMapping("/folders")
     public AjaxResult setMeetingFolders(@RequestBody MeetingSetFoldersDTO dto)

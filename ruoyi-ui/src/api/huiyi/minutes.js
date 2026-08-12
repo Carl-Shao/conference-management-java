@@ -102,7 +102,7 @@ export function favoriteMeeting(meetingId, favorite) {
  */
 export function addMeetingToFolder(data) {
   return request({
-    url: '/huiyi/meeting/folder/add',
+    url: '/huiyi/record/folder/add',
     method: 'put',
     data: data
   })
@@ -115,7 +115,7 @@ export function addMeetingToFolder(data) {
  */
 export function removeMeetingFromFolder(data) {
   return request({
-    url: '/huiyi/meeting/folder/remove',
+    url: '/huiyi/record/folder/remove',
     method: 'put',
     data: data
   })
@@ -128,7 +128,7 @@ export function removeMeetingFromFolder(data) {
  */
 export function setMeetingFolders(data) {
   return request({
-    url: '/huiyi/meeting/folders',
+    url: '/huiyi/record/folders',
     method: 'put',
     data: data
   })

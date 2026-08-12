@@ -124,9 +124,9 @@
               <div class="card-info">
                 <h3 class="card-title" v-html="highlightText(item.title, queryParams.title)" />
                 <p class="card-meta">
-                  <span>{{ item.duration }}</span>
-                  <span class="meta-divider">·</span>
                   <span>{{ item.createTime }}</span>
+                  <span class="meta-divider">·</span>
+                  <span>{{ formatDuration(item.duration) }}</span>
                 </p>
               </div>
             </div>
@@ -194,9 +194,9 @@
             <div class="card-info">
               <h3 class="card-title">{{ item.title }}</h3>
               <p class="card-meta">
-                <span>{{ item.duration }}</span>
-                <span class="meta-divider">·</span>
                 <span>{{ item.createTime }}</span>
+                <span class="meta-divider">·</span>
+                <span>{{ formatDuration(item.duration) }}</span>
               </p>
             </div>
 
@@ -268,6 +268,20 @@
     </div>
 
     <a ref="downloadLink" style="display:none" />
+    <el-dialog title="移动到文件夹" :visible.sync="moveDialogVisible" width="420px" append-to-body
+      :close-on-click-modal="false" custom-class="move-folder-dialog">
+      <div class="move-folder-content">
+        <p class="move-tip">选择目标文件夹，不选则移出所有文件夹</p>
+        <el-select v-model="targetFolderId" placeholder="请选择文件夹" clearable filterable style="width: 100%"
+          :loading="folderLoading">
+          <el-option v-for="folder in folderList" :key="folder.id" :label="folder.name" :value="folder.id" />
+        </el-select>
+      </div>
+      <span slot="footer" class="dialog-footer">
+        <el-button @click="moveDialogVisible = false">取 消</el-button>
+        <el-button type="primary" :loading="moveLoading" @click="confirmMove">确 定</el-button>
+      </span>
+    </el-dialog>
   </div>
 </template>
 
@@ -279,11 +293,13 @@ import {
   delMeeting,
   renameMeeting,
   favoriteMeeting,
-  moveMeetingToFolder,
+  addMeetingToFolder,
+  removeMeetingFromFolder,
+  setMeetingFolders,
   mergeMeetings
 } from '@/api/huiyi/minutes'
 
-import { uploadAudio } from '@/api/huiyi/audio'
+import { listFolder } from '@/api/huiyi/folder'
 
 const SORT_COLUMN_MAP = {
   createTime: 'create_time',
@@ -311,7 +327,13 @@ export default {
         isFavorite: '1',
         orderByColumn: 'create_time',
         isAsc: 'desc'
-      }
+      },
+      moveDialogVisible: false,
+      targetFolderId: '',
+      currentMovingMeetingId: null,
+      folderList: [],
+      folderLoading: false,
+      moveLoading: false
     }
   },
   computed: {
@@ -358,6 +380,17 @@ export default {
           sourceType: item.sourceType === '0' ? 'record' : 'upload'
         }))
       }).finally(() => { this.loading = false })
+    },
+    formatDuration(seconds) {
+      const sec = Number(seconds) || 0;
+      if (sec <= 0) return '00:00:00';
+
+      const h = Math.floor(sec / 3600);
+      const m = Math.floor((sec % 3600) / 60);
+      const s = Math.floor(sec % 60);
+
+      const pad = (n) => String(n).padStart(2, '0');
+      return `${pad(h)}:${pad(m)}:${pad(s)}`;
     },
     handleSearchInput(val) {
       if (this.searchDebounceTimer) clearTimeout(this.searchDebounceTimer)
@@ -453,7 +486,7 @@ export default {
             inputPattern: /\S+/, inputErrorMessage: '名称不能为空', customClass: 'new-folder-dialog' 
            }).then(({ value }) => { if (!value || !value.trim()) return; renameMeeting(row.meetingId, value.trim()).then(() => { this.$message.success('重命名成功'); this.getList() }) }).catch(() => {})
           break
-        case 'move': this.$message.info('移动功能待对接文件夹选择器'); break
+        case 'move': this.openMoveDialog(row); break
         case 'merge': this.$message.info('合并功能待对接会议选择器'); break
       }
     },
@@ -466,6 +499,45 @@ export default {
       let backRoute = ''
       try { backRoute = JSON.stringify({ name: this.$route.name, path: this.$route.path, query: this.$route.query || {} }) } catch (e) { backRoute = this.$route.path }
       this.$router.push({ path: '/meeting/record', query: { backRoute } })
+    },
+    fetchFolderList() {
+      this.folderLoading = true
+      return listFolder({ pageNum: 1, pageSize: 999 }).then(res => {
+        const raw = Array.isArray(res) ? res : (res.rows || res.data || [])
+        this.folderList = (raw || []).map(item => ({
+          id: item.folderId ?? item.id,
+          name: item.folderName ?? item.name ?? item.label
+        }))
+        console.log('文件夹列表:', this.folderList)
+      }).catch(err => {
+        console.error('获取文件夹失败:', err)
+        this.$message.error(err.msg || '获取文件夹列表失败')
+        this.folderList = []
+      }).finally(() => {
+        this.folderLoading = false
+      })
+    },
+    openMoveDialog(row) {
+      this.currentMovingMeetingId = row.meetingId
+      this.targetFolderId = ''
+      this.moveDialogVisible = true
+      // 每次打开都刷新文件夹列表，保证数据最新
+      this.fetchFolderList()
+    },
+    confirmMove() {
+      this.moveLoading = true
+      addMeetingToFolder({
+        meetingIds: [this.currentMovingMeetingId],
+        folderId: this.targetFolderId || '' // 空值 = 移出文件夹
+      }).then(() => {
+        this.$message.success('移动成功')
+        this.moveDialogVisible = false
+        this.getList()
+      }).catch(err => {
+        this.$message.error(err?.msg || '移动失败')
+      }).finally(() => {
+        this.moveLoading = false
+      })
     }
   }
 }
@@ -919,6 +991,25 @@ export default {
       background-color: #f78989 !important;
       border-color: #f78989 !important;
     }
+  }
+}
+.move-folder-dialog.el-dialog {
+  border-radius: 14px !important;
+  .move-folder-content {
+    .move-tip {
+      font-size: 13px;
+      color: #909399;
+      margin-bottom: 12px;
+    }
+  }
+  .dialog-footer .el-button {
+    border-radius: 10px !important;
+    font-weight: 600;
+    padding: 10px 28px;
+  }
+  .dialog-footer .el-button--primary {
+    background-color: #4a7dff !important;
+    border-color: #4a7dff !important;
   }
 }
 </style>
