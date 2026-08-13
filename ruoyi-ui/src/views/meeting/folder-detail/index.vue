@@ -281,6 +281,7 @@
 </template>
 
 <script>
+import { download } from '@/utils/request'
 import { getFolder } from '@/api/huiyi/folder'
 import { listMeeting, delMeeting, renameMeeting, favoriteMeeting, removeMeetingFromFolder, downloadMeetingPackage } from '@/api/huiyi/minutes' 
 
@@ -526,7 +527,7 @@ export default {
             .catch(() => {})
           break
         case 'download':
-          { const link = this.$refs.downloadLink; link.href = row.downloadUrl || `/huiyi/record/${id}/audio`; link.download = `${row.title}.mp3`; link.click() }
+          downloadMeetingPackage(row.meetingId, row.title)
           break
         case 'addFavorite':
           favoriteMeeting(id, true).then(() => { row.isFavorite = true; this.$message.success('已添加到收藏') })
