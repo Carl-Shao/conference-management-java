@@ -430,37 +430,50 @@ export default {
     },
 
     renameFolder(item) {
+      const targetId = item.folderId || item.id;
+      const currentName = item.title || item.folderName;
+      if (!targetId) {
+        this.$message.error('文件夹ID无效，无法重命名');
+        return;
+      }
       this.$prompt('请输入新的文件夹名称', '重命名文件夹', {
         confirmButtonText: '确定',
         cancelButtonText: '取消',
-        inputValue: item.title || item.folderName,
+        inputValue: currentName,
         inputPattern: /\S+/,
         inputErrorMessage: '名称不能为空',
         customClass: 'new-folder-dialog'
       }).then(async ({ value }) => {
-        if (value.trim() === (item.title || item.folderName)) return
+        const newName = value.trim();
+        if (newName === currentName) return;
         try {
-          await updateFolder({ id: item.id, title: value.trim(), folderName: value.trim() })
+          await updateFolder({ folderId: targetId, title: value.trim(), folderName: value.trim() })
           this.$message.success('重命名成功')
           await this.fetchFolderList()
         } catch (err) {
-          this.$message.error(err.message || '重命名失败，请重试')
+          console.error('重命名文件夹失败:', err);
+          this.$message.error(err.msg || err.message || '重命名失败，请重试');
         }
       }).catch(() => {})
     },
 
     deleteFolder(item) {
+      const targetId = item.folderId || item.id;
+      if (!targetId) {
+        this.$message.error('文件夹ID无效，无法删除');
+        return;
+      }
       this.$confirm(
         `确定删除文件夹「${item.title || item.folderName}」吗？文件夹内的会议记录不会被删除，只会移出文件夹。`,
         '删除确认',
-        { type: 'warning', confirmButtonText: '删除', cancelButtonText: '取消', customClass: 'new-folder-dialog', 
-        distinguishCancelAndClose: true, showClose: false }
-      ).then(async () => {
+        { type: 'warning', confirmButtonText: '删除', cancelButtonText: '取消', customClass: 'delete-confirm-dialog', 
+        distinguishCancelAndClose: true, showClose: false }).then(async () => {
         try {
-          await delFolder(item.id)
+          await delFolder([targetId])
           this.$message.success('删除成功')
           await this.fetchFolderList()
         } catch (err) {
+          console.error('删除文件夹失败:', err);
           this.$message.error(err.message || '删除失败，请重试')
         }
       }).catch(() => {})
@@ -776,6 +789,44 @@ export default {
   .dropdown-svg-icon { width: 26px; height: 26px; margin-right: 10px; vertical-align: middle; display: inline-flex; align-items: center; flex-shrink: 0; }
 }
 body .new-folder-dialog.el-message-box { border-radius: 14px !important; }
+
+.delete-confirm-dialog.el-message-box {
+  border-radius: 14px !important;
+  .el-message-box__title {
+    font-size: 18px;
+    font-weight: 600;
+    color: #303133;
+  }
+  .el-message-box__message p {
+    font-size: 14px;
+    color: #606266;
+    line-height: 1.6;
+  }
+  .el-message-box__btns .el-button {
+    border-radius: 14px !important;
+    font-weight: 600;
+    padding: 10px 28px;
+  }
+  .el-message-box__btns .el-button:first-child {
+    background-color: #f5f6f8 !important;
+    border-color: #dcdfe6 !important;
+    color: #606266 !important;
+    &:hover {
+      background-color: #e8eaed !important;
+      border-color: #dcdfe6 !important;
+      color: #606266 !important;
+    }
+  }
+  .el-message-box__btns .el-button:last-child {
+    background-color: #f56c6c !important;
+    border-color: #f56c6c !important;
+    color: #fff !important;
+    &:hover {
+      background-color: #f78989 !important;
+      border-color: #f78989 !important;
+    }
+  }
+}
 
 .new-folder-dialog.el-message-box {
   .el-message-box__btns .el-button {

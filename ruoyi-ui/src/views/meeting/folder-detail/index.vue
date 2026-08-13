@@ -182,19 +182,19 @@
               <i v-if="item.isFavorite" class="favorite-badge el-icon-star-on" />
               <svg v-if="item.sourceType === 'record'" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <path
-                  d="M24 14C22.3431 14 21 15.3431 21 17V25C21 26.6569 22.3431 28 24 28C25.6569 28 27 26.6569 27 25V17C27 15.3431 25.6569 14 24 14Z"
+                  d="M24 14C22.067 14 20.5 15.567 20.5 17.5V24.5C20.5 26.433 22.067 28 24 28C25.933 28 27.5 26.433 27.5 24.5V17.5C27.5 15.567 25.933 14 24 14Z"
                   fill="#4A7DFF" />
-                <path d="M19 25C19 27.7614 21.2386 30 24 30C26.7614 30 29 27.7614 29 25" stroke="#4A7DFF"
-                  stroke-width="2" stroke-linecap="round" />
-                <line x1="24" y1="30" x2="24" y2="34" stroke="#4A7DFF" stroke-width="2" stroke-linecap="round" />
-                <line x1="21" y1="34" x2="27" y2="34" stroke="#4A7DFF" stroke-width="2" stroke-linecap="round" />
+                <path d="M18.5 25C18.5 28.0376 20.9624 30.5 24 30.5C27.0376 30.5 29.5 28.0376 29.5 25" stroke="#4A7DFF"
+                  stroke-width="1.7" stroke-linecap="round" />
+                <line x1="24" y1="30.5" x2="24" y2="34" stroke="#4A7DFF" stroke-width="1.7" stroke-linecap="round" />
+                <line x1="21" y1="34" x2="27" y2="34" stroke="#4A7DFF" stroke-width="1.7" stroke-linecap="round" />
               </svg>
               <svg v-else viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M24 16V28" stroke="#67C23A" stroke-width="2" stroke-linecap="round" />
-                <path d="M19 21L24 16L29 21" stroke="#67C23A" stroke-width="2" stroke-linecap="round"
+                <path d="M24 16V28" stroke="#67C23A" stroke-width="3" stroke-linecap="round" />
+                <path d="M19 21L24 16L29 21" stroke="#67C23A" stroke-width="3" stroke-linecap="round"
                   stroke-linejoin="round" />
                 <path d="M16 28V32C16 33.1046 16.8954 34 18 34H30C31.1046 34 32 33.1046 32 32V28" stroke="#67C23A"
-                  stroke-width="2" stroke-linecap="round" />
+                  stroke-width="3" stroke-linecap="round" />
               </svg>
             </div>
 
@@ -277,8 +277,8 @@
 </template>
 
 <script>
-import { listMeeting, getFolder } from '@/api/huiyi/folder'
-import { delMeeting, renameMeeting, favoriteMeeting } from '@/api/huiyi/minutes' 
+import { getFolder } from '@/api/huiyi/folder'
+import { listMeeting, delMeeting, renameMeeting, favoriteMeeting } from '@/api/huiyi/minutes' 
 
 const SORT_COLUMN_MAP = {
   createTime: 'create_time',
@@ -328,7 +328,11 @@ export default {
     }
   },
   created() {
-    this.initFolderContext()
+    try {
+      this.initFolderContext()
+    } catch (e) {
+      console.error('初始化文件夹上下文失败:', e)
+    }
     this.getList()
   },
   watch: {
@@ -527,7 +531,7 @@ export default {
 .folder-nav-bar {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 19px;
   padding: 0 20px 16px 20px;
   flex-shrink: 0;
   animation: navSlideDown 0.25s ease-out;
@@ -555,7 +559,7 @@ export default {
   &:active { transform: scale(0.92); }
 }
 .folder-nav-title {
-  font-size: 18px;
+  font-size: 22px;
   font-weight: 600;
   color: #303133;
   white-space: nowrap;
@@ -756,13 +760,13 @@ export default {
   display: flex;
   align-items: center;
   gap: 16px;
-  margin-bottom: 28px;
+  margin: 18px 0 12px 0; 
   flex-shrink: 0;
   z-index: 99;
 }
 
 .section-title {
-  margin: 0 0 16px 0;
+  margin: 0 0 10px 0;
   margin-left: 20px;
   font-size: 25px;
   font-weight: 600;
@@ -861,6 +865,8 @@ export default {
   min-height: 0;
   overflow-y: auto;
   padding-bottom: 120px;
+  display: flex;          
+  flex-direction: column; 
   scrollbar-width: thin;
   scrollbar-color: #dcdfe6 transparent;
   -webkit-overflow-scrolling: touch;
@@ -899,7 +905,7 @@ export default {
   flex-shrink: 0;
   width: 86px;
   height: 50px;
-  margin-right: 0px;
+  margin-right: -8px;
   position: relative;
   svg { width: 100%; height: 100%; }
   .favorite-badge { position: absolute; top: 2px; left: 15px; font-size: 17px; color: #e6a23c; z-index: 1; pointer-events: none; filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.15)); }
@@ -911,9 +917,8 @@ export default {
 .card-more { flex-shrink: 0; font-size: 20px; color: #909399; padding: 8px; border-radius: 8px; cursor: pointer; transition: all 0.2s; &:hover { background: #f5f6f8; color: #606266; } }
 
 .empty-state-wrapper {
-  position: absolute; top: 0; left: 0; right: 0; bottom: 0;
-  flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 24px;
-}
+  flex: 1; min-height: 300px; display: flex; flex-direction: column; align-items: center;
+  justify-content: center; gap: 24px; width: 100%; }
 .empty-illustration { display: flex; flex-direction: column; align-items: center; gap: 18px; animation: emptyFadeIn 0.5s ease-out; }
 .folder-wrap { width: 170px; height: 140px; animation: emptyFloat 5s ease-in-out infinite; svg { width: 100%; height: 100%; overflow: visible; } }
 .qmark { transform-box: fill-box; transform-origin: center; animation: emptyWiggle 4s ease-in-out infinite; }

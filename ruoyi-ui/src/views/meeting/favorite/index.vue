@@ -174,19 +174,19 @@
               <i v-if="item.isFavorite" class="favorite-badge el-icon-star-on" />
               <svg v-if="item.sourceType === 'record'" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <path
-                  d="M24 14C22.3431 14 21 15.3431 21 17V25C21 26.6569 22.3431 28 24 28C25.6569 28 27 26.6569 27 25V17C27 15.3431 25.6569 14 24 14Z"
+                  d="M24 14C22.067 14 20.5 15.567 20.5 17.5V24.5C20.5 26.433 22.067 28 24 28C25.933 28 27.5 26.433 27.5 24.5V17.5C27.5 15.567 25.933 14 24 14Z"
                   fill="#4A7DFF" />
-                <path d="M19 25C19 27.7614 21.2386 30 24 30C26.7614 30 29 27.7614 29 25" stroke="#4A7DFF"
-                  stroke-width="2" stroke-linecap="round" />
-                <line x1="24" y1="30" x2="24" y2="34" stroke="#4A7DFF" stroke-width="2" stroke-linecap="round" />
-                <line x1="21" y1="34" x2="27" y2="34" stroke="#4A7DFF" stroke-width="2" stroke-linecap="round" />
+                <path d="M18.5 25C18.5 28.0376 20.9624 30.5 24 30.5C27.0376 30.5 29.5 28.0376 29.5 25" stroke="#4A7DFF"
+                  stroke-width="1.7" stroke-linecap="round" />
+                <line x1="24" y1="30.5" x2="24" y2="34" stroke="#4A7DFF" stroke-width="1.7" stroke-linecap="round" />
+                <line x1="21" y1="34" x2="27" y2="34" stroke="#4A7DFF" stroke-width="1.7" stroke-linecap="round" />
               </svg>
               <svg v-else viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M24 16V28" stroke="#67C23A" stroke-width="2" stroke-linecap="round" />
-                <path d="M19 21L24 16L29 21" stroke="#67C23A" stroke-width="2" stroke-linecap="round"
+                <path d="M24 16V28" stroke="#67C23A" stroke-width="3" stroke-linecap="round" />
+                <path d="M19 21L24 16L29 21" stroke="#67C23A" stroke-width="3" stroke-linecap="round"
                   stroke-linejoin="round" />
                 <path d="M16 28V32C16 33.1046 16.8954 34 18 34H30C31.1046 34 32 33.1046 32 32V28" stroke="#67C23A"
-                  stroke-width="2" stroke-linecap="round" />
+                  stroke-width="3" stroke-linecap="round" />
               </svg>
             </div>
 
@@ -627,7 +627,7 @@ export default {
   }
 }
 
-/* ⭐️ 新增：右侧操作区容器 */
+/* 新增：右侧操作区容器 */
 .search-actions-right {
   display: flex;
   align-items: center;
@@ -879,9 +879,9 @@ export default {
   flex-shrink: 0;
   width: 86px;
   height: 50px;
-  margin-right: 0px;
+  margin-right: -8px;
   position: relative;
-  svg { width: 100%; height: 100%; }
+  svg { width: 100%; height: 100%; transform: scale(1.1); transform-origin: center center; }
   .favorite-badge { position: absolute; top: 2px; left: 15px; font-size: 17px; color: #e6a23c; z-index: 1; pointer-events: none; filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.15)); }
 }
 
