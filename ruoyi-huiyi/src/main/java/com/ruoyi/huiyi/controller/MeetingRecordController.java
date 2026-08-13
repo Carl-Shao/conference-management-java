@@ -21,11 +21,14 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
-import java.io.File;
-import java.io.IOException;
-import java.io.OutputStream;
-import java.io.RandomAccessFile;
+import java.io.*;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
+
+import static org.apache.poi.xdgf.util.Util.sanitizeFilename;
 
 /**
  * 会议纪要
@@ -196,5 +199,86 @@ public class MeetingRecordController extends BaseController {
             }
             os.flush();
         } catch (IOException e){}
+    }
+
+    /**
+     * 打包下载：音频 + 转写 + 纪要 + 笔记 打成一个zip
+     */
+    @GetMapping("/{meetingId}/download")
+    public void downloadPackage(@PathVariable Long meetingId, HttpServletResponse response) throws IOException {
+        MeetingDetailVO vo;
+        File audioFile;
+        try {
+            vo = meetingRecordService.selectMeetingDetail(meetingId);
+            audioFile = meetingRecordService.resolvePlayableAudioFile(meetingId);
+        } catch (ServiceException e) {
+            response.setStatus(HttpServletResponse.SC_FORBIDDEN);
+            return;
+        }
+        if (vo == null || vo.getMeeting() == null)
+        {
+            response.setStatus(HttpServletResponse.SC_NOT_FOUND);
+            return;
+        }
+
+        String safeTitle = sanitizeFilename(vo.getMeeting().getTitle());
+        String zipFilename = safeTitle + ".zip";
+
+        response.setContentType("application/zip");
+        response.setHeader("Content-Disposition",
+                "attachment; filename=\"" + URLEncoder.encode(zipFilename, StandardCharsets.UTF_8) + "\"");
+
+        String folderPrefix = safeTitle + "/";
+        try (ZipOutputStream zos = new ZipOutputStream(response.getOutputStream()))
+        {
+            if (audioFile != null && audioFile.exists())
+            {
+                writeFileEntry(zos, folderPrefix + "audio.wav", audioFile);
+            }
+            if (vo.getTranscript() != null && vo.getTranscript().getContent() != null)
+            {
+                writeTextEntry(zos, folderPrefix + "转写内容.txt", vo.getTranscript().getContent());
+            }
+            if (vo.getMinutes() != null && vo.getMinutes().getContent() != null)
+            {
+                writeTextEntry(zos, folderPrefix + "会议纪要.md", vo.getMinutes().getContent());
+            }
+            if (vo.getNote() != null && vo.getNote().getContent() != null)
+            {
+                writeTextEntry(zos, folderPrefix + "我的笔记.txt", vo.getNote().getContent());
+            }
+            zos.finish();
+            zos.flush();
+        }
+    }
+
+    private void writeFileEntry(ZipOutputStream zos, String entryName, File file) throws IOException
+    {
+        zos.putNextEntry(new ZipEntry(entryName));
+        try (FileInputStream fis = new FileInputStream(file))
+        {
+            byte[] buffer = new byte[8192];
+            int len;
+            while ((len = fis.read(buffer)) != -1)
+            {
+                zos.write(buffer, 0, len);
+            }
+        }
+        zos.closeEntry();
+    }
+    private void writeTextEntry(ZipOutputStream zos, String entryName, String content) throws IOException
+    {
+        zos.putNextEntry(new ZipEntry(entryName));
+        zos.write(content.getBytes(StandardCharsets.UTF_8));
+        zos.closeEntry();
+    }
+    /** zip条目名不能带路径分隔符/特殊字符，把会议标题里可能出现的这些字符替换掉 */
+    private String sanitizeFilename(String name)
+    {
+        if (name == null || name.isEmpty())
+        {
+            return "会议记录";
+        }
+        return name.replaceAll("[\\\\/:*?\"<>|]", "_");
     }
 }

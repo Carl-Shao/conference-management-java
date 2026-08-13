@@ -296,9 +296,10 @@ import {
   addMeetingToFolder,
   removeMeetingFromFolder,
   setMeetingFolders,
-  mergeMeetings
+  mergeMeetings,
+  downloadMeetingPackage
 } from '@/api/huiyi/minutes'
-
+import { download } from '@/utils/request'
 import { listFolder } from '@/api/huiyi/folder'
 
 const SORT_COLUMN_MAP = {

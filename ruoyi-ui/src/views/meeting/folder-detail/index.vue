@@ -282,7 +282,7 @@
 
 <script>
 import { getFolder } from '@/api/huiyi/folder'
-import { listMeeting, delMeeting, renameMeeting, favoriteMeeting, removeMeetingFromFolder } from '@/api/huiyi/minutes' 
+import { listMeeting, delMeeting, renameMeeting, favoriteMeeting, removeMeetingFromFolder, downloadMeetingPackage } from '@/api/huiyi/minutes' 
 
 const SORT_COLUMN_MAP = {
   createTime: 'create_time',

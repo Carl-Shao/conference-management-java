@@ -313,8 +313,11 @@ import {
   addMeetingToFolder,
   removeMeetingFromFolder,
   setMeetingFolders,
-  mergeMeetings
+  mergeMeetings,
+  downloadMeetingPackage
 } from '@/api/huiyi/minutes'
+
+import { download } from '@/utils/request'
 
 import { uploadAudio } from '@/api/huiyi/audio'
 
@@ -491,7 +494,7 @@ export default {
         cancelButtonText: '取消', customClass: 'delete-confirm-dialog', distinguishCancelAndClose: true, showClose: false }).then(() => delMeeting([row.meetingId])).then(() => { this.$message.success('已删除'); this.getList() }).catch(() => {})
           break
         case 'download':
-          { const link = this.$refs.downloadLink; link.href = row.downloadUrl || `/huiyi/meeting/download/${row.meetingId}`; link.download = `${row.title}.mp3`; link.click() }
+          downloadMeetingPackage(row.meetingId, row.title)
           break
         case 'addFavorite':
           favoriteMeeting(row.meetingId, true).then(() => { row.isFavorite = true; this.$message.success('已添加到收藏') })

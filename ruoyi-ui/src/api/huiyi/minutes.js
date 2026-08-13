@@ -1,5 +1,6 @@
 import request from '@/utils/request'
 import { get } from 'sortablejs'
+import { download } from '@/utils/request'
 
 /**
  * ========================
@@ -187,4 +188,16 @@ export function getMeetingAudioBlob(meetingId) {
     responseType: 'blob',
     skipInterceptor: true
   })
+}
+
+/**
+ * 下载会议资料包（音频+转写+纪要+笔记）
+ * @param {Number|String} meetingId 会议ID
+ */
+export function downloadMeetingPackage(meetingId, meetingTitle) {
+  return download(
+    '/huiyi/record/' + meetingId + '/download',
+    {},
+    (meetingTitle || '会议记录') + '.zip'
+  )
 }
