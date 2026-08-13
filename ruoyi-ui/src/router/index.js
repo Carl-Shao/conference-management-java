@@ -120,6 +120,13 @@ export const constantRoutes = [
         meta: { title: '文件夹详情', noCache: true, activeMenu: '/meeting/folder' },
         hidden: true
       },
+      {
+        path: 'folder-add/:folderId',
+        component: () => import('@/views/meeting/folder-add/index'),
+        name: 'AddToFolder',
+        meta: { title: '添加到文件夹', noCache: true, activeMenu: '/meeting/folder-detail' },
+        hidden: true
+      },
     ]
   },
   {

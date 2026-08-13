@@ -94,10 +94,19 @@
           <div class="results-hint">
             找到 {{ meetingList.length }} 条相关纪要
           </div>
-
           <div class="meeting-list search-result-list">
             <div v-for="item in meetingList" :key="item.meetingId" class="meeting-card search-result-card"
               :class="{ 'is-clicking': clickingId === item.meetingId }" @click="handleCardClick($event, item)">
+              <div class="checkbox-wrapper">
+                <div class="checkbox-circle" :class="{
+                  selected: selectedIds.includes(item.meetingId),
+                  'is-clicking': clickingId === item.meetingId
+                }" @click="handleCheckboxClick($event, item.meetingId)">
+                  <svg viewBox="0 0 24 24" transform="scale(0.83)">
+                    <polyline points="20,6 9,17 4,12" fill="none" stroke="white" stroke-width="3" />
+                  </svg>
+                </div>
+              </div>
               <div class="card-icon">
                 <i v-if="item.isFavorite" class="favorite-badge el-icon-star-on" />
                 <svg v-if="item.sourceType === 'record'" viewBox="0 0 48 48" fill="none">
@@ -154,8 +163,7 @@
             <path d="M12 19l-7-7 7-7" />
           </svg>
         </button>
-        <span class="folder-nav-title">{{ currentFolder.name }}</span>
-        <span class="folder-nav-count">{{ meetingList.length }} 条纪要</span>
+        <span class="folder-nav-title">全部纪要</span>
       </div>
       
       <div class="top-search-bar">
@@ -168,10 +176,6 @@
           @input="handleSearchInput"
           @click.native.prevent="enterSearchMode"
         />
-
-        <button class="add-to-folder-btn" @click.stop="goToAddFolderIndex">
-          添加到文件夹
-        </button>
       </div>
 
       <!-- 2. 内容区：标题 + 列表 -->
@@ -179,8 +183,18 @@
         <h2 class="section-title">{{ currentFolder ? '' : '我的文件夹' }}</h2>
 
         <div class="meeting-list">
-          <div v-for="item in meetingList" :key="item.meetingId" class="meeting-card" :class="{ 'is-clicking': clickingId === item.meetingId }"
-            @click="handleCardClick($event, item)">
+          <div v-for="item in meetingList" :key="item.meetingId" class="meeting-card"
+            :class="{ 'is-clicking': clickingId === item.meetingId, 
+            'is-selected': selectedIds.includes(item.meetingId) }" @click="handleCardClick($event, item)">
+            <div class="checkbox-wrapper">
+              <div class="checkbox-circle" :class="{ selected: selectedIds.includes(item.meetingId),
+                'is-clicking': clickingId === item.meetingId }"
+                @click="handleCheckboxClick($event, item.meetingId)">
+                <svg viewBox="0 0 24 24" transform="scale(0.83)">
+                  <polyline points="20,6 9,17 4,12" fill="none" stroke="white" stroke-width="3" />
+                </svg>
+              </div>
+            </div>
             <!-- 左侧图标 -->
             <div class="card-icon">
               <i v-if="item.isFavorite" class="favorite-badge el-icon-star-on" />
@@ -211,27 +225,6 @@
                 <span>{{ item.createTime }}</span>
               </p>
             </div>
-
-            <!-- 右侧更多操作 -->
-            <el-dropdown trigger="click" @command="(cmd) => handleCommand(cmd, item)">
-              <i class="el-icon-more card-more" />
-              <el-dropdown-menu slot="dropdown" class="custom-action-dropdown">
-                <el-dropdown-item command="download"><i class="el-icon-download icon-clr-green" />
-                  <span>下载</span></el-dropdown-item>
-                <el-dropdown-item :command="item.isFavorite ? 'removeFavorite' : 'addFavorite'">
-                  <i :class="['icon-clr-yellow', item.isFavorite ? 'el-icon-star-on' : 'el-icon-star-off']" />
-                  <span>{{ item.isFavorite ? '从收藏列表移除' : '添加到收藏' }}</span>
-                </el-dropdown-item>
-                <el-dropdown-item command="remove"><i class="el-icon-folder-opened icon-clr-blue" />
-                  <span>从文件夹移除</span></el-dropdown-item>
-                <el-dropdown-item command="rename"><i class="el-icon-edit icon-clr-purple" />
-                  <span>重命名</span></el-dropdown-item>
-                <el-dropdown-item command="merge"><i class="el-icon-document-copy icon-clr-orange" />
-                  <span>合并</span></el-dropdown-item>
-                <el-dropdown-item command="delete"><i class="el-icon-delete icon-clr-red" />
-                  <span>删除</span></el-dropdown-item>
-              </el-dropdown-menu>
-            </el-dropdown>
           </div>
 
           <div v-if="!meetingList.length && !loading" class="empty-state-wrapper">
@@ -275,14 +268,20 @@
         </div>
       </div>
     </div>
-
+    <section class="bottom-action-area">
+      <div class="button-container">
+        <button class="new-btn" :class="{ inactive: selectedIds.length === 0 }" @click="handleBatchAction">
+          {{ selectedIds.length > 0 ? `添加到文件夹 (${selectedIds.length})` : '添加到文件夹' }}
+        </button>
+      </div>
+    </section>
     <a ref="downloadLink" style="display:none" />
   </div>
 </template>
 
 <script>
 import { getFolder } from '@/api/huiyi/folder'
-import { listMeeting, delMeeting, renameMeeting, favoriteMeeting, removeMeetingFromFolder } from '@/api/huiyi/minutes' 
+import { listMeeting, delMeeting, renameMeeting, favoriteMeeting, addMeetingToFolder } from '@/api/huiyi/minutes' 
 
 const SORT_COLUMN_MAP = {
   createTime: 'create_time',
@@ -304,11 +303,14 @@ export default {
     return {
       isSearchMode: false,
       currentFolder: null,
+      folderId: undefined,
+      folderName: '',
       activeFolderId: undefined, 
       beginTime: undefined, 
       endTime: undefined,   
       clickingId: null,
       meetingList: [],
+      selectedIds: [],
       loading: false,
       searchDebounceTimer: null,
       queryParams: {
@@ -332,10 +334,12 @@ export default {
     }
   },
   created() {
-    try {
-      this.initFolderContext()
-    } catch (e) {
-      console.error('初始化文件夹上下文失败:', e)
+    this.folderId = this.$route.params.folderId
+
+    if (!this.folderId) {
+      this.$message.error('缺少文件夹ID')
+      this.$router.go(-1)
+      return
     }
     this.getList()
   },
@@ -367,7 +371,7 @@ export default {
       this.loading = true
       const params = { ...this.queryParams }
       if (this.activeFolderId) {
-        params.folderId = this.activeFolderId
+        params.excludeFolderId = this.activeFolderId
       }
       if (this.beginTime) {
         params['params[beginTime]'] = this.beginTime.length === 10
@@ -379,11 +383,9 @@ export default {
           ? `${this.endTime} 23:59:59`
           : this.endTime
       }
-
       Object.keys(params).forEach(key => {
         if (params[key] === '' || params[key] === undefined || params[key] === null) delete params[key]
       })
-
       listMeeting(params).then(response => {
         this.meetingList = (response.rows || []).map(item => ({
           ...item,
@@ -393,7 +395,7 @@ export default {
         }))
       }).finally(() => { this.loading = false })
     },
-    
+
     initFolderContext() {
       const targetFolderId = this.folderId
         || this.$route.query.folderId
@@ -427,37 +429,30 @@ export default {
     },
 
     goBackToRoot() {
-      this.currentFolder = null
-      this.activeFolderId = undefined
-      if (this.folderId !== undefined) {
-        this.$emit('back')
-        return
-      }
-      
-      const rootPath = '/meeting/folder' 
-      if (this.$route.path !== rootPath || Object.keys(this.$route.query).length > 0) {
+      const targetFolderId = this.folderId;
+      if (targetFolderId !== undefined) {
+        this.currentFolder = null;
+        this.activeFolderId = targetFolderId;
         this.$router.replace({
-          path: rootPath,
-          query: {}
+          name: 'FolderDetail',
+          params: { folderId: String(targetFolderId) },
+          query: this.$route.query.name
+            ? { name: this.$route.query.name }
+            : {}
         }).catch(err => {
-          if (err.name !== 'NavigationDuplicated') console.error(err)
-        })
-      } else {
-        this.getList()
+          if (err.name !== 'NavigationDuplicated') console.error(err);
+        });
+        return;
       }
-    },
-
-    goToAddFolderIndex() {
-      if (!this.activeFolderId) {
-        this.$message.warning('当前不在任何文件夹中')
-        return
+      this.activeFolderId = undefined;
+      this.currentFolder = null;
+      this.getList();
+      const rootPath = '/meeting/folder';
+      if (this.$route.path !== rootPath || Object.keys(this.$route.query).length > 0) {
+        this.$router.replace({ path: rootPath, query: {} }).catch(err => {
+          if (err.name !== 'NavigationDuplicated') console.error(err);
+        });
       }
-      this.$router.push({
-        name: 'AddToFolder',
-        params: { folderId: this.activeFolderId }
-      }).catch(err => {
-        if (err.name !== 'NavigationDuplicated') console.error(err)
-      })
     },
 
     handleSearchInput(val) {
@@ -483,6 +478,7 @@ export default {
       this.queryParams.title = undefined
       this.beginTime = undefined
       this.endTime = undefined
+      this.queryParams.sourceType = undefined; 
       this.getList()
     },
     highlightText(text, keyword) {
@@ -523,7 +519,7 @@ export default {
             customClass: 'danger-confirm-dialog'
           }).then(() => delMeeting(id))
             .then(() => { this.$message.success('已删除'); this.getList() })
-            .catch(() => {})
+            .catch(() => { })
           break
         case 'download':
           { const link = this.$refs.downloadLink; link.href = row.downloadUrl || `/huiyi/record/${id}/audio`; link.download = `${row.title}.mp3`; link.click() }
@@ -550,30 +546,91 @@ export default {
             })
           }).catch(() => {})
           break
-        case 'remove':
-          this.$confirm('确定将该会议纪要从当前文件夹中移除吗？', '提示', {
-            confirmButtonText: '移除',
-            cancelButtonText: '取消',
-            type: 'warning',
-            customClass: 'danger-confirm-dialog'
-          }).then(() => {
-            return removeMeetingFromFolder({
-              meetingIds: [id],
-              folderId: this.activeFolderId
-            })
-          }).then(() => {
-            this.$message.success('已从文件夹移除')
-            this.getList()
-          }).catch(() => { })
-          break
+        case 'move': this.$message.info('移动功能待对接文件夹选择器'); break
         case 'merge': this.$message.info('合并功能待对接会议选择器'); break
       }
     },
     handleCardClick(event, item) {
       const target = event.target
-      if (target.closest('.el-dropdown') || target.classList.contains('card-more')) return
-      this.$router.push(`/meeting/detail/${item.meetingId}`)
+      if (target.closest('.el-dropdown') || target.closest('.meeting-actions')) return
+      this.toggleSelect(item.meetingId)
+      this.clickingId = item.meetingId
+      setTimeout(() => { this.clickingId = null }, 300)
     },
+    handleCheckboxClick(event, meetingId) {
+      event.stopPropagation(); // 仍然阻止冒泡，避免重复触发 toggleSelect
+      this.toggleSelect(meetingId);
+      const card = event.currentTarget.closest('.meeting-card');
+      if (card) {
+        card.classList.remove('is-clicking');
+        requestAnimationFrame(() => {
+          requestAnimationFrame(() => {
+            card.classList.add('is-clicking');
+          });
+        });
+        // 动画结束后自动移除类，保证下次可重新触发
+        const onEnd = () => {
+          card.classList.remove('is-clicking');
+          card.removeEventListener('animationend', onEnd);
+        };
+        card.addEventListener('animationend', onEnd);
+      }
+    },
+    toggleSelect(id) {
+      const idx = this.selectedIds.indexOf(id);
+      if (idx > -1) {
+        this.selectedIds.splice(idx, 1);
+      } else {
+        this.selectedIds.push(id);
+      }
+    },
+    handleBatchAction() {
+      if (!this.selectedIds.length) return
+
+      // 获取当前目标文件夹 ID
+      const targetFolderId = this.activeFolderId || this.folderId
+      if (!targetFolderId) {
+        this.$message.warning('未找到目标文件夹')
+        return
+      }
+
+      this.$confirm(
+        `确定将选中的 ${this.selectedIds.length} 条纪要添加到当前文件夹吗？`,
+        '添加到文件夹',
+        {
+          confirmButtonText: '确定',
+          cancelButtonText: '取消',
+          type: 'info',
+          customClass: 'custom-confirm-dialog'
+        }
+      ).then(() => {
+        // 严格按照 API 要求的 DTO 格式传参
+        return addMeetingToFolder({
+          meetingIds: this.selectedIds,
+          folderId: targetFolderId
+        })
+      }).then(() => {
+        this.$message.success('添加成功')
+        if (this.isSearchMode) {
+          this.isSearchMode = false
+        }
+        if (window.history.length > 1) {
+          this.$router.go(-1)
+        } else {
+          // 兜底：如果没有历史记录，跳转到会议列表首页
+          this.$router.push('/meeting/folder')
+        }
+        // 1. 清空选中状态（底部按钮会自动恢复为置灰不可点击状态）
+        this.selectedIds = []
+        // 2. 刷新列表（因为 getList 过滤了 excludeFolderId，已添加的纪要会自动从列表中移除）
+        this.getList()
+      }).catch((err) => {
+        // 过滤掉用户点击“取消”按钮触发的异常
+        if (err !== 'cancel' && err?.toString() !== 'cancel') {
+          this.$message.error(err.message || '添加失败，请重试')
+        }
+      })
+    }
   }
 }
 </script>
@@ -817,31 +874,6 @@ export default {
   z-index: 99;
 }
 
-.add-to-folder-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  height: 42px;
-  padding: 0 20px;
-  border: none;
-  border-radius: 14px;
-  background: linear-gradient(180deg, #3b86ff, #2f7bff);
-  color: #fff;
-  font-size: 16px;
-  font-weight: 600;
-  cursor: pointer;
-  box-shadow: 0 10px 30px rgba(31, 107, 240, 0.28);
-  transition: transform 0.2s, box-shadow 0.2s;
-  position: relative;
-  z-index: 101;  
-  overflow: visible;
-  margin-left: auto;
-  margin-right: 30px; 
-  svg { width: 20px; height: 20px; flex-shrink: 0; }
-  &:hover { transform: translateY(-2px); box-shadow: 0 12px 28px rgba(31, 107, 240, 0.4); z-index: 102; }
-  &:active { transform: translateY(-1px); }
-}
-
 .section-title {
   margin: 0 0 10px 0;
   margin-left: 20px;
@@ -888,27 +920,109 @@ export default {
   z-index: 100;
 }
 
-.upload-btn {
-  display: inline-flex;
+/* ===== 复选框 ===== */
+.checkbox-wrapper {
+  flex-shrink: 0;
+  margin-left: 10px;
+  margin-right: 4px;
+  display: flex;
   align-items: center;
-  gap: 8px;
-  height: 42px;
-  padding: 0 20px;
-  border: none;
-  border-radius: 14px;
-  background: linear-gradient(180deg, #3b86ff, #2f7bff);
-  color: #fff;
-  font-size: 16px;
-  font-weight: 600;
+}
+
+.checkbox-circle {
+  width: 24px;
+  height: 24px;
+  border: 2px solid #ccc;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   cursor: pointer;
+  transition: background-color 0.2s ease, border-color 0.2s ease;
+  will-change: transform;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  svg {
+    visibility: hidden;
+    width: 20px;
+    height: 20px;
+  }
+
+  &.selected {
+    background: #2f7bff;
+    border-color: #2f7bff;
+
+    svg { visibility: visible; }
+  }
+  &.is-clicking {
+    animation: clickEffect 0.25s ease-out forwards;
+  }
+}
+/* ===== 卡片点击缩放动画（补充） ===== */
+.meeting-card.is-clicking {
+  animation: clickEffect 0.3s ease;
+}
+
+@keyframes clickEffect {
+  0%   { transform: scale(1); }
+  50%  { transform: scale(0.98); }
+  100% { transform: scale(1); }
+}
+
+/* ===== 底部操作区 ===== */
+.bottom-action-area {
+  position: absolute;
+  bottom: 30px;
+  left: 0;
+  right: 0;
+  flex-shrink: 0;
+  padding: 20px 0;
+  background: linear-gradient(to top, #ffffff 60%, transparent);
+  z-index: 10;
+}
+
+.button-container {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+}
+
+.new-btn {
+  background: #2f7bff;
+  color: #fff;
+  border: none;
+  cursor: pointer;
+  font-size: 20px;
+  font-weight: 700;
+  padding: 16px 32px;
+  min-width: 400px;
+  max-width: 600px;
+  border-radius: 999px;
   box-shadow: 0 10px 30px rgba(31, 107, 240, 0.28);
-  transition: transform 0.2s, box-shadow 0.2s;
-  position: relative;
-  z-index: 101;  
-  overflow: visible;
-  svg { width: 20px; height: 20px; flex-shrink: 0; }
-  &:hover { transform: translateY(-2px); box-shadow: 0 12px 28px rgba(31, 107, 240, 0.4); z-index: 102; }
+  transition: transform 0.2s, box-shadow 0.2s, background 0.2s;
+
+  &:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 16px 38px rgba(31, 107, 240, 0.4);
+  }
+
   &:active { transform: translateY(-1px); }
+
+  &.inactive {
+    background: #accbee;
+    cursor: not-allowed;
+
+    &:hover {
+      transform: none;
+      box-shadow: 0 10px 30px rgba(31, 107, 240, 0.28);
+    }
+  }
+}
+
+@keyframes checkboxPop {
+  0%   { transform: scale(1); }
+  40%  { transform: scale(0.8); }
+  100% { transform: scale(1); }
 }
 
 .middle-actions {
@@ -969,10 +1083,11 @@ export default {
   border: none;
   box-shadow: none;
   border-radius: 16px;
-  transition: background 0.2s ease;
+  transition: background-color 0.2s ease;
   cursor: pointer;
   &:hover { background: #e6f0ff; }
-  &.is-clicking { background: #d6e8ff !important; transform: scale(0.97); transition: all 0.1s ease-out; }
+  &.is-clicking { background: #d6e8ff !important; animation: clickEffect 0.25s ease-out forwards; will-change: transform, opacity;
+    backface-visibility: hidden; -webkit-backface-visibility: hidden; }
   .el-dropdown { position: relative; z-index: 2; }
 }
 
