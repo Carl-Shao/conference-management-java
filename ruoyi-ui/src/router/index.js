@@ -76,6 +76,19 @@ export const constantRoutes = [
     ]
   },
   {
+    path: '/merge/index',
+    component: Layout, 
+    hidden: true,      
+    children: [
+      {
+        path: '',
+        name: 'MergeIndex',
+        component: () => import('@/views/meeting/merge/index.vue'),
+        meta: { title: '会议合并', activeMenu: '/meeting' } // activeMenu 高亮原菜单
+      }
+    ]
+  },
+  {
     path: '/huiyi/record',
     component: Layout,
     hidden: true,

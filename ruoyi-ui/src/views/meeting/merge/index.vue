@@ -1,0 +1,1119 @@
+<template>
+  <div class="meeting-index">
+    <!-- ======================= -->
+    <!-- 搜索模式 (全屏/独立视图) -->
+    <!-- ======================= -->
+    <div v-if="isSearchMode" class="search-mode-overlay">
+      <div class="search-bar-wrapper">
+        <button class="search-close-btn" @click="exitSearch" aria-label="关闭搜索">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+            <line x1="18" y1="6" x2="6" y2="18" />
+            <line x1="6" y1="6" x2="18" y2="18" />
+          </svg>
+        </button>
+
+        <el-input
+          ref="searchInputRef"
+          v-model="queryParams.title"
+          placeholder="搜索会议标题或总结..."
+          prefix-icon="el-icon-search"
+          class="search-mode-input"
+          clearable
+          @input="handleSearchInput"
+        />
+
+        <div class="search-actions-right">
+          <div class="action-divider"></div>
+          
+          <!-- 排序 -->
+          <el-dropdown trigger="click" @command="handleSortChange">
+            <button class="icon-action-btn sort-button" title="排序">
+              <svg viewBox="0 0 24 24" fill="currentColor">
+                <path d="M3 6h18v2H3V6zm0 4h12v2H3v-2zm0 4h6v2H3v-2zm0 4h18v2H3v-2z" />
+              </svg>
+            </button>
+            <el-dropdown-menu slot="dropdown" class="custom-action-dropdown">
+              <el-dropdown-item command="timeDesc"><i class="el-icon-time icon-clr-blue" /><span>按时间正序</span></el-dropdown-item>
+              <el-dropdown-item command="timeAsc"><i class="el-icon-time icon-clr-green" /><span>按时间倒序</span></el-dropdown-item>
+            </el-dropdown-menu>
+          </el-dropdown>
+
+          <!-- 筛选 -->
+          <el-dropdown trigger="click" @command="handleFilterChange">
+            <button class="icon-action-btn filter-button" :class="{ 'is-active': queryParams.sourceType }" title="筛选">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M4 4h16l-8 8v8H8v-8L4 4z" />
+              </svg>
+            </button>
+            <el-dropdown-menu slot="dropdown" class="custom-action-dropdown">
+              <el-dropdown-item command="all">
+                <svg class="dropdown-svg-icon" viewBox="0 0 48 48" fill="none"><path d="M14 6H30L38 14V38C38 40.2091 36.2091 42 34 42H14C11.7909 42 10 40.2091 10 38V10C10 7.79086 11.7909 6 14 6Z" stroke="#909399" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" /><path d="M30 6V14H38" stroke="#909399" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" /><line x1="16" y1="22" x2="32" y2="22" stroke="#909399" stroke-width="2.5" stroke-linecap="round" /><line x1="16" y1="28" x2="28" y2="28" stroke="#909399" stroke-width="2.5" stroke-linecap="round" /><line x1="16" y1="34" x2="24" y2="34" stroke="#909399" stroke-width="2.5" stroke-linecap="round" /></svg>
+                <span>全部纪要</span>
+              </el-dropdown-item>
+              <el-dropdown-item command="0">
+                <svg class="dropdown-svg-icon" viewBox="0 0 46 46" fill="none"><rect x="18" y="6" width="12" height="20" rx="6" fill="#4A7DFF" /><path d="M12 22a12 12 0 0 0 24 0" stroke="#4A7DFF" stroke-width="2" stroke-linecap="round" /><line x1="24" y1="34" x2="24" y2="40" stroke="#4A7DFF" stroke-width="2" stroke-linecap="round" /><line x1="18" y1="40" x2="30" y2="40" stroke="#4A7DFF" stroke-width="2" stroke-linecap="round" /></svg>
+                <span>录制音频文件</span>
+              </el-dropdown-item>
+              <el-dropdown-item command="1">
+                <svg class="dropdown-svg-icon" viewBox="0 0 26 26" fill="none"><path d="M12 4v12" stroke="#67C23A" stroke-width="2.2" stroke-linecap="round" /><path d="M8 9l4-5 4 5" stroke="#67C23A" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" /><path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2" stroke="#67C23A" stroke-width="2.2" stroke-linecap="round" /></svg>
+                <span>上传音频文件</span>
+              </el-dropdown-item>
+            </el-dropdown-menu>
+          </el-dropdown>
+
+          <!-- 日期选择器组 -->
+          <div class="date-picker-group">
+            <el-date-picker
+              v-model="beginTime"
+              type="date"
+              placeholder="开始日期"
+              value-format="yyyy-MM-dd HH:mm:ss"
+              :default-time="'00:00:00'"
+              size="mini"
+              class="single-date-picker"
+              @change="handleDateChange"
+            />
+            <span class="date-separator">-</span>
+            <el-date-picker
+              v-model="endTime"
+              type="date"
+              placeholder="结束日期"
+              value-format="yyyy-MM-dd HH:mm:ss"
+              :default-time="'23:59:59'"
+              size="mini"
+              class="single-date-picker"
+              @change="handleDateChange"
+            />
+          </div>
+        </div>
+      </div>
+
+      <!-- 搜索结果列表 -->
+      <div class="search-results">
+        <template v-if="hasAnyFilter">
+          <div class="results-hint">
+            找到 {{ meetingList.length }} 条相关纪要
+          </div>
+          <div class="meeting-list search-result-list">
+            <div v-for="item in meetingList" :key="item.meetingId" class="meeting-card search-result-card"
+              :class="{ 'is-clicking': clickingId === item.meetingId }" @click="handleCardClick($event, item)">
+              <div class="checkbox-wrapper">
+                <div class="checkbox-circle" :class="{
+                  selected: selectedIds.includes(item.meetingId),
+                  'is-clicking': clickingId === item.meetingId
+                }" @click="handleCheckboxClick($event, item.meetingId)">
+                  <svg viewBox="0 0 24 24" transform="scale(0.83)">
+                    <polyline points="20,6 9,17 4,12" fill="none" stroke="white" stroke-width="3" />
+                  </svg>
+                </div>
+              </div>
+              <div class="card-icon">
+                <i v-if="item.isFavorite" class="favorite-badge el-icon-star-on" />
+                <span v-if="item.sourceType === 'merge'" class="emoji-icon">📋</span>
+                <svg v-else-if="item.sourceType === 'record'" viewBox="0 0 48 48" fill="none">
+                  <path
+                    d="M24 14C22.3431 14 21 15.3431 21 17V25C21 26.6569 22.3431 28 24 28C25.6569 28 27 26.6569 27 25V17C27 15.3431 25.6569 14 24 14Z"
+                    fill="#4A7DFF" />
+                  <path d="M19 25C19 27.7614 21.2386 30 24 30C26.7614 30 29 27.7614 29 25" stroke="#4A7DFF"
+                    stroke-width="2" stroke-linecap="round" />
+                  <line x1="24" y1="30" x2="24" y2="34" stroke="#4A7DFF" stroke-width="2" stroke-linecap="round" />
+                  <line x1="21" y1="34" x2="27" y2="34" stroke="#4A7DFF" stroke-width="2" stroke-linecap="round" />
+                </svg>
+                <svg v-else viewBox="0 0 48 48" fill="none">
+                  <path d="M24 16V28" stroke="#67C23A" stroke-width="2" stroke-linecap="round" />
+                  <path d="M19 21L24 16L29 21" stroke="#67C23A" stroke-width="2" stroke-linecap="round"
+                    stroke-linejoin="round" />
+                  <path d="M16 28V32C16 33.1046 16.8954 34 18 34H30C31.1046 34 32 33.1046 32 32V28" stroke="#67C23A"
+                    stroke-width="2" stroke-linecap="round" />
+                </svg>
+              </div>
+              <div class="card-info">
+                <h3 class="card-title" v-html="highlightText(item.title, queryParams.title)" />
+                <p class="card-meta">
+                  <span>{{ item.duration }}</span>
+                  <span class="meta-divider">·</span>
+                  <span>{{ item.createTime }}</span>
+                </p>
+              </div>
+            </div>
+
+            <div v-if="!meetingList.length && !loading" class="empty-state">
+              <p>未找到符合条件的纪要</p>
+            </div>
+          </div>
+        </template>
+
+        <template v-else>
+          <div class="search-empty-hint">
+            <p>输入关键词或选择筛选条件开始搜索</p>
+          </div>
+        </template>
+      </div>
+    </div>
+
+    <!-- ======================= -->
+    <!-- 普通模式 (默认视图) -->
+    <!-- ======================= -->
+    <div v-else class="normal-mode-view">
+      <div class="merge-nav-bar">
+        <button class="merge-back-btn" @click="goBackToRoot" aria-label="返回全部纪要">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"
+            stroke-linejoin="round">
+            <path d="M19 12H5" />
+            <path d="M12 19l-7-7 7-7" />
+          </svg>
+        </button>
+        <span class="merge-nav-title">全部纪要</span>
+      </div>
+      <div class="top-search-bar">
+        <el-input
+          v-model="queryParams.title"
+          placeholder="搜索会议纪要..."
+          prefix-icon="el-icon-search"
+          class="meeting-search"
+          clearable
+          @input="handleSearchInput"
+          @focus="enterSearchMode"
+        />
+      </div>
+
+      <!-- 内容区：列表 -->
+      <div class="content-section">
+        <div class="meeting-list">
+          <div v-for="item in meetingList" :key="item.meetingId" class="meeting-card"
+            :class="{ 'is-clicking': clickingId === item.meetingId, 
+            'is-selected': selectedIds.includes(item.meetingId) }" @click="handleCardClick($event, item)">
+            <div class="checkbox-wrapper">
+              <div class="checkbox-circle" :class="{ selected: selectedIds.includes(item.meetingId),
+                'is-clicking': clickingId === item.meetingId }"
+                @click="handleCheckboxClick($event, item.meetingId)">
+                <svg viewBox="0 0 24 24" transform="scale(0.83)">
+                  <polyline points="20,6 9,17 4,12" fill="none" stroke="white" stroke-width="3" />
+                </svg>
+              </div>
+            </div>
+            <!-- 左侧图标 -->
+            <div class="card-icon">
+              <i v-if="item.isFavorite" class="favorite-badge el-icon-star-on" />
+              <span v-if="item.sourceType === 'merge'" class="emoji-icon">📋</span>
+              <svg v-else-if="item.sourceType === 'record'" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path
+                  d="M24 14C22.067 14 20.5 15.567 20.5 17.5V24.5C20.5 26.433 22.067 28 24 28C25.933 28 27.5 26.433 27.5 24.5V17.5C27.5 15.567 25.933 14 24 14Z"
+                  fill="#4A7DFF" />
+                <path d="M18.5 25C18.5 28.0376 20.9624 30.5 24 30.5C27.0376 30.5 29.5 28.0376 29.5 25" stroke="#4A7DFF"
+                  stroke-width="1.7" stroke-linecap="round" />
+                <line x1="24" y1="30.5" x2="24" y2="34" stroke="#4A7DFF" stroke-width="1.7" stroke-linecap="round" />
+                <line x1="21" y1="34" x2="27" y2="34" stroke="#4A7DFF" stroke-width="1.7" stroke-linecap="round" />
+              </svg>
+              <svg v-else viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M24 16V28" stroke="#67C23A" stroke-width="3" stroke-linecap="round" />
+                <path d="M19 21L24 16L29 21" stroke="#67C23A" stroke-width="3" stroke-linecap="round"
+                  stroke-linejoin="round" />
+                <path d="M16 28V32C16 33.1046 16.8954 34 18 34H30C31.1046 34 32 33.1046 32 32V28" stroke="#67C23A"
+                  stroke-width="3" stroke-linecap="round" />
+              </svg>
+            </div>
+
+            <!-- 中间信息 -->
+            <div class="card-info">
+              <h3 class="card-title">{{ item.title }}</h3>
+              <p class="card-meta">
+                <span>{{ item.duration }}</span>
+                <span class="meta-divider">·</span>
+                <span>{{ item.createTime }}</span>
+              </p>
+            </div>
+          </div>
+
+          <div v-if="!meetingList.length && !loading" class="empty-state-wrapper">
+            <div class="empty-illustration">
+              <div class="folder-wrap" aria-hidden="true">
+                <svg viewBox="0 0 200 160">
+                  <defs>
+                    <linearGradient id="empty-back" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0" stop-color="#dfe4ea" />
+                      <stop offset="1" stop-color="#c2c8d2" />
+                    </linearGradient>
+                    <linearGradient id="empty-front" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0" stop-color="#eef1f5" />
+                      <stop offset="1" stop-color="#cfd6df" />
+                    </linearGradient>
+                    <linearGradient id="empty-qg" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0" stop-color="#8194a9" />
+                      <stop offset="1" stop-color="#56697f" />
+                    </linearGradient>
+                    <filter id="empty-ds" x="-30%" y="-30%" width="160%" height="160%">
+                      <feDropShadow dx="0" dy="8" stdDeviation="7" flood-color="#3a4658" flood-opacity=".18" />
+                    </filter>
+                  </defs>
+                  <path d="M30 42 q0-9 9-9 h32 l11 13 h72 q9 0 9 9 v62 q0 9-9 9 H39 q-9 0-9-9 z"
+                    fill="url(#empty-back)" />
+                  <g class="qmark" filter="url(#empty-ds)">
+                    <text x="148" y="66" font-size="62" font-weight="800" fill="#3f4f63" font-family="Arial"
+                      opacity=".35" transform="translate(2,3)">?</text>
+                    <text x="148" y="66" font-size="62" font-weight="800" fill="url(#empty-qg)"
+                      font-family="Arial">?</text>
+                  </g>
+                  <path d="M22 72 q0-7 7-7 h58 l9 11 h76 q7 0 7 7 v40 q0 9-9 9 H31 q-9 0-9-9 z" fill="url(#empty-front)"
+                    filter="url(#empty-ds)" />
+                  <path d="M24 73 q0-6 6-6 h56 l8 10" fill="none" stroke="#ffffff" stroke-width="2.5"
+                    stroke-linecap="round" opacity=".7" />
+                </svg>
+              </div>
+              <p class="empty-text">暂无会议纪要</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <section class="bottom-action-area">
+      <div class="button-container">
+        <button class="new-btn" :class="{ inactive: selectedIds.length === 0 }" @click="handleBatchAction">
+          {{ selectedIds.length > 0 ? `合并 (${selectedIds.length})` : '合并' }}
+        </button>
+      </div>
+    </section>
+    <a ref="downloadLink" style="display:none" />
+  </div>
+</template>
+
+<script>
+import { listMeeting, mergeMeeting } from '@/api/huiyi/minutes' 
+
+const SORT_COLUMN_MAP = {
+  createTime: 'create_time',
+  title: 'title',
+  duration: 'duration',
+  updateTime: 'update_time'
+}
+
+export default {
+  name: 'MeetingIndex',
+  data() {
+    return {
+      isSearchMode: false,
+      excludeMeetingId: undefined,
+      returnPath: '/meeting/summary',
+      beginTime: undefined, 
+      endTime: undefined,   
+      clickingId: null,
+      meetingList: [],
+      selectedIds: [],
+      loading: false,
+      searchDebounceTimer: null,
+      queryParams: {
+        pageNum: 1,
+        pageSize: 20,
+        title: undefined,
+        sourceType: undefined,
+        orderByColumn: 'create_time',
+        isAsc: 'desc'
+      }
+    }
+  },
+  computed: {
+    hasAnyFilter() {
+      return !!(
+        (this.queryParams.title && this.queryParams.title.trim()) ||
+        this.queryParams.sourceType ||
+        this.beginTime ||
+        this.endTime
+      )
+    }
+  },
+  created() {
+    this.returnPath = this.$route.query.from || '/meeting/summary'
+    this.excludeMeetingId = this.$route.query.meetingId || undefined
+    this.getList()
+  },
+  watch: {
+    '$route.query.meetingId'(excludeMeetingId) {
+      if (this.excludeMeetingId) {
+        const baseId = String(this.excludeMeetingId)
+        list = list.filter(
+          item => String(item.meetingId) !== baseId
+        )
+      }
+    }
+  },
+  beforeDestroy() {
+    if (this.searchDebounceTimer) clearTimeout(this.searchDebounceTimer)
+  },
+  methods: {
+    getList() {
+      this.loading = true
+      const params = { ...this.queryParams }
+      if (this.beginTime) {
+        params['params[beginTime]'] = this.beginTime.length === 10
+          ? `${this.beginTime} 00:00:00`
+          : this.beginTime
+      }
+      if (this.endTime) {
+        params['params[endTime]'] = this.endTime.length === 10
+          ? `${this.endTime} 23:59:59`
+          : this.endTime
+      }
+      Object.keys(params).forEach(key => {
+        if (params[key] === '' || params[key] === undefined || params[key] === null) delete params[key]
+      })
+      listMeeting(params).then(response => {
+        let list = (response.rows || []).map(item => ({
+          ...item,
+          meetingId: item.meetingId || item.id,
+          isFavorite: item.isFavorite === '1' || item.isFavorite === true,
+          sourceType: item.sourceType === '0' ? 'record' 
+          : item.sourceType === '2' ? 'merge' : 'upload'
+        }))
+
+        if (this.excludeMeetingId) {
+          const baseId = String(this.excludeMeetingId)
+          list = list.filter(item => String(item.meetingId) !== baseId)
+        }
+
+        this.meetingList = list
+      }).finally(() => { this.loading = false })
+    },
+    goBackToRoot() {
+      this.isSearchMode = false
+        this.selectedIds = []
+
+        this.$router.push({
+            path: this.returnPath
+        })
+    },
+
+    handleSearchInput(val) {
+      if (this.searchDebounceTimer) clearTimeout(this.searchDebounceTimer)
+      this.searchDebounceTimer = setTimeout(() => {
+        this.queryParams.title = val || undefined
+        this.getList()
+      }, 300)
+    },
+    handleDateChange() { this.getList() },
+    enterSearchMode() {
+      this.isSearchMode = true
+      this.$nextTick(() => {
+        const input = this.$refs.searchInputRef
+        if (input) {
+          input.focus()
+          if (this.queryParams.title) input.select()
+        }
+      })
+    },
+    exitSearch() {
+      this.isSearchMode = false
+      this.queryParams.title = undefined
+      this.beginTime = undefined
+      this.endTime = undefined
+      this.queryParams.sourceType = undefined; 
+      this.getList()
+    },
+    highlightText(text, keyword) {
+      if (!keyword || !keyword.trim()) return this.escapeHtml(text)
+      const escaped = keyword.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+      return this.escapeHtml(text).replace(new RegExp(`(${this.escapeHtml(escaped)})`, 'gi'), '<span class="search-highlight">$1</span>')
+    },
+    escapeHtml(str) {
+      const map = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' }
+      return String(str || '').replace(/[&<>"']/g, c => map[c])
+    },
+    handleSortChange(command) {
+      const map = {
+        timeDesc: { col: 'createTime', asc: 'desc' },
+        timeAsc:  { col: 'createTime', asc: 'asc' },
+        titleAsc: { col: 'title', asc: 'asc' },
+        titleDesc:{ col: 'title', asc: 'desc' }
+      }
+      const config = map[command]
+      if (config) {
+        this.queryParams.orderByColumn = SORT_COLUMN_MAP[config.col] || config.col
+        this.queryParams.isAsc = config.asc
+        this.getList()
+      }
+    },
+    handleFilterChange(command) {
+      this.queryParams.sourceType = (command === 'all') ? undefined : command
+      this.getList()
+    },
+    handleCardClick(event, item) {
+      const target = event.target
+      if (target.closest('.el-dropdown') || target.closest('.meeting-actions')) return
+      this.toggleSelect(item.meetingId)
+      this.clickingId = item.meetingId
+      setTimeout(() => { this.clickingId = null }, 300)
+    },
+    handleCheckboxClick(event, meetingId) {
+      event.stopPropagation();
+      this.toggleSelect(meetingId);
+      const card = event.currentTarget.closest('.meeting-card');
+      if (card) {
+        card.classList.remove('is-clicking');
+        requestAnimationFrame(() => {
+          requestAnimationFrame(() => {
+            card.classList.add('is-clicking');
+          });
+        });
+        const onEnd = () => {
+          card.classList.remove('is-clicking');
+          card.removeEventListener('animationend', onEnd);
+        };
+        card.addEventListener('animationend', onEnd);
+      }
+    },
+    toggleSelect(id) {
+      const idx = this.selectedIds.indexOf(id);
+      if (idx > -1) {
+        this.selectedIds.splice(idx, 1);
+      } else {
+        this.selectedIds.push(id);
+      }
+    },
+    formatDateTime(date) {
+      const d = new Date(date)
+      const pad = (n) => String(n).padStart(2, '0')
+      return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`
+    },
+    handleBatchAction() {
+      if (!this.selectedIds.length) return
+      const baseMeetingId = this.excludeMeetingId || this.$route.query.meetingId
+
+      if (!baseMeetingId) {
+        this.$message.warning('未找到基准会议信息')
+          return
+        }
+          // 当前会议 + 用户选择的会议
+      const meetingIds = [
+        Number(baseMeetingId),
+          ...this.selectedIds.map(id => Number(id))
+        ]
+          // 去重，防止当前会议同时被选中
+      const uniqueMeetingIds = [...new Set(meetingIds)]
+      if (uniqueMeetingIds.length < 2) {
+        this.$message.warning('合并至少需要选择两条会议记录')
+          return
+        }
+        this.$confirm(
+          `确定将选中的 ${this.selectedIds.length} 条纪要与当前会议合并吗？`,
+          '合并确认',
+          {
+            confirmButtonText: '确定合并',
+            cancelButtonText: '取消',
+            type: 'warning',
+            customClass: 'custom-confirm-dialog'
+          }
+        ).then(() => {
+          return mergeMeeting({
+            meetingIds: uniqueMeetingIds,
+            title: `合并会议 ${this.formatDateTime(new Date())}`
+          })
+          }).then(() => {
+              this.$message.success('合并成功')
+              this.selectedIds = []
+              this.goBackToRoot()
+          }).catch((err) => {
+        if (err !== 'cancel' && err?.toString() !== 'cancel') {
+          this.$message.error(err.message || '合并失败，请重试')
+        }
+      })
+    }
+  }
+}
+</script>
+
+<style lang="scss" scoped>
+.merge-nav-bar {
+  display: flex;
+  align-items: center;
+  gap: 19px;
+  padding: 0 20px 16px 20px;
+  flex-shrink: 0;
+  animation: navSlideDown 0.25s ease-out;
+}
+@keyframes navSlideDown {
+  from { opacity: 0; transform: translateY(-8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.merge-back-btn {
+  width: 34px;
+  height: 34px;
+  border: none;
+  background: #f5f6f8;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: all 0.2s;
+  color: #606266;
+
+  svg { width: 18px; height: 18px; }
+  &:hover { background: #e8eaed; color: #303133; }
+  &:active { transform: scale(0.92); }
+}
+.merge-nav-title {
+  font-size: 22px;
+  font-weight: 600;
+  color: #303133;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 400px;
+}
+.meeting-index {
+  padding: 24px;
+  background: #ffffff;
+  position: relative;
+  z-index: 1;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  box-sizing: border-box;
+}
+
+.search-mode-overlay {
+  position: relative;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: #ffffff;
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  animation: searchSlideIn 0.2s ease-out;
+}
+
+@keyframes searchSlideIn {
+  from { opacity: 0; transform: translateY(-8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.search-bar-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 12px 24px;
+  flex-shrink: 0;
+  border-bottom: 1px solid #f0f1f3;
+}
+
+.search-close-btn {
+  width: 32px; height: 32px;
+  border: none;
+  background: #f5f6f8;
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: all 0.2s;
+  color: #606266;
+
+  svg { width: 18px; height: 18px; }
+  &:hover { background: #e8eaed; color: #303133; }
+  &:active { transform: scale(0.92); }
+}
+
+.search-mode-input {
+  flex: 1; 
+  min-width: 200px;
+
+  ::v-deep .el-input__inner {
+    height: 36px;
+    line-height: 36px;
+    border-radius: 18px;
+    border: none;
+    background-color: #f5f6f8;
+    font-size: 14px;
+    padding-left: 40px;
+    color: #303133;
+
+    &::placeholder { color: #b0b3b8; }
+    &:focus { background-color: #edeef0; box-shadow: none; }
+  }
+
+  ::v-deep .el-input__prefix {
+    left: 12px;
+    font-size: 14px;
+    line-height: 36px;
+  }
+  
+  ::v-deep .el-input__suffix {
+    line-height: 36px;
+  }
+}
+
+.search-actions-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-shrink: 0;
+}
+
+.action-divider {
+  width: 1px;
+  height: 20px;
+  background-color: #e4e7ed;
+  margin: 0 4px;
+}
+
+.date-picker-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.date-separator {
+  font-size: 13px;
+  color: #909399;
+  flex-shrink: 0;
+}
+
+.single-date-picker {
+  width: 130px; 
+
+  ::v-deep .el-input__inner {
+    height: 32px;
+    line-height: 32px;
+    border-radius: 16px;
+    border: none;
+    background-color: #f5f6f8;
+    font-size: 13px;
+    padding-left: 32px;
+    color: #303133;
+
+    &::placeholder { color: #b0b3b8; }
+    &:hover { background-color: #edeef0; }
+    &:focus { background-color: #edeef0; box-shadow: none; }
+  }
+
+  ::v-deep .el-input__prefix {
+    left: 8px;
+    font-size: 14px;
+    line-height: 32px;
+  }
+}
+
+.search-empty-hint {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 80px 20px;
+  p { font-size: 15px; color: #b0b3b8; }
+}
+
+.search-result-list { gap: 0; }
+
+.search-result-card {
+  padding: 0px 24px;
+  border-radius: 0;
+  background: transparent;
+  transition: opacity 0.2s ease, background-color 0.2s ease;
+  margin: 0;
+
+  & + .search-result-card {
+    border-top: 1px solid #e8e9ea;
+    border-radius: 0;
+  }
+
+  &:hover {
+    background: #ffffff !important;
+    opacity: 0.55;
+  }
+
+  .card-icon, .card-info { pointer-events: none; }
+}
+
+.search-results {
+  flex: 1;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.results-hint {
+  padding: 12px 24px 4px;
+  font-size: 13px;
+  color: #909399;
+}
+
+.normal-mode-view {
+  flex: 1;
+  min-height: 0vh;
+  display: flex;
+  flex-direction: column;
+  overflow: visible;
+}
+
+.top-search-bar {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin: 18px 0 12px 0; 
+  flex-shrink: 0;
+  z-index: 99;
+}
+
+.section-title {
+  margin: 0 0 10px 0;
+  margin-left: 20px;
+  font-size: 25px;
+  font-weight: 600;
+  color: #5a606b;
+  line-height: 1.4;
+}
+
+.emoji-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  font-size: 32px;       /* 与普通模式 SVG 视觉大小匹配 */
+  line-height: 1;
+  user-select: none;
+  pointer-events: none;
+}
+
+/* 搜索结果列表中的 emoji 稍微小一点以匹配其 SVG 尺寸 */
+.search-result-card .emoji-icon {
+  font-size: 28px;
+}
+
+.meeting-search {
+  margin-left: 20px;
+  max-width: 360px;
+
+  ::v-deep .el-input__inner {
+    height: 30px;
+    line-height: 40px;
+    border-radius: 14px;
+    border: none;
+    background-color: #ececf4;
+    color: #303133;
+    font-size: 14px;
+    padding-left: 40px;
+    transition: background-color 0.2s;
+    &::placeholder { color: #b0b3b8; }
+    &:focus { background-color: #edeef0; box-shadow: none; }
+  }
+  ::v-deep .el-input__prefix { left: 8px; font-size: 14px; line-height: 32px; transition: none; }
+  ::v-deep .el-input__prefix .el-icon-search { font-size: 14px; line-height: inherit; }
+}
+
+::v-deep .search-highlight {
+  color: #4A7DFF;
+  text-shadow: 0 0 6px rgba(74, 125, 255, 0.45);
+  font-weight: 600;
+  background: transparent;
+}
+
+.action-buttons-group {
+  display: flex;
+  align-items: center;
+  gap: 28px;
+  padding-right: 20px;
+  position: relative;
+  z-index: 100;
+}
+
+/* ===== 复选框 ===== */
+.checkbox-wrapper {
+  flex-shrink: 0;
+  margin-left: 10px;
+  margin-right: 4px;
+  display: flex;
+  align-items: center;
+}
+
+.checkbox-circle {
+  width: 24px;
+  height: 24px;
+  border: 2px solid #ccc;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background-color 0.2s ease, border-color 0.2s ease;
+  will-change: transform;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  svg {
+    visibility: hidden;
+    width: 20px;
+    height: 20px;
+  }
+
+  &.selected {
+    background: #2f7bff;
+    border-color: #2f7bff;
+
+    svg { visibility: visible; }
+  }
+  &.is-clicking {
+    animation: clickEffect 0.25s ease-out forwards;
+  }
+}
+
+.meeting-card.is-clicking {
+  animation: clickEffect 0.3s ease;
+}
+
+@keyframes clickEffect {
+  0%   { transform: scale(1); }
+  50%  { transform: scale(0.98); }
+  100% { transform: scale(1); }
+}
+
+/* ===== 底部操作区 ===== */
+.bottom-action-area {
+  position: absolute;
+  bottom: 30px;
+  left: 0;
+  right: 0;
+  flex-shrink: 0;
+  padding: 20px 0;
+  background: linear-gradient(to top, #ffffff 60%, transparent);
+  z-index: 10;
+}
+
+.button-container {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+}
+
+.new-btn {
+  background: #2f7bff;
+  color: #fff;
+  border: none;
+  cursor: pointer;
+  font-size: 20px;
+  font-weight: 700;
+  padding: 16px 32px;
+  min-width: 400px;
+  max-width: 600px;
+  border-radius: 999px;
+  box-shadow: 0 10px 30px rgba(31, 107, 240, 0.28);
+  transition: transform 0.2s, box-shadow 0.2s, background 0.2s;
+
+  &:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 16px 38px rgba(31, 107, 240, 0.4);
+  }
+
+  &:active { transform: translateY(-1px); }
+
+  &.inactive {
+    background: #accbee;
+    cursor: not-allowed;
+
+    &:hover {
+      transform: none;
+      box-shadow: 0 10px 30px rgba(31, 107, 240, 0.28);
+    }
+  }
+}
+
+.icon-action-btn {
+  z-index: 100;
+  width: 36px;
+  height: 36px;
+  border: none;
+  background: transparent;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: #5a606b;
+  transition: background 0.2s, transform 0.2s;
+  svg { width: 20px; height: 20px; }
+  &:hover { background: rgba(20, 24, 40, 0.06); transform: rotate(-15deg); }
+  &.is-active { color: #2f7bff; background: rgba(47, 123, 255, 0.08); }
+}
+
+.meeting-list {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding-bottom: 120px;
+  display: flex;          
+  flex-direction: column; 
+  scrollbar-width: thin;
+  scrollbar-color: #dcdfe6 transparent;
+  -webkit-overflow-scrolling: touch;
+}
+.meeting-list::-webkit-scrollbar { width: 6px; }
+.meeting-list::-webkit-scrollbar-track { background: transparent; }
+.meeting-list::-webkit-scrollbar-thumb { background: #dcdfe6; border-radius: 10px; }
+.meeting-list::-webkit-scrollbar-thumb:hover { background: #c0c4cc; }
+
+.content-section {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: visible;
+}
+
+.meeting-card {
+  display: flex;
+  align-items: center;
+  padding: 16px 20px;
+  background: #ffffff;
+  border: none;
+  box-shadow: none;
+  border-radius: 16px;
+  transition: background-color 0.2s ease;
+  cursor: pointer;
+  &:hover { background: #e6f0ff; }
+  &.is-clicking { background: #d6e8ff !important; animation: clickEffect 0.25s ease-out forwards; will-change: transform, opacity;
+    backface-visibility: hidden; -webkit-backface-visibility: hidden; }
+  .el-dropdown { position: relative; z-index: 2; }
+}
+
+.search-result-card.is-clicking { opacity: 0.4 !important; background: #f0f7ff !important; transition: all 0.1s ease-out; }
+
+.card-icon {
+  flex-shrink: 0;
+  width: 86px;
+  height: 50px;
+  margin-right: -8px;
+  position: relative;
+  svg { width: 100%; height: 100%; }
+  .favorite-badge { position: absolute; top: 2px; left: 15px; font-size: 17px; color: #e6a23c; z-index: 1; pointer-events: none; filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.15)); }
+}
+
+.card-info { flex: 1; min-width: 0; }
+.card-title { margin: 0 0 6px 0; font-size: 16px; font-weight: 600; color: #303133; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.card-meta { margin: 0; font-size: 13px; color: #909399; .meta-divider { margin: 0 6px; } }
+
+.empty-state-wrapper {
+  flex: 1; min-height: 300px; display: flex; flex-direction: column; align-items: center;
+  justify-content: center; gap: 24px; width: 100%; }
+.empty-illustration { display: flex; flex-direction: column; align-items: center; gap: 18px; animation: emptyFadeIn 0.5s ease-out; }
+.folder-wrap { width: 170px; height: 140px; animation: emptyFloat 5s ease-in-out infinite; svg { width: 100%; height: 100%; overflow: visible; } }
+.qmark { transform-box: fill-box; transform-origin: center; animation: emptyWiggle 4s ease-in-out infinite; }
+.empty-text { font-size: 22px; font-weight: 500; color: #9aa1ad; letter-spacing: 0.3px; }
+
+@keyframes emptyFadeIn { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes emptyFloat { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-12px); } }
+@keyframes emptyWiggle { 0%, 100% { transform: rotate(0); } 25% { transform: rotate(8deg); } 75% { transform: rotate(-8deg); } }
+</style>
+
+<!-- 全局下拉菜单样式 -->
+<style lang="scss">
+.app-main { overflow: visible !important; }
+.meeting-page-wrapper .app-main, .app-main:has(.meeting-index) { overflow: visible !important; }
+
+.custom-action-dropdown.el-dropdown-menu {
+  border-radius: 20px !important; padding: 6px 0 !important; overflow: hidden;
+  .el-dropdown-menu__item {
+    font-size: 15px !important; line-height: 22px !important; padding: 10px 20px !important; color: #303133 !important;
+    i { font-size: 18px !important; margin-right: 8px; vertical-align: middle; display: inline-flex; align-items: center; height: 22px; }
+    span { vertical-align: middle; }
+    &:hover, &:focus { background-color: #f5f7fa !important; color: #303133 !important; }
+  }
+  .icon-clr-green { color: #67c23a !important; }
+  .icon-clr-yellow { color: #e6a23c !important; }
+  .icon-clr-blue { color: #409eff !important; }
+  .icon-clr-purple { color: #9b59b6 !important; }
+  .icon-clr-orange { color: #ff8c00 !important; }
+  .icon-clr-red { color: #f56c6c !important; }
+  .el-dropdown-menu__item--divided:before { margin: 4px 20px !important; }
+  .dropdown-svg-icon { width: 26px; height: 26px; margin-right: 10px; vertical-align: middle; display: inline-flex; align-items: center; flex-shrink: 0; }
+}
+.custom-confirm-dialog.el-message-box,
+.custom-prompt-dialog.el-message-box,
+.danger-confirm-dialog.el-message-box {
+  border-radius: 14px !important;
+  padding-bottom: 0 !important;
+
+  .el-message-box__header {
+    padding: 24px 24px 8px !important;
+  }
+
+  .el-message-box__title {
+    font-size: 18px !important;
+    font-weight: 600 !important;
+    color: #303133 !important;
+  }
+
+  .el-message-box__content {
+    padding: 0 24px 20px !important;
+  }
+
+  .el-message-box__message p {
+    font-size: 14px !important;
+    color: #606266 !important;
+    line-height: 1.6 !important;
+  }
+
+  .el-message-box__btns {
+    padding: 12px 24px 24px !important;
+    display: flex !important;
+    gap: 12px !important;
+    justify-content: flex-end !important;
+
+    .el-button {
+      border-radius: 14px !important;
+      font-weight: 600 !important;
+      padding: 10px 28px !important;
+      margin-left: 0 !important;
+      min-width: 88px !important;
+    }
+
+    .el-button:first-child {
+      background-color: #f5f6f8 !important;
+      border-color: transparent !important;
+      color: #606266 !important;
+
+      &:hover, &:focus {
+        background-color: #e8eaed !important;
+        border-color: transparent !important;
+        color: #606266 !important;
+      }
+    }
+
+    .el-button:last-child {
+      background-color: #4a7dff !important;
+      border-color: #4a7dff !important;
+      color: #fff !important;
+
+      &:hover, &:focus {
+        background-color: #3b6de6 !important;
+        border-color: #3b6de6 !important;
+      }
+    }
+  }
+}
+
+.custom-prompt-dialog.el-message-box {
+  .el-message-box__input {
+    padding-top: 4px !important;
+  }
+
+  .el-input__inner {
+    border-radius: 10px !important;
+    height: 40px !important;
+    line-height: 40px !important;
+    border-color: #dcdfe6 !important;
+
+    &:focus {
+      border-color: #4a7dff !important;
+    }
+  }
+}
+
+.danger-confirm-dialog.el-message-box {
+  .el-message-box__btns .el-button:last-child {
+    background-color: #f56c6c !important;
+    border-color: #f56c6c !important;
+
+    &:hover, &:focus {
+      background-color: #f78989 !important;
+      border-color: #f78989 !important;
+    }
+  }
+}
+</style>

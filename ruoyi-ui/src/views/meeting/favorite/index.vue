@@ -104,7 +104,8 @@
               :class="{ 'is-clicking': clickingId === item.id }" @click="handleCardClick($event, item)">
               <div class="card-icon">
                 <i v-if="item.isFavorite" class="favorite-badge el-icon-star-on" />
-                <svg v-if="item.sourceType === 'record'" viewBox="0 0 48 48" fill="none">
+                <span v-if="item.sourceType === 'merge'" class="emoji-icon">📋</span>
+                <svg v-else-if="item.sourceType === 'record'" viewBox="0 0 48 48" fill="none">
                   <path
                     d="M24 14C22.3431 14 21 15.3431 21 17V25C21 26.6569 22.3431 28 24 28C25.6569 28 27 26.6569 27 25V17C27 15.3431 25.6569 14 24 14Z"
                     fill="#4A7DFF" />
@@ -172,7 +173,8 @@
             <!-- 左侧图标 -->
             <div class="card-icon">
               <i v-if="item.isFavorite" class="favorite-badge el-icon-star-on" />
-              <svg v-if="item.sourceType === 'record'" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <span v-if="item.sourceType === 'merge'" class="emoji-icon">📋</span>
+              <svg v-else-if="item.sourceType === 'record'" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <path
                   d="M24 14C22.067 14 20.5 15.567 20.5 17.5V24.5C20.5 26.433 22.067 28 24 28C25.933 28 27.5 26.433 27.5 24.5V17.5C27.5 15.567 25.933 14 24 14Z"
                   fill="#4A7DFF" />
@@ -378,7 +380,8 @@ export default {
         this.meetingList = (response.rows || []).map(item => ({
           ...item,
           isFavorite: item.isFavorite === '1',
-          sourceType: item.sourceType === '0' ? 'record' : 'upload'
+          sourceType: item.sourceType === '0' ? 'record' 
+          : item.sourceType === '2' ? 'merge': 'upload'
         }))
       }).finally(() => { this.loading = false })
     },
@@ -488,7 +491,13 @@ export default {
            }).then(({ value }) => { if (!value || !value.trim()) return; renameMeeting(row.meetingId, value.trim()).then(() => { this.$message.success('重命名成功'); this.getList() }) }).catch(() => {})
           break
         case 'move': this.openMoveDialog(row); break
-        case 'merge': this.$message.info('合并功能待对接会议选择器'); break
+        case 'merge': this.$router.push({
+            path: '/merge/index', 
+            query: { 
+              meetingId: row.meetingId,
+              from: '/meeting/summary'
+            }
+          }); break
       }
     },
     handleCardClick(event, item) {
@@ -749,6 +758,23 @@ export default {
   font-weight: 600;
   color: #5a606b;
   line-height: 1.4;
+}
+
+.emoji-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  font-size: 32px;       /* 与普通模式 SVG 视觉大小匹配 */
+  line-height: 1;
+  user-select: none;
+  pointer-events: none;
+}
+
+/* 搜索结果列表中的 emoji 稍微小一点以匹配其 SVG 尺寸 */
+.search-result-card .emoji-icon {
+  font-size: 28px;
 }
 
 .meeting-search {

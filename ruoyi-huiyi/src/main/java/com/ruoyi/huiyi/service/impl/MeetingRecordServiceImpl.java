@@ -9,6 +9,7 @@ import com.ruoyi.huiyi.domain.dto.MeetingFolderTagDTO;
 import com.ruoyi.huiyi.domain.dto.MeetingMergeDTO;
 import com.ruoyi.huiyi.domain.dto.MeetingSetFoldersDTO;
 import com.ruoyi.huiyi.domain.enums.MeetingRecordStatus;
+import com.ruoyi.huiyi.domain.enums.MeetingSourceType;
 import com.ruoyi.huiyi.domain.enums.MeetingStatus;
 import com.ruoyi.huiyi.domain.vo.MeetingDetailVO;
 import com.ruoyi.huiyi.mapper.*;
@@ -89,7 +90,7 @@ public class MeetingRecordServiceImpl implements IMeetingRecordService {
                         .format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm"));
         meetingRecord.setTitle(time + " 录音");
         meetingRecord.setCreateBy(getUsername());
-        if("0".equals(meetingRecord.getSourceType()) && meetingRecord.getSourceType() == null) {
+        if(MeetingSourceType.RECORDING.getCode().equals(meetingRecord.getSourceType()) && meetingRecord.getSourceType() == null) {
             meetingRecord.setRecordStatus(MeetingRecordStatus.NOT_STARTED.getCode());
         }
         return meetingRecordMapper.insertMeetingRecord(meetingRecord);
@@ -196,7 +197,7 @@ public class MeetingRecordServiceImpl implements IMeetingRecordService {
         // 2. 创建合并后的新会议记录
         MeetingRecord merged = new MeetingRecord();
         merged.setTitle(dto.getTitle());
-        merged.setSourceType("1"); // 合并结果视为"派生"记录，来源标记按需调整
+        merged.setSourceType("2"); // 合并结果视为"派生"记录，来源标记按需调整
         merged.setDuration(totalDuration);
         merged.setStatus(MeetingStatus.TRANSCRIBED.getCode()); // 转写内容已就绪，等待/或已生成纪要
         merged.setIsFavorite("0");

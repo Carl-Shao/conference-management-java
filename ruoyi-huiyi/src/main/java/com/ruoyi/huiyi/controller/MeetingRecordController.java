@@ -147,6 +147,15 @@ public class MeetingRecordController extends BaseController {
         return toAjax(meetingRecordService.saveNote(meetingId, content));
     }
 
+    /** 用户手动编辑纪要内容（不是LLM重新生成，只是改文字） */
+    @PreAuthorize("@ss.hasPermi('huiyi:record:edit')")
+    @Log(title = "会议纪要编辑", businessType = BusinessType.UPDATE)
+    @PutMapping("{meetingId}/minutes")
+    public AjaxResult saveMinutes(@PathVariable Long meetingId, @RequestBody String content) {
+        meetingRecordService.saveMinutesEdit(meetingId, content);
+        return success();
+    }
+
     /** 文件流接口 */
     @PreAuthorize("@ss.hasPermi('huiyi:record:query')")
     @GetMapping("/{meetingId}/audio")

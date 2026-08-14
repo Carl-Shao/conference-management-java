@@ -10,7 +10,8 @@
 
       <div class="record-info">
         <div class="record-icon-svg">
-          <svg v-if="detail.sourceType === '0'" viewBox="0 0 48 48" fill="none">
+          <span v-if="detail.sourceType === '2'" class="emoji-icon">📋</span>
+          <svg v-else-if="detail.sourceType === '0'" viewBox="0 0 48 48" fill="none">
             <path d="M24 14C22.3431 14 21 15.3431 21 17V25C21 26.6569 22.3431 28 24 28C25.6569 28 27 26.6569 27 25V17C27 15.3431 25.6569 14 24 14Z" fill="#4A7DFF" />
             <path d="M19 25C19 27.7614 21.2386 30 24 30C26.7614 30 29 27.7614 29 25" stroke="#4A7DFF" stroke-width="2" stroke-linecap="round" />
             <line x1="24" y1="30" x2="24" y2="34" stroke="#4A7DFF" stroke-width="2" stroke-linecap="round" />
@@ -734,6 +735,23 @@ export default {
   svg { color: var(--ink-soft); transition: color 0.2s, transform 0.2s; }
   &:hover svg { color: var(--blue); transform: translateY(2px); }
   &[disabled] { opacity: 0.5; cursor: not-allowed; &:hover { transform: none !important; background: transparent; svg { transform: none; color: var(--ink-soft); } } }
+}
+
+.emoji-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  font-size: 32px;       /* 与普通模式 SVG 视觉大小匹配 */
+  line-height: 1;
+  user-select: none;
+  pointer-events: none;
+}
+
+/* 搜索结果列表中的 emoji 稍微小一点以匹配其 SVG 尺寸 */
+.search-result-card .emoji-icon {
+  font-size: 28px;
 }
 
 /* ==========================================

@@ -4,6 +4,7 @@ import com.ruoyi.common.core.controller.BaseController;
 import com.ruoyi.common.core.domain.AjaxResult;
 import com.ruoyi.huiyi.domain.MeetingRecord;
 import com.ruoyi.huiyi.domain.dto.UploadedAudioResult;
+import com.ruoyi.huiyi.domain.enums.MeetingSourceType;
 import com.ruoyi.huiyi.domain.enums.MeetingStatus;
 import com.ruoyi.huiyi.mq.dto.AudioUploadTask;
 import com.ruoyi.huiyi.mq.producer.AudioTaskProducer;
@@ -45,7 +46,7 @@ public class MeetingAudioController extends BaseController{
             // 2. 先建一条会议主表记录，转写/纪要/笔记此时都还没有，属于正常的"待转写"状态
             MeetingRecord meeting = new MeetingRecord();
             meeting.setTitle(resolveTitle(file.getOriginalFilename()));
-            meeting.setSourceType("1"); // 上传音频
+            meeting.setSourceType(MeetingSourceType.UPLOAD.getCode()); // 上传音频
             meeting.setAudioPath(saved.getRelativePath());
             meeting.setDuration(saved.getDurationSeconds());
             meeting.setStatus(MeetingStatus.TRANSCRIBING.getCode()); // 转写中
