@@ -29,7 +29,7 @@ public class MeetingLlmServiceImpl implements IMeetingLlmService {
         try{
             String requestBody = buildRequestBody(prompt);
             String responseBody = HttpClientUtil.doPostJson(
-                    llmProperties.getUrl(),
+                    llmProperties.getApiUrl(),
                     requestBody,
                     null,
                     llmProperties.getConnectTimeout(),

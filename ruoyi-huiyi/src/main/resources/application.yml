@@ -9,13 +9,14 @@ huiyi:
     allowed-type: mp3,wav
 
   asr:
-    api-url: http://192.168.2.195:8000/v1/audio/transcriptions
+    api-url: http://192.168.2.195:8899/v1/audio/transcriptions
+    model: /models/faster-whisper-medium
     connect-timeout: 5000
     socket-timeout: 60000
 
   llm:
     api-url: http://192.168.2.195:8081/v1/chat/completions
-    model: gemma4
+    model: /model
     connect-timeout: 5000
     socket-timeout: 60000
 

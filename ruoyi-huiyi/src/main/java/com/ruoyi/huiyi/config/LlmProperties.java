@@ -8,7 +8,7 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 @ConfigurationProperties("huiyi.llm")
 public class LlmProperties {
-    private String url;
+    private String apiUrl;
     private String model;
     private int connectTimeout = 5000;
     private int socketTimeout = 60000;

@@ -216,8 +216,8 @@
                   <span>移动到</span></el-dropdown-item>
                 <el-dropdown-item command="rename"><i class="el-icon-edit icon-clr-purple" />
                   <span>重命名</span></el-dropdown-item>
-                <el-dropdown-item command="merge"><i class="el-icon-document-copy icon-clr-orange" />
-                  <span>合并</span></el-dropdown-item>
+                <!-- <el-dropdown-item command="merge"><i class="el-icon-document-copy icon-clr-orange" />
+                  <span>合并</span></el-dropdown-item> -->
                 <el-dropdown-item command="delete"><i class="el-icon-delete icon-clr-red" />
                   <span>删除</span></el-dropdown-item>
               </el-dropdown-menu>

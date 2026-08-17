@@ -167,7 +167,7 @@ public class HttpClientUtil {
             HttpEntity entity = response.getEntity();
             String result = entity != null ? EntityUtils.toString(entity, StandardCharsets.UTF_8) : null;
             int statusCode = response.getStatusLine().getStatusCode();
-            if (statusCode > 200 && statusCode < 300) {
+            if (statusCode >= 200 && statusCode < 300) {
                 return result;
             }
             log.warn("HTTP请求返回非2xx状态码: {}, url: {}, body: {}",

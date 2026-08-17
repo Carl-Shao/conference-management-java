@@ -8,7 +8,8 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 @ConfigurationProperties(prefix = "huiyi.asr")
 public class AsrProperties {
-    private String url;
+    private String apiUrl;
+    private String model;
     private int connectTimeout = 5000;
     private int socketTimeout = 60000;
 }

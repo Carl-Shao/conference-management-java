@@ -27,21 +27,35 @@ public class MeetingAsrServiceImpl implements IMeetingAsrService {
     public String asrTranslateService(String audioPath) {
         // request
         try{
-            String responseBody = HttpClientUtil.doPostFile(
-                    asrProperties.getUrl(),
-                    "audio",
+            Map<String, String> formParams = new HashMap();
+            formParams.put("model", asrProperties.getModel());
+            formParams.put("language", "zh");
+            formParams.put("response_format", "json");
+            log.info("开始调用 ASR, filePath={}, apiUrl={}, model={}",
                     audioPath,
-                    null,
+                    asrProperties.getApiUrl(),
+                    asrProperties.getModel());
+
+            String responseBody = HttpClientUtil.doPostFile(
+                    asrProperties.getApiUrl(),
+                    "file",
+                    audioPath,
+                    formParams,
                     null,
                     asrProperties.getConnectTimeout(),
                     asrProperties.getSocketTimeout()
             );
 
+            log.info("ASR返回: {}", responseBody);
             JsonNode root = MAPPER.readTree(responseBody);
-            if (root.path("code").asInt(-1) != 0) {
-                throw new RuntimeException("ASR服务返回错误: " + responseBody);
+            String text = root.path("text").asText(null);
+            if (text == null) {
+                throw new RuntimeException(
+                        "ASR服务返回格式错误: " + responseBody
+                );
             }
-            return root.path("text").asText("");
+
+            return text.trim();
         }catch (IOException e){
             log.error("调用ASR服务失败, filePath={}", audioPath, e);
             throw new RuntimeException("语音识别失败: " + e.getMessage(), e);

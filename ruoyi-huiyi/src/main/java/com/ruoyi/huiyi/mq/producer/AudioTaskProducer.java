@@ -3,7 +3,6 @@ package com.ruoyi.huiyi.mq.producer;
 import com.ruoyi.huiyi.config.RabbitMqConfig;
 import com.ruoyi.huiyi.mq.dto.AudioUploadTask;
 import com.ruoyi.huiyi.mq.message.AsrTaskMessage;
-import jakarta.annotation.PostConstruct;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
