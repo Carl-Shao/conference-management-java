@@ -45,6 +45,7 @@ public class MeetingAsrServiceImpl implements IMeetingAsrService {
             formParams.put("model", asrProperties.getModel());
             formParams.put("language", "zh");
             formParams.put("response_format", "json");
+            formParams.put("punctuation", "true");
             log.info("开始调用 ASR, filePath={}, apiUrl={}, model={}",
                     resolvedPath,
                     asrProperties.getApiUrl(),

@@ -10,6 +10,6 @@ import org.springframework.context.annotation.Configuration;
 public class AsrProperties {
     private String apiUrl;
     private String model;
-    private int connectTimeout = 5000;
-    private int socketTimeout = 60000;
+    private int connectTimeout = 600000;
+    private int socketTimeout = 600000;
 }

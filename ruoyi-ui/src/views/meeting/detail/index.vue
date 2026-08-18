@@ -103,10 +103,10 @@
         <!-- ==================== 纪要 Tab ==================== -->
         <div v-show="currentTab === 'summary'" class="content-card fade-in"
           @click="!summaryEditing && startEdit('summary')">
-          <textarea v-if="summaryEditing" ref="summaryEditor" v-model="editContent" class="in-card-editor"
+          <!-- <textarea v-if="summaryEditing" ref="summaryEditor" v-model="editContent" class="in-card-editor"
             placeholder="点击即可编辑纪要..." @blur="handleBlur('summary')"
-            @keydown="handleKeydown($event, 'summary')"></textarea>
-          <div v-else-if="detail.minutesContent" class="markdown-body" v-html="detail.minutesContent"></div>
+            @keydown="handleKeydown($event, 'summary')"></textarea> -->
+          <div v-if="detail.minutesContent" class="markdown-body" v-html="renderMarkdown(detail.minutesContent)"></div>
           <div v-else class="empty-placeholder">
             <i class="el-icon-document"></i>
             <p>{{ loading ? 'AI 正在生成纪要...' : '点击此处编写纪要' }}</p>
@@ -203,6 +203,8 @@
 <script>
 import { getMeeting, delMeeting, favoriteMeeting, renameMeeting, saveMeetingNote, saveMeetingMinutes, getMeetingAudioBlob } from '@/api/huiyi/minutes'
 
+const marked = require('marked')
+
 export default {
   name: 'MeetingDetail',
   data() {
@@ -291,10 +293,27 @@ export default {
         try {
           const raw = data.transcript?.content
           if (raw) {
-            segments = typeof raw === 'string' ? JSON.parse(raw) : raw
+            const trimmed = typeof raw === 'string' ? raw.trim() : ''
+            if (trimmed.startsWith('[') || trimmed.startsWith('{')) {
+              segments = JSON.parse(trimmed)
+            } else if (typeof raw === 'string') {
+              // 如果是纯文本，将其包装为单条转写记录，防止页面空白
+              segments = [{
+                seqNo: 0,
+                startOffsetMs: 0,
+                text: raw
+              }]
+            } else if (Array.isArray(raw)) {
+              // 如果后端已经返回了数组对象（非字符串）
+              segments = raw
+            }
           }
         } catch (e) {
           console.error('转写内容 JSON 解析失败:', e)
+          const fallbackText = data.transcript?.content || ''
+          if (fallbackText) {
+            segments = [{ seqNo: 0, startOffsetMs: 0, text: String(fallbackText) }]
+          }
         }
         this.segments = segments.sort((a, b) => (a.startTime || 0) - (b.startTime || 0))
         // 5. 收藏状态
@@ -348,6 +367,18 @@ export default {
       } catch (err) {
         console.error('下载失败:', err);
         this.$message.error('下载失败，请稍后重试');
+      }
+    },
+    renderMarkdown(content) {
+      if (!content) return ''
+
+      try {
+        const html = marked.parse(content)
+
+        return html
+      } catch (e) {
+        console.error('Markdown 解析失败:', e)
+        return content
       }
     },
     startEditTitle() {
@@ -865,11 +896,58 @@ export default {
 @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 .fade-in { animation: fadeIn 0.3s ease forwards; }
 
-.markdown-body {
-  font-size: 15px; line-height: 1.7; color: var(--ink);
-  ::v-deep h2 { color: var(--blue); font-size: 18px; margin: 20px 0 10px; border-bottom: none; }
-  ::v-deep strong { color: var(--ink); font-weight: 700; }
-  ::v-deep p { margin-bottom: 10px; }
+.meeting-detail-page .markdown-body {
+  font-size: 15px;
+  line-height: 1.8;
+  color: #2b2f36;
+  word-break: break-word;
+
+  h1, h2, h3 {
+    color: #2b2f36;
+    font-weight: 700;
+    margin: 24px 0 12px;
+  }
+  h2 {
+    color: #2f7bff;
+    font-size: 20px;
+  }
+  h3 {
+    font-size: 17px;
+  }
+  p {
+    margin: 10px 0;
+  }
+  strong {
+    font-weight: 700;
+  }
+  ul, ol {
+    margin: 10px 0;
+    padding-left: 28px;
+  }
+  li {
+    margin: 5px 0;
+  }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 16px 0;
+    font-size: 14px;
+  }
+  th, td {
+    border: 1px solid #dcdfe6;
+    padding: 9px 12px;
+    text-align: left;
+  }
+  th {
+    background: #f5f7fa;
+    font-weight: 600;
+  }
+  blockquote {
+    margin: 12px 0;
+    padding: 8px 16px;
+    border-left: 4px solid #2f7bff;
+    background: #f5f7fa;
+  }
 }
 
 .transcript-card { padding: 0; overflow: hidden; }

@@ -11,14 +11,14 @@ huiyi:
   asr:
     api-url: http://192.168.2.195:8899/v1/audio/transcriptions
     model: /models/faster-whisper-medium
-    connect-timeout: 5000
-    socket-timeout: 60000
+    connect-timeout: 600000
+    socket-timeout: 600000
 
   llm:
-    api-url: http://192.168.2.195:8081/v1/chat/completions
-    model: /model
-    connect-timeout: 5000
-    socket-timeout: 60000
+    api-url: http://localhost:11434/api/generate
+    model: qwen2.5:7b
+    connect-timeout: 600000
+    socket-timeout: 600000
 
   rabbitmq:
     asr:

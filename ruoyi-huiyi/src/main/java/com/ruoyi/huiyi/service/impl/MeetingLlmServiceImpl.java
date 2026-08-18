@@ -48,6 +48,7 @@ public class MeetingLlmServiceImpl implements IMeetingLlmService {
         node.put("model", llmProperties.getModel());
         node.put("prompt", prompt);
         node.put("stream", false);
+        node.put("format", "json");
         return MAPPER.writeValueAsString(node);
     }
 
@@ -89,13 +90,22 @@ public class MeetingLlmServiceImpl implements IMeetingLlmService {
             return null;
         }
         String trimmed = text.trim();
-        if(trimmed.startsWith("'''")) {
+        if(trimmed.startsWith("```")) {
             int firstNewLine = trimmed.indexOf('\n');
             if(firstNewLine != -1) {
                 trimmed = trimmed.substring(firstNewLine + 1);
             }
-            int lastFence = trimmed.lastIndexOf("'''");
+            int lastFence = trimmed.lastIndexOf("```");
             if(lastFence != -1) {
+                trimmed = trimmed.substring(0, lastFence);
+            }
+        } else if (trimmed.startsWith("'''")) {
+            int firstNewLine = trimmed.indexOf('\n');
+            if (firstNewLine != -1) {
+                trimmed = trimmed.substring(firstNewLine + 1);
+            }
+            int lastFence = trimmed.lastIndexOf("'''");
+            if (lastFence != -1) {
                 trimmed = trimmed.substring(0, lastFence);
             }
         }
