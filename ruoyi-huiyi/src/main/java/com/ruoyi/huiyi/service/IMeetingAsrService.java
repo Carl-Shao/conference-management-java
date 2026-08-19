@@ -1,5 +1,7 @@
 package com.ruoyi.huiyi.service;
 
+import com.ruoyi.huiyi.domain.vo.AsrResultVO;
+
 public interface IMeetingAsrService {
 
     /**
@@ -7,5 +9,7 @@ public interface IMeetingAsrService {
      * @param audioPath 音频文件（本地磁盘路径）
      * @return 识别出的文本
      */
-    String asrTranslateService(String audioPath);
+    AsrResultVO asrTranslateService(String audioPath);
+
+    String buildSegmentedTranscript(AsrResultVO asrResult);
 }

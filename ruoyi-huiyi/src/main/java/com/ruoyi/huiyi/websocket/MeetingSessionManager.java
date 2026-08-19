@@ -7,6 +7,7 @@ import com.ruoyi.huiyi.domain.MeetingRecord;
 import com.ruoyi.huiyi.domain.MeetingTranscriptSegment;
 import com.ruoyi.huiyi.domain.dto.TranscriptPushDTO;
 import com.ruoyi.huiyi.domain.enums.MeetingRecordStatus;
+import com.ruoyi.huiyi.domain.vo.AsrResultVO;
 import com.ruoyi.huiyi.mapper.MeetingRecordMapper;
 import com.ruoyi.huiyi.mapper.MeetingTranscriptSegmentMapper;
 import com.ruoyi.huiyi.mq.message.MinutesTaskMessage;
@@ -254,7 +255,8 @@ public class MeetingSessionManager {
                     session.getRecordConfig().getChannels(),
                     session.getRecordConfig().getBitDepth());
 
-            String text = asrService.asrTranslateService(chunkFile.getAbsolutePath());
+            AsrResultVO asrResult = asrService.asrTranslateService(chunkFile.getAbsolutePath());
+            String text = asrResult.getText();
 
             MeetingTranscriptSegment segment = new MeetingTranscriptSegment();
             segment.setMeetingId(meetingId);

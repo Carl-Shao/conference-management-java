@@ -2,6 +2,7 @@ package com.ruoyi.huiyi.mq.listener;
 
 import com.rabbitmq.client.Channel;
 import com.ruoyi.huiyi.config.RabbitMqConfig;
+import com.ruoyi.huiyi.domain.vo.AsrResultVO;
 import com.ruoyi.huiyi.mq.message.AsrTaskMessage;
 import com.ruoyi.huiyi.mq.message.MinutesTaskMessage;
 import com.ruoyi.huiyi.service.IMeetingAsrService;
@@ -15,6 +16,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
+import java.util.List;
 
 @Component
 public class AsrTaskListener {
@@ -37,9 +39,12 @@ public class AsrTaskListener {
         try{
             log.info("开始处理ASR任务, taskId={}, filePath={}", message.getTaskId(), message.getAudioPath());
 
-            String text = meetingAsrService.asrTranslateService(message.getAudioPath());
+            AsrResultVO asrResult = meetingAsrService.asrTranslateService(message.getAudioPath());
+            String text = asrResult.getText();
+            String transcript = meetingAsrService.buildSegmentedTranscript(asrResult);
+            meetingRecordService.saveTranscriptResult(message.getMeetingId(), transcript);
 
-            meetingRecordService.saveTranscriptResult(message.getMeetingId(), text);
+            meetingRecordService.saveTranscriptResult(message.getMeetingId(), transcript);
 
             MinutesTaskMessage minutesTaskMessage = new MinutesTaskMessage();
             minutesTaskMessage.setTaskId(message.getTaskId());

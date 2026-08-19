@@ -116,7 +116,7 @@
         <div v-show="currentTab === 'transcript'" class="content-card fade-in transcript-card">
           <div class="transcript-list">
             <div v-for="seg in segments" :key="seg.seqNo" class="transcript-item">
-              <span class="time-badge">{{ formatTime(seg.startOffsetMs) }}</span>
+              <span class="time-badge">{{ formatTime(seg.start) }}</span>
               <p class="transcript-text">{{ seg.text }}</p>
             </div>
             <div v-if="!segments.length && !loading" class="empty-placeholder small">
@@ -315,7 +315,7 @@ export default {
             segments = [{ seqNo: 0, startOffsetMs: 0, text: String(fallbackText) }]
           }
         }
-        this.segments = segments.sort((a, b) => (a.startTime || 0) - (b.startTime || 0))
+        this.segments = segments.sort((a, b) => (a.start || 0) - (b.start || 0))
         // 5. 收藏状态
         this.isFavorite = String(this.detail.isFavorite) === '1'
         // 6. 请求音频流
@@ -550,7 +550,7 @@ export default {
       } else if (cmd === 'copy') {
         let text = ''
         if (this.currentTab === 'transcript') {
-           text = this.segments.map(s => `[${this.formatTime(s.startOffsetMs)}] ${s.text}`).join('\n')
+           text = this.segments.map(s => `[${this.formatTime(s.start)}] ${s.text}`).join('\n')
         } else {
            const div = document.createElement('div')
            div.innerHTML = this.detail.minutesContent || ''
@@ -952,7 +952,7 @@ export default {
 
 .transcript-card { padding: 0; overflow: hidden; }
 .transcript-list { max-height: 60vh; overflow-y: auto; padding: 20px; }
-.transcript-item { display: flex; gap: 16px; margin-bottom: 16px; &:last-child { margin-bottom: 0; } }
+.transcript-item { display: flex; gap: 16px; margin-bottom: 40px; &:last-child { margin-bottom: 0; } }
 .time-badge {
   flex-shrink: 0; font-size: 13px; font-weight: 600; color: var(--blue);
   background: var(--blue-soft); padding: 4px 10px; border-radius: 8px;
