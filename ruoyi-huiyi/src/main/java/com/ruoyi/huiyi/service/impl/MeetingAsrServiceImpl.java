@@ -70,6 +70,10 @@ public class MeetingAsrServiceImpl implements IMeetingAsrService {
                 );
             }
 
+            log.info("========== ASR最终转写结果 ==========");
+            log.info("\n{}", text);
+            log.info("=====================================");
+
             return text.trim();
         }catch (IOException e){
             log.error("调用ASR服务失败, filePath={}", resolvedPath, e);

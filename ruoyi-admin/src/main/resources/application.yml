@@ -168,8 +168,8 @@ huiyi:
     allowed-type: mp3,wav
 
   asr:
-    api-url: http://192.168.2.195:8899/v1/audio/transcriptions
-    model: /models/faster-whisper-medium
+    api-url: http://192.168.2.195:8898/v1/audio/transcriptions
+    model: paraformer
     connect-timeout: 600000
     socket-timeout: 600000
 
