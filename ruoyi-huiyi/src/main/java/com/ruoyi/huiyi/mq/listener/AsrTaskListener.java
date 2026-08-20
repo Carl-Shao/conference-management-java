@@ -39,11 +39,9 @@ public class AsrTaskListener {
         try{
             log.info("开始处理ASR任务, taskId={}, filePath={}", message.getTaskId(), message.getAudioPath());
 
-            AsrResultVO asrResult = meetingAsrService.asrTranslateService(message.getAudioPath());
+            AsrResultVO asrResult = meetingAsrService.transcribeAudio(message.getAudioPath());
             String text = asrResult.getText();
             String transcript = meetingAsrService.buildSegmentedTranscript(asrResult);
-            meetingRecordService.saveTranscriptResult(message.getMeetingId(), transcript);
-
             meetingRecordService.saveTranscriptResult(message.getMeetingId(), transcript);
 
             MinutesTaskMessage minutesTaskMessage = new MinutesTaskMessage();

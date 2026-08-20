@@ -3,14 +3,16 @@ package com.ruoyi.huiyi.util;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.sound.sampled.AudioFileFormat;
-import javax.sound.sampled.AudioSystem;
-import javax.sound.sampled.UnsupportedAudioFileException;
+import javax.sound.sampled.*;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 public final class WavUtils {
 
@@ -42,6 +44,72 @@ public final class WavUtils {
             raf.write(buildHeader(pcmData.length, sampleRate, channels, bitDepth));
             raf.write(pcmData);
         }
+    }
+
+    /**
+     * 把一个wav文件按固定时长切成若干段，每一段都是独立、完整可播放的wav文件（自带wav头）。
+     * 用 AudioInputStream 流式读取源文件、边读边写，不会把整个源文件（可能几百MB的长录音）
+     * 一次性加载进内存，2小时的音频文件切片也不会占用过多内存。
+     *
+     * @param sourceFile      源wav文件
+     * @param outputDir       切片输出目录，不存在会自动创建
+     * @param chunkDurationMs 每段最大时长（毫秒）
+     * @return 切出来的文件列表，按顺序排列（最后一段可能比 chunkDurationMs 短）
+     */
+    public static List<File> splitWavByDuration(File sourceFile, File outputDir, long chunkDurationMs)
+            throws IOException, UnsupportedAudioFileException {
+        List<File> result = new ArrayList<>();
+        if (!outputDir.exists()) {
+            outputDir.mkdirs();
+        }
+
+        try (AudioInputStream ais = AudioSystem.getAudioInputStream(sourceFile)) {
+            javax.sound.sampled.AudioFormat format = ais.getFormat();
+            int sampleRate = (int) format.getSampleRate();
+            int channels = format.getChannels();
+            int bitDepth = format.getSampleSizeInBits();
+            int bytesPerFrame = format.getFrameSize(); // 一帧 = 每个采样点所有声道的字节数总和
+
+            // 算出"chunkDurationMs对应多少字节"，按帧对齐（不能切在一帧中间，会导致噪音）
+            long bytesPerChunk = (long) sampleRate * bytesPerFrame * chunkDurationMs / 1000;
+            bytesPerChunk = (bytesPerChunk / bytesPerFrame) * bytesPerFrame;
+            if (bytesPerChunk <= 0) {
+                bytesPerChunk = bytesPerFrame; // 极端保护，理论上不会走到这里
+            }
+
+            byte[] readBuffer = new byte[8192];
+            ByteArrayOutputStream currentChunk = new ByteArrayOutputStream();
+            int chunkIndex = 0;
+            int read;
+
+            while ((read = ais.read(readBuffer)) != -1) {
+                currentChunk.write(readBuffer, 0, read);
+
+                // 攒够一整段就落盘，避免currentChunk本身无限增长占用内存
+                while (currentChunk.size() >= bytesPerChunk) {
+                    byte[] allBytes = currentChunk.toByteArray();
+                    byte[] chunkData = Arrays.copyOfRange(allBytes, 0, (int) bytesPerChunk);
+                    byte[] remaining = Arrays.copyOfRange(allBytes, (int) bytesPerChunk, allBytes.length);
+
+                    File chunkFile = new File(outputDir, "chunk_" + chunkIndex + ".wav");
+                    pcmBytesToWavFile(chunkData, chunkFile, sampleRate, channels, bitDepth);
+                    result.add(chunkFile);
+                    chunkIndex++;
+
+                    currentChunk.reset();
+                    currentChunk.write(remaining);
+                }
+            }
+
+            // 收尾：最后剩下不足一整段的部分，也要单独写成一个文件，不能丢
+            if (currentChunk.size() > 0) {
+                File chunkFile = new File(outputDir, "chunk_" + chunkIndex + ".wav");
+                pcmBytesToWavFile(currentChunk.toByteArray(), chunkFile, sampleRate, channels, bitDepth);
+                result.add(chunkFile);
+            }
+        }
+
+        return result;
     }
 
     public static void writePlaceholderHeader(RandomAccessFile raf, int sampleRate,

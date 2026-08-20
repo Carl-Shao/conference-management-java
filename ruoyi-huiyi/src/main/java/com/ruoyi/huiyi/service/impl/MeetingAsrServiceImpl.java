@@ -10,6 +10,7 @@ import com.ruoyi.huiyi.config.AsrProperties;
 import com.ruoyi.huiyi.config.MeetingRecordProperties;
 import com.ruoyi.huiyi.domain.vo.AsrResultVO;
 import com.ruoyi.huiyi.util.HttpClientUtil;
+import com.ruoyi.huiyi.util.WavUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import com.ruoyi.huiyi.service.IMeetingAsrService;
@@ -25,6 +26,14 @@ public class MeetingAsrServiceImpl implements IMeetingAsrService {
 
     private static final Logger log = LoggerFactory.getLogger(MeetingAsrServiceImpl.class);
     private static final ObjectMapper MAPPER = new ObjectMapper();
+    /** 单次ASR调用允许的最大音频时长，超过这个阈值会先切片再逐段转写，避免长音频占用过多显存 */
+    private static final long MAX_SINGLE_CALL_DURATION_MS = 4 * 60 * 1000L;
+
+    private static final int MIN_SEGMENT_LENGTH = 60;
+    private static final int NORMAL_SEGMENT_LENGTH = 80;
+
+    private static final long PAUSE_THRESHOLD = 1800;
+    private static final long MAX_SEGMENT_DURATION = 60_000;
 
     @Autowired
     private AsrProperties asrProperties;
@@ -34,10 +43,6 @@ public class MeetingAsrServiceImpl implements IMeetingAsrService {
 
     @Override
     public AsrResultVO asrTranslateService(String audioPath) {
-        // audioPath 有两种来源：上传音频存的是相对audioBasePath的相对路径，
-        // 实时录制分片传的是chunkFile.getAbsolutePath()绝对路径，两种都要能处理，
-        // 不能直接把audioPath原样传给HttpClientUtil——相对路径会按JVM当前工作目录去找，
-        // 大概率找不到文件（跟之前streamAudio播放接口踩的是同一个坑，同样的解析逻辑）
         File resolvedFile = resolveAudioFile(audioPath);
         if (!resolvedFile.exists() || !resolvedFile.isFile()) {
             throw new RuntimeException("音频文件不存在: " + resolvedFile.getAbsolutePath());
@@ -93,6 +98,95 @@ public class MeetingAsrServiceImpl implements IMeetingAsrService {
         }
     }
 
+    @Override
+    public AsrResultVO transcribeAudio(String audioPath) {
+        File resolvedFile = resolveAudioFile(audioPath);
+        if (!resolvedFile.exists() || !resolvedFile.isFile()) {
+            throw new RuntimeException("音频文件不存在: " + resolvedFile.getAbsolutePath());
+        }
+
+        long durationMs = WavUtils.readDurationMs(resolvedFile);
+        if (durationMs <= 0 || durationMs <= MAX_SINGLE_CALL_DURATION_MS) {
+            // 读不出时长（保守起见按不切处理）或者本来就没超阈值，直接单次调用
+            return asrTranslateService(resolvedFile.getAbsolutePath());
+        }
+
+        log.info("音频时长{}ms超过单次调用上限{}ms，切成{}分钟一段分批转写: {}",
+                durationMs, MAX_SINGLE_CALL_DURATION_MS, MAX_SINGLE_CALL_DURATION_MS / 60000,
+                resolvedFile.getAbsolutePath());
+
+        File chunkDir = new File(resolvedFile.getParentFile(), "asr_chunks_" + System.currentTimeMillis());
+        List<File> chunkFiles;
+        try {
+            chunkFiles = WavUtils.splitWavByDuration(resolvedFile, chunkDir, MAX_SINGLE_CALL_DURATION_MS);
+        } catch (Exception e) {
+            throw new RuntimeException("音频切片失败: " + e.getMessage(), e);
+        }
+
+        try {
+            StringBuilder fullText = new StringBuilder();
+            StringBuilder fullRawText = new StringBuilder();
+            List<List<Long>> allTimestamps = new ArrayList<>();
+
+            for (int i = 0; i < chunkFiles.size(); i++) {
+                File chunkFile = chunkFiles.get(i);
+                long chunkOffsetMs = (long) i * MAX_SINGLE_CALL_DURATION_MS;
+
+                log.info("开始转写第{}/{}段: {}", i + 1, chunkFiles.size(), chunkFile.getName());
+                AsrResultVO chunkResult = asrTranslateService(chunkFile.getAbsolutePath());
+
+                // 拼接 text
+                if (fullText.length() > 0) {
+                    fullText.append("\n");
+                }
+                fullText.append(chunkResult.getText());
+
+                // 拼接 rawText
+                if (chunkResult.getRawText() != null && !chunkResult.getRawText().isEmpty()) {
+                    if (fullRawText.length() > 0) {
+                        fullRawText.append(" ");
+                    }
+                    fullRawText.append(chunkResult.getRawText());
+                }
+
+                // 拼接 timestamp，加上偏移量
+                if (chunkResult.getTimestamp() != null) {
+                    for (List<Long> ts : chunkResult.getTimestamp()) {
+                        if (ts != null && ts.size() >= 2) {
+                            List<Long> adjusted = new ArrayList<>(2);
+                            adjusted.add(ts.get(0) + chunkOffsetMs);
+                            adjusted.add(ts.get(1) + chunkOffsetMs);
+                            allTimestamps.add(adjusted);
+                        }
+                    }
+                }
+            }
+
+            AsrResultVO result = new AsrResultVO();
+            result.setText(fullText.toString().trim());
+            result.setRawText(fullRawText.toString().trim());
+            result.setTimestamp(allTimestamps);
+
+            log.info("========== 长音频分段转写合并结果 ==========");
+            log.info("text={}", result.getText());
+            log.info("rawText长度={}", result.getRawText() == null ? 0 : result.getRawText().length());
+            log.info("timestamp数量={}", result.getTimestamp() == null ? 0 : result.getTimestamp().size());
+            log.info("============================================");
+
+            return result;
+        } finally {
+            // 切片是临时文件，转写完就没用了，用完必须删，不然长音频反复上传会在磁盘上堆一堆碎文件
+            for (File f : chunkFiles) {
+                if (f.exists() && !f.delete()) {
+                    log.warn("ASR切片临时文件删除失败: {}", f.getAbsolutePath());
+                }
+            }
+            if (chunkDir.exists() && !chunkDir.delete()) {
+                log.warn("ASR切片临时目录删除失败（可能不为空）: {}", chunkDir.getAbsolutePath());
+            }
+        }
+    }
+
     /** 把 audioPath 解析成真实文件：绝对路径直接用，相对路径拼上配置的音频根目录 */
     private File resolveAudioFile(String audioPath) {
         File direct = new File(audioPath);
@@ -101,12 +195,6 @@ public class MeetingAsrServiceImpl implements IMeetingAsrService {
         }
         return new File(recordProperties.getAudioBasePath(), audioPath);
     }
-
-    private static final int MIN_SEGMENT_LENGTH = 60;
-    private static final int NORMAL_SEGMENT_LENGTH = 80;
-
-    private static final long PAUSE_THRESHOLD = 1800;
-    private static final long MAX_SEGMENT_DURATION = 60_000;
 
     public String buildSegmentedTranscript(AsrResultVO asrResult) {
         String text = asrResult.getText();

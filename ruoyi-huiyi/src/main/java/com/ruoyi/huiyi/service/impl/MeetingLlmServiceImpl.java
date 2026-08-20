@@ -49,6 +49,10 @@ public class MeetingLlmServiceImpl implements IMeetingLlmService {
         node.put("prompt", prompt);
         node.put("stream", false);
         node.put("format", "json");
+
+        ObjectNode options = node.putObject("options");
+        options.put("num_ctx", 32768);
+        options.put("num_predict", 8192);
         return MAPPER.writeValueAsString(node);
     }
 
