@@ -362,6 +362,41 @@ export default {
             });
         },
 
+        onTranscriptPush(dto) {
+            // 1. 过滤空文本（后端转写失败时会推空文本占位）
+            if (!dto.text || dto.text.trim() === '') {
+                return;
+            }
+
+            // 2. 构造前端需要的 transcript 对象
+            const newLine = {
+                id: dto.seqNo,          // 用 seqNo 作为唯一标识，保证顺序且可去重
+                speaker: '发言人',       // 后端目前没推说话人，先用默认值
+                text: dto.text,
+                startMs: dto.startOffsetMs,
+                endMs: dto.endOffsetMs
+            };
+
+            // 3. 按 seqNo 排序插入（防止网络乱序导致显示错乱）
+            const existIndex = this.transcripts.findIndex(t => t.id === dto.seqNo);
+            if (existIndex === -1) {
+                this.transcripts.push(newLine);
+              // 按 seqNo 升序排列
+               this.transcripts.sort((a, b) => a.id - b.id);
+            } else {
+                // 如果已存在则更新（支持后端重推修正）
+                this.$set(this.transcripts, existIndex, newLine);
+            }
+
+            // 4. 自动滚动到底部
+            this.$nextTick(() => {
+                const el = this.$refs.transcriptScroll;
+                if (el) {
+                    el.scrollTop = el.scrollHeight;
+                }
+            });
+        },
+
         // 格式化时间偏移
         formatOffset(ms) {
             if (!ms && ms !== 0) return '';
