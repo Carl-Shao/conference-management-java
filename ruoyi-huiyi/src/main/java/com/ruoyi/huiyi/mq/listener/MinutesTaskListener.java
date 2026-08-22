@@ -32,7 +32,11 @@ public class MinutesTaskListener {
         try {
             log.info("开始生成会议纪要, taskId={}", message.getTaskId());
 
-            String prompt = message.getRecognizedText() +
+            String prompt =
+                    "====================\n" +
+                    "会议转录文本：\n" +
+                    "====================\n" +
+                    message.getRecognizedText() +
                     "你是一名专业的会议纪要分析助手。\n" +
                     "你的任务是：根据输入的完整会议音频转录文本，将非结构化、口语化的会议内容转换为准确、规范、完整、结构化的会议纪要。\n" +
                     "你必须以整份会议转录文本为基础进行分析，先理解全文，再进行主题划分、信息提取和纪要组织，不能看到局部内容后直接套用固定模板。\n" +
@@ -320,11 +324,7 @@ public class MinutesTaskListener {
                     "- 不允许尾随逗号；\n" +
                     "- summary 是搜索索引的核心，应尽量在约100字内包含原文中的关键信息，但绝不能编造；\n" +
                     "- summary 可以保持简洁，但不能以压缩 summary 的方式影响 content 的完整性；\n" +
-                    "- content 的详细程度必须根据会议转录文本的实际信息量动态决定。\n" +
-                    "\n" +
-                    "====================\n" +
-                    "会议转录文本：\n" +
-                    "====================\n";
+                    "- content 的详细程度必须根据会议转录文本的实际信息量动态决定。\n";
 
             MeetingMinutesResultDTO minutes = meetingLlmService.generateMinutes(prompt);
 
